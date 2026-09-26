@@ -30,14 +30,14 @@
   </section>
   <section class="section">
     <div class="dark-panel standalone-panel">
-      <div class="section-head"><p class="eyebrow">VIN LOOKUP</p><h2>بيانات دقيقة، استعلام أسرع</h2><p>اكتب رقم الشاسيه كاملًا أو آخر 7 خانات لمساعدتنا في تحديد القطعة المناسبة.</p></div>
+      <div class="section-head"><p class="eyebrow">VIN LOOKUP</p><h2>بيانات دقيقة، استعلام أسرع</h2><p>يرجى إدخال رقم الشاسيه الكامل المكوّن من 17 خانة لضمان تحديد القطعة بدقة.</p></div>
       <form class="form wide" id="partsForm">
         <div class="grid2">
           <label>الاسم<input name="name" required maxlength="80"></label>
           <label>رقم الهاتف<input name="phone" required maxlength="20" inputmode="tel"></label>
           <label>السيارة / الموديل<input name="carModel" required maxlength="80"></label>
           <label>سنة الصنع<input name="year" required maxlength="4" inputmode="numeric"></label>
-          <label class="span2">رقم الشاسيه / آخر 7 خانات<input name="vin" required minlength="7" maxlength="17" dir="ltr" class="ltr" placeholder="7 أو 17 خانة"></label>
+          <label class="span2">رقم الشاسيه (17 خانة)<input name="vin" required minlength="7" maxlength="17" pattern="[A-HJ-NPR-Za-hj-npr-z0-9]{7,17}" dir="ltr" class="ltr" placeholder="أدخل رقم الشاسيه المكوّن من 17 خانة" title="أدخل رقم الشاسيه كاملًا أو آخر 7 خانات على الأقل"></label>
           <label>كود القطعة إن وجد<input name="partCode" maxlength="60" dir="ltr" class="ltr"></label>
           <label>الكمية<input name="quantity" type="number" min="1" max="20" value="1"></label>
         </div>
