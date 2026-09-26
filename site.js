@@ -14,6 +14,13 @@ const $=s=>document.querySelector(s);
 const msg=(el,text,ok=true)=>{el.textContent=text;el.className="form-msg "+(ok?"ok":"err")};
 const pageName=(location.pathname.split("/").filter(Boolean)[0]||"home").replace(/\.html$/,'');
 document.body.classList.add(`page-${pageName}`);
+const heroVideo=document.querySelector(".hero-video-main");
+if(heroVideo){
+  heroVideo.muted=true;
+  heroVideo.addEventListener("canplay",()=>heroVideo.play().catch(()=>{}),{once:true});
+  heroVideo.addEventListener("ended",()=>{heroVideo.currentTime=0;heroVideo.play().catch(()=>{})});
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&heroVideo.paused)heroVideo.play().catch(()=>{})});
+}
 $("#menuBtn")?.addEventListener("click",()=>$("#navLinks").classList.toggle("open"));
 document.querySelectorAll("#navLinks a").forEach(a=>a.addEventListener("click",()=>$("#navLinks").classList.remove("open")));
 
