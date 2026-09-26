@@ -1,3 +1,6 @@
+// Always use the official Esotica artwork, not the text-based SVG.
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.brand-mark img,.brand-logo img,.esotica-intro-logo').forEach(img=>{img.src='/site/logo.png';img.alt='Esotica Auto';});});
+
 
 const ESOTICA_ASSETS={
   logo:"/site/esotica-logo.svg",
