@@ -15,3 +15,12 @@ footer{border-top:1px solid var(--line);padding:48px max(22px,calc((100vw - var(
 /* A single video stream avoids duplicate loading and keeps the full clip playing. */
 .hero-video-stage{background:#050706 url('/site/hero-video-poster.jpg') center/cover no-repeat}
 .hero-video-stage::before{content:"";position:absolute;inset:-35px;background:inherit;filter:blur(30px) brightness(.5);transform:scale(1.08)}
+
+/* Authentic Esotica page imagery and high-contrast marque strip. */
+.strip img{filter:brightness(0) invert(1);opacity:.9}
+.page-services .inner-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.28)),url('/site/services-hero-authentic.webp')}
+.page-booking .inner-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.30)),url('/site/booking-hero-authentic.webp')}
+.page-parts .inner-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.24)),url('/site/parts-hero-real.webp')}
+.page-branches .inner-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.26)),url('/site/branches-hero-authentic.webp')}
+.page-contact .inner-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.28)),url('/site/contact-hero-authentic.webp')}
+.gallery-pending{border-top:1px solid var(--line);background:#0b0d0c}.gallery-empty{height:220px;border:1px dashed rgba(200,170,112,.36);border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(200,170,112,.06),rgba(255,255,255,.015));color:#858983;font-size:11px;font-weight:800;letter-spacing:.22em}
