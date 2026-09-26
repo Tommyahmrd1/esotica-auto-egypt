@@ -1,0 +1,129 @@
+name: Repair Hero Video
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/repair-hero-video.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure ffmpeg is available
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+          ffmpeg -version | head -1
+
+      - name: Inspect video candidates and select the fullest source
+        id: inspect
+        shell: bash
+        run: |
+          set -euo pipefail
+          best=""
+          best_frames=0
+          for f in site/hero-video.mp4 site/hero-video-v2.mp4 site/hero-video-lite.mp4; do
+            [ -f "$f" ] || continue
+            echo "===== $f ====="
+            ffprobe -v error -show_entries format=duration,size -show_entries stream=codec_name,width,height,r_frame_rate,avg_frame_rate,duration -of default=noprint_wrappers=1 "$f" || true
+            frames=$(ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=noprint_wrappers=1:nokey=1 "$f" 2>/dev/null | tail -1 || true)
+            if [[ ! "$frames" =~ ^[0-9]+$ ]]; then frames=0; fi
+            echo "decoded_frames=$frames"
+            if (( frames > best_frames )); then
+              best_frames=$frames
+              best="$f"
+            fi
+          done
+          if [ -z "$best" ]; then
+            echo "No usable hero video source found" >&2
+            exit 1
+          fi
+          echo "Selected $best with $best_frames decoded frames"
+          echo "source=$best" >> "$GITHUB_OUTPUT"
+          echo "frames=$best_frames" >> "$GITHUB_OUTPUT"
+
+      - name: Rebuild frame-by-frame with clean timestamps
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="${{ steps.inspect.outputs.source }}"
+          mkdir -p /tmp/esotica_frames
+          fps=$(ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 "$src" | head -1)
+          if [ -z "$fps" ] || [ "$fps" = "0/0" ] || [ "$fps" = "N/A" ]; then fps="30"; fi
+          echo "Rebuilding from $src at $fps fps"
+
+          # Decode every actual frame without trusting the source presentation timestamps.
+          ffmpeg -y -fflags +genpts -err_detect ignore_err -i "$src"             -map 0:v:0 -fps_mode passthrough -q:v 3 /tmp/esotica_frames/frame_%06d.jpg
+
+          count=$(find /tmp/esotica_frames -type f -name 'frame_*.jpg' | wc -l)
+          echo "Extracted frames: $count"
+          if [ "$count" -lt 600 ]; then
+            echo "Too few frames were decoded; refusing to publish a truncated repair." >&2
+            exit 1
+          fi
+
+          # Re-encode the sequence from frame numbers, creating a brand-new monotonic timeline.
+          ffmpeg -y -framerate "$fps" -i /tmp/esotica_frames/frame_%06d.jpg             -an -c:v libx264 -preset medium -crf 24 -pix_fmt yuv420p             -movflags +faststart -vf "setsar=1" /tmp/hero-video-rebuilt.mp4
+
+          echo "===== rebuilt file ====="
+          ffprobe -v error -show_entries format=duration,size -show_entries stream=codec_name,width,height,r_frame_rate,avg_frame_rate,duration,nb_frames -of default=noprint_wrappers=1 /tmp/hero-video-rebuilt.mp4
+
+          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 /tmp/hero-video-rebuilt.mp4)
+          awk -v d="$duration" 'BEGIN { if (d < 20) { print "Rebuilt video is unexpectedly short: " d > "/dev/stderr"; exit 1 } }'
+
+          mv /tmp/hero-video-rebuilt.mp4 site/hero-video-lite.mp4
+          sed -i -E 's#hero-video-lite\.mp4\?v=[0-9]+#hero-video-lite.mp4?v=30#g' index.html
+
+      - name: Add playback stall recovery
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("site.js")
+          s=p.read_text()
+          old='''  window.setInterval(()=>{if(heroVideo.paused&&!document.hidden)heroVideo.play().catch(()=>{})},1500);
+          }'''
+          new='''  let heroLastTime=-1, heroLastAdvance=Date.now();
+          heroVideo.addEventListener("timeupdate",()=>{if(heroVideo.currentTime>heroLastTime+.03){heroLastTime=heroVideo.currentTime;heroLastAdvance=Date.now();}});
+          window.setInterval(()=>{
+            if(document.hidden)return;
+            if(heroVideo.paused)heroVideo.play().catch(()=>{});
+            if(heroVideo.readyState>=2 && Date.now()-heroLastAdvance>2500){
+              const next=Math.min(heroVideo.currentTime+.12,Math.max(0,(heroVideo.duration||0)-.2));
+              if(Number.isFinite(next))heroVideo.currentTime=next;
+              heroVideo.play().catch(()=>{});
+              heroLastAdvance=Date.now();
+            }
+          },750);
+          }'''
+          if old not in s:
+              raise SystemExit("Expected hero playback block not found")
+          p.write_text(s.replace(old,new))
+          PY
+
+      - name: Commit repaired video
+        run: |
+          git config user.name "Esotica Video Repair"
+          git config user.email "actions@users.noreply.github.com"
+          git add site/hero-video-lite.mp4 index.html site.js
+          git commit -m "Repair hero video timestamps frame by frame"
+          git push
+
+      - name: Deploy repaired site to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy . --project-name=esotica-auto-egypt --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
