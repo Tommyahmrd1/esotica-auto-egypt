@@ -1,3 +1,6 @@
+// Keep the official logo after admin settings finish loading.
+document.addEventListener('DOMContentLoaded',()=>{const keepOfficialLogo=()=>document.querySelectorAll('.brand-mark img,.brand-logo img,.esotica-intro-logo').forEach(img=>{if(!img.src.endsWith('/site/logo.png'))img.src='/site/logo.png';});keepOfficialLogo();new MutationObserver(keepOfficialLogo).observe(document.body,{childList:true,subtree:true});});
+
 // Always use the official Esotica artwork, not the text-based SVG.
 document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.brand-mark img,.brand-logo img,.esotica-intro-logo').forEach(img=>{img.src='/site/logo.png';img.alt='Esotica Auto';});});
 
