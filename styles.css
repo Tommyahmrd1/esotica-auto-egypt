@@ -1,3 +1,9 @@
+/* Header uses .brand-logo */
+.brand-logo{width:202px!important;height:64px!important;background:transparent!important;box-shadow:none!important;padding:0!important;overflow:hidden!important;display:block!important}
+.brand-logo img{width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;transform:scale(1.42)!important;filter:invert(1) contrast(1.28) brightness(1.45)!important;mix-blend-mode:screen!important}
+footer .brand-logo{width:184px!important;height:58px!important}
+@media(max-width:900px){.nav .brand-logo{width:158px!important;height:50px!important}.nav .brand-logo img{transform:scale(1.4)!important}}
+
 /* Official Esotica logo - header visibility fix */
 .nav .brand-mark.has-logo{width:202px!important;height:64px!important;background:transparent!important;box-shadow:none!important;padding:0!important;overflow:hidden!important}
 .nav .brand-mark.has-logo img{width:100%!important;height:100%!important;object-fit:cover!important;transform:scale(1.42)!important;filter:invert(1) contrast(1.28) brightness(1.45)!important;mix-blend-mode:screen!important}
