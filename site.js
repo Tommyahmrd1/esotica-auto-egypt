@@ -1,6 +1,6 @@
 
 const ESOTICA_ASSETS={
-  logo:"/site/esotica-logo.png",
+  logo:"/site/esotica-logo.svg",
   home:"/site/home-hero.webp",
   parts:"/site/parts-hero.webp"
 };

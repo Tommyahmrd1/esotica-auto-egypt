@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 300" role="img" aria-labelledby="t">
+<title id="t">Esotica</title>
+<defs>
+  <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f7f7f7"/>
+    <stop offset=".28" stop-color="#bfc0c0"/>
+    <stop offset=".55" stop-color="#ffffff"/>
+    <stop offset=".82" stop-color="#8e8f90"/>
+    <stop offset="1" stop-color="#d7d7d7"/>
+  </linearGradient>
+  <filter id="shadow" x="-20%" y="-30%" width="140%" height="160%">
+    <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#000" flood-opacity=".38"/>
+  </filter>
+</defs>
+<g fill="none" stroke="url(#silver)" stroke-width="12" stroke-linecap="square" filter="url(#shadow)">
+  <path d="M42 60H430"/>
+  <path d="M700 60H1058"/>
+  <path d="M480 86l52-62 48 58 36-44 42 48"/>
+</g>
+<text x="50%" y="246" text-anchor="middle" fill="url(#silver)" filter="url(#shadow)"
+      font-family="Georgia,Times New Roman,serif" font-size="220" font-weight="700"
+      letter-spacing="-9">Esotica</text>
+</svg>
