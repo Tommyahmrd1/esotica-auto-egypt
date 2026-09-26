@@ -1,46 +1,3 @@
-// Keep the official logo after admin settings finish loading.
-document.addEventListener('DOMContentLoaded',()=>{const keepOfficialLogo=()=>document.querySelectorAll('.brand-mark img,.brand-logo img,.esotica-intro-logo').forEach(img=>{if(!img.src.endsWith('/site/logo.png'))img.src='/site/logo.png';});keepOfficialLogo();new MutationObserver(keepOfficialLogo).observe(document.body,{childList:true,subtree:true});});
-
-// Always use the official Esotica artwork, not the text-based SVG.
-document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.brand-mark img,.brand-logo img,.esotica-intro-logo').forEach(img=>{img.src='/site/logo.png';img.alt='Esotica Auto';});});
-
-
-const ESOTICA_ASSETS={
-  logo:"/site/esotica-logo.svg",
-  home:"/site/home-hero.webp",
-  parts:"/site/parts-hero.webp"
-};
-const cleanPath=location.pathname.replace(/\/+$/,"")||"/";
-if(cleanPath==="/")document.body.classList.add("home-page");
-else if(cleanPath==="/parts"||cleanPath==="/parts.html")document.body.classList.add("parts-page");
-else document.body.classList.add("inner-page");
-
-function applySiteLogo(){
-  document.querySelectorAll(".brand-mark").forEach(el=>{
-    el.innerHTML='<img src="'+ESOTICA_ASSETS.logo+'" alt="Esotica">';
-    el.classList.add("has-logo");
-  });
-  document.querySelectorAll(".brand-text").forEach(el=>el.style.display="none");
-}
-applySiteLogo();
-
-function playEsoticaIntro(){
-  if(cleanPath!=="/")return;
-  if(sessionStorage.getItem("esoticaIntroShown")==="1")return;
-  sessionStorage.setItem("esoticaIntroShown","1");
-  const intro=document.createElement("div");
-  intro.className="esotica-intro";
-  intro.setAttribute("aria-hidden","true");
-  intro.innerHTML=
-    '<span class="esotica-headlight left"></span>'+
-    '<span class="esotica-headlight right"></span>'+
-    '<span class="esotica-intro-sheen"></span>'+
-    '<img class="esotica-intro-logo" src="'+ESOTICA_ASSETS.logo+'" alt="">';
-  document.body.prepend(intro);
-  setTimeout(()=>intro.remove(),3700);
-}
-playEsoticaIntro();
-
 
 function cairoNow(){
   const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hour12:false}).formatToParts(new Date());
@@ -100,7 +57,7 @@ async function loadSiteContent(){
       if(settings.hero_secondary_text)s.textContent=settings.hero_secondary_text;
       if(settings.hero_secondary_link)s.href=settings.hero_secondary_link;
     }
-    /* Homepage artwork is intentionally fixed to the Esotica workshop hero. */
+    /* Visual identity is fixed in code; old dashboard image uploads are ignored. */
     
     if(settings.brand_name){
       document.querySelectorAll("#brandName").forEach(el=>el.textContent=settings.brand_name);
@@ -112,12 +69,6 @@ async function loadSiteContent(){
       document.querySelectorAll(".brand-text").forEach(el=>el.style.display="none");
     }
 
-    if(settings.logo_media_id){
-      document.querySelectorAll(".brand-mark").forEach(el=>{
-        el.innerHTML=`<img src="/api/media/${settings.logo_media_id}" alt="Esotica logo">`;
-        el.classList.add("has-logo");
-      });
-    }
     if(settings.accent_color && /^#[0-9A-Fa-f]{6}$/.test(settings.accent_color)){
       document.documentElement.style.setProperty("--gold",settings.accent_color);
       document.documentElement.style.setProperty("--gold2",settings.accent_color);
@@ -152,4 +103,4 @@ async function loadSiteContent(){
   }catch(e){console.warn("CMS content unavailable",e)}
 }
 function escHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-loadSiteContent().finally(applySiteLogo);
+loadSiteContent();
