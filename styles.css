@@ -26,3 +26,170 @@
 .action-number{font-size:11px;letter-spacing:.2em;color:var(--gold);font-weight:900}
 .page-form-section{padding-top:75px}.standalone-panel{margin:0 auto;padding-block:50px}.center-action{text-align:center;margin-top:38px}
 @media(max-width:900px){.action-grid{grid-template-columns:1fr}.action-card.featured{grid-column:auto}.inner-hero{min-height:300px}.inner-hero-content{padding:70px 0 42px}}
+
+
+/* ===== Esotica visual upgrade ===== */
+.brand{min-width:max-content}
+.brand-mark,
+.brand-mark.has-logo{
+  width:150px;
+  height:52px;
+  border:0;
+  padding:0;
+  background:transparent;
+  overflow:visible;
+  color:transparent;
+}
+.brand-mark img,
+.brand-mark.has-logo img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  filter:drop-shadow(0 5px 16px rgba(0,0,0,.32));
+}
+.brand-text{display:none!important}
+footer .brand-mark,
+footer .brand-mark.has-logo{width:190px;height:62px}
+
+.home-page .hero{
+  min-height:790px;
+  background-image:url('/site/home-hero.webp')!important;
+  background-position:center center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+}
+.home-page .hero-overlay{
+  background:
+    linear-gradient(90deg,rgba(3,5,4,.30) 0%,rgba(3,5,4,.72) 48%,rgba(3,5,4,.94) 78%),
+    linear-gradient(0deg,rgba(5,7,6,.86) 0%,rgba(5,7,6,.10) 46%,rgba(5,7,6,.20) 100%);
+}
+.home-page .hero-content{filter:drop-shadow(0 2px 12px rgba(0,0,0,.42))}
+.home-page .hero h1{max-width:720px}
+.home-page .action-card{
+  overflow:hidden;
+  isolation:isolate;
+}
+.home-page .action-card:after{
+  content:"";
+  position:absolute;
+  inset:auto -25% -65% -25%;
+  height:150px;
+  background:radial-gradient(circle,rgba(199,168,106,.12),transparent 65%);
+  z-index:-1;
+  transition:transform .35s ease;
+}
+.home-page .action-card:hover:after{transform:translateY(-18px)}
+
+.parts-page .inner-hero{
+  min-height:510px;
+  align-items:end;
+  background:
+    linear-gradient(90deg,rgba(4,6,5,.93) 0%,rgba(4,6,5,.70) 42%,rgba(4,6,5,.28) 76%,rgba(4,6,5,.46) 100%),
+    linear-gradient(0deg,rgba(7,9,8,.82),transparent 55%),
+    url('/site/parts-hero.webp') center/cover no-repeat!important;
+}
+.parts-page .inner-hero-content{padding-bottom:68px}
+.parts-page .inner-hero h1{text-shadow:0 4px 22px rgba(0,0,0,.65)}
+.parts-page .standalone-panel{
+  box-shadow:0 25px 80px rgba(0,0,0,.25);
+}
+
+/* Cinematic first-visit intro */
+.esotica-intro{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  overflow:hidden;
+  background:#040504 url('/site/home-hero.webp') center/cover no-repeat;
+  animation:esoticaIntroOut .7s cubic-bezier(.4,0,.2,1) 2.8s forwards;
+}
+.esotica-intro:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 51% 50%,transparent 0 19%,rgba(0,0,0,.12) 43%,rgba(0,0,0,.62) 100%),
+    linear-gradient(0deg,rgba(0,0,0,.55),rgba(0,0,0,.18));
+}
+.esotica-intro-logo{
+  position:absolute;
+  left:50%;
+  top:24%;
+  width:min(560px,72vw);
+  height:auto;
+  transform:translate(-50%,-50%) scale(.86);
+  opacity:0;
+  filter:drop-shadow(0 10px 30px rgba(0,0,0,.65));
+  animation:esoticaLogoReveal .95s cubic-bezier(.2,.8,.2,1) 1.35s forwards;
+}
+.esotica-headlight{
+  position:absolute;
+  top:52%;
+  width:9vw;
+  max-width:150px;
+  min-width:65px;
+  aspect-ratio:3/1;
+  border-radius:50%;
+  opacity:0;
+  background:radial-gradient(ellipse at center,#fff 0 10%,#e7f7ff 18%,rgba(158,220,255,.92) 35%,rgba(77,166,255,.32) 55%,transparent 73%);
+  filter:blur(3px);
+  mix-blend-mode:screen;
+  animation:esoticaLampFlicker 1.35s linear .18s forwards;
+}
+.esotica-headlight.left{left:43%}
+.esotica-headlight.right{left:56%}
+.esotica-intro-sheen{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  background:linear-gradient(112deg,transparent 33%,rgba(255,255,255,.07) 47%,transparent 57%);
+  transform:translateX(-60%);
+  animation:esoticaSheen 1s ease 1.5s forwards;
+}
+@keyframes esoticaLampFlicker{
+  0%,10%,24%,39%{opacity:0;transform:scale(.65)}
+  6%,17%,31%{opacity:.98;transform:scale(1.05)}
+  48%{opacity:.22;transform:scale(.8)}
+  62%,100%{opacity:1;transform:scale(1);filter:blur(2px) drop-shadow(0 0 22px rgba(202,239,255,.95)) drop-shadow(0 0 55px rgba(94,180,255,.72))}
+}
+@keyframes esoticaLogoReveal{
+  0%{opacity:0;transform:translate(-50%,-44%) scale(.86);filter:blur(8px) drop-shadow(0 10px 30px rgba(0,0,0,.65))}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0) drop-shadow(0 10px 30px rgba(0,0,0,.65))}
+}
+@keyframes esoticaSheen{
+  0%{opacity:0;transform:translateX(-60%)}
+  25%{opacity:1}
+  100%{opacity:0;transform:translateX(65%)}
+}
+@keyframes esoticaIntroOut{
+  to{opacity:0;visibility:hidden;pointer-events:none}
+}
+@media(max-width:900px){
+  .brand-mark,.brand-mark.has-logo{width:118px;height:44px}
+  .home-page .hero{min-height:700px;background-position:54% center!important}
+  .parts-page .inner-hero{min-height:420px;background-position:center!important}
+  .esotica-intro{background-position:54% center}
+  .esotica-intro-logo{top:25%;width:min(430px,76vw)}
+  .esotica-headlight{top:51%;width:13vw;min-width:52px}
+  .esotica-headlight.left{left:39%}
+  .esotica-headlight.right{left:57%}
+}
+@media(max-width:560px){
+  .nav{padding-inline:14px}
+  .brand-mark,.brand-mark.has-logo{width:105px;height:40px}
+  footer .brand-mark,footer .brand-mark.has-logo{width:150px;height:52px}
+  .home-page .hero{background-position:57% center!important}
+  .home-page .hero-overlay{background:linear-gradient(0deg,rgba(4,7,5,.95) 0%,rgba(4,7,5,.55) 66%,rgba(4,7,5,.30) 100%)}
+  .esotica-intro{background-position:57% center}
+  .esotica-intro-logo{top:23%;width:78vw}
+  .esotica-headlight{top:52%;width:16vw;min-width:46px}
+  .esotica-headlight.left{left:35%}
+  .esotica-headlight.right{left:56%}
+}
+@media(prefers-reduced-motion:reduce){
+  .esotica-headlight{animation:none;opacity:.85}
+  .esotica-intro-logo{animation:none;opacity:1;transform:translate(-50%,-50%)}
+  .esotica-intro-sheen{display:none}
+  .esotica-intro{animation:esoticaIntroOut .25s ease .8s forwards}
+}
