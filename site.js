@@ -12,6 +12,8 @@ if(bookingDateInput){
 
 const $=s=>document.querySelector(s);
 const msg=(el,text,ok=true)=>{el.textContent=text;el.className="form-msg "+(ok?"ok":"err")};
+const pageName=(location.pathname.split("/").filter(Boolean)[0]||"home").replace(/\.html$/,'');
+document.body.classList.add(`page-${pageName}`);
 $("#menuBtn")?.addEventListener("click",()=>$("#navLinks").classList.toggle("open"));
 document.querySelectorAll("#navLinks a").forEach(a=>a.addEventListener("click",()=>$("#navLinks").classList.remove("open")));
 
@@ -103,4 +105,47 @@ async function loadSiteContent(){
   }catch(e){console.warn("CMS content unavailable",e)}
 }
 function escHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-loadSiteContent();
+const EN={
+  "الخدمات":"Services","حجز صيانة":"Book Service","قطع الغيار":"Spare Parts","الفروع":"Locations","تواصل معنا":"Contact Us","احجز الآن":"Book Now",
+  "خبرة متخصصة.":"Specialist expertise.","عناية تليق بسيارتك.":"Care worthy of your car.","خدمة متخصصة لسيارات Range Rover وJaguar، وعناية متكاملة بمجموعة مختارة من السيارات الفاخرة.":"Specialist Range Rover and Jaguar service, with complete care for a select range of luxury vehicles.","شوف الفروع":"View Locations","اكتشف Esotica":"Explore Esotica","فروع لخدمتك":"service locations","خبرة متخصصة":"specialist expertise","عناية متكاملة":"complete care",
+  "كل ما تحتاجه لسيارتك":"Everything your car needs","ابدأ طلبك من الصفحة المخصصة، وسيقوم فريقنا بمراجعة التفاصيل والتواصل معك للتأكيد.":"Choose the service you need. Our team will review the details and contact you to confirm.","احجز موعدك واختر الفرع والتاريخ المناسب.":"Choose your preferred location and date.","ابدأ الحجز ←":"Book now →","أرسل رقم الشاسيه وبيانات القطعة لتأكيد التوفر والسعر.":"Send the VIN and part details to confirm availability and price.","استعلام قطع غيار ←":"Parts enquiry →","خدماتنا":"Our Services","صيانة وتشخيص وسمكرة ودهان وخدمات متخصصة لسيارتك.":"Maintenance, diagnostics, body repair and specialist vehicle care.","عرض الخدمات ←":"Explore services →","العناوين ومواعيد العمل والوصول لكل فرع.":"Addresses, opening hours and directions for every location.","عندك استفسار؟ ابعت رسالة مباشرة لفريقنا.":"Have a question? Send our team a message.","آراء عملائنا":"Client Reviews","ما يقوله عملاؤنا عن تجربتهم مع فريق Esotica Auto.":"What our clients say about their experience with Esotica Auto.","لا توجد تقييمات منشورة حتى الآن.":"No reviews have been published yet.",
+  "خبرة متكاملة لسيارتك":"Complete expertise for your car","حلول صيانة وتشخيص متخصصة لسيارات Range Rover وJaguar، وخدمات مختارة للسيارات الفاخرة.":"Specialist maintenance and diagnostics for Range Rover and Jaguar, plus selected services for luxury vehicles.","الصيانة والتشخيص":"Maintenance & Diagnostics","صيانة دورية وتشخيص للأعطال الميكانيكية والكهربائية باستخدام أجهزة متخصصة.":"Scheduled maintenance and precise mechanical and electrical diagnostics using specialist equipment.","السمكرة والدهان":"Body & Paint","إصلاحات دقيقة وتشطيب نهائي يراعي تفاصيل السيارة وجودة مظهرها.":"Precision repairs and refinishing with close attention to every detail.","تحديد القطعة المناسبة وفق بيانات السيارة ورقم الشاسيه، مع تأكيد التوفر والسعر.":"Accurate part identification by vehicle details and VIN, with availability and price confirmation.","أرسل طلبك ←":"Send enquiry →","الفحص الشامل":"Comprehensive Inspection","تقييم متكامل للحالة الميكانيكية والكهربائية، مع توضيح الأولويات قبل بدء العمل.":"A complete mechanical and electrical assessment, with clear priorities before work begins.","الخدمة المتنقلة":"Mobile Service","دعم متنقل للحالات التي يمكن خدمتها خارج المركز وداخل نطاق التغطية.":"Mobile support for eligible services within our coverage area.","متابعة ما بعد الخدمة":"After-Service Care","نتابع معك بعد التسليم للتأكد من جودة التنفيذ واستقرار حالة السيارة.":"We follow up after delivery to ensure quality and lasting performance.",
+  "احجز موعد الصيانة":"Book Your Service","اختر الفرع والتاريخ المناسب، وسيقوم فريقنا بالتواصل معك لتأكيد الموعد.":"Choose your preferred location and date. Our team will contact you to confirm the appointment.","احجز موعدك":"Request an Appointment","بعد إرسال الطلب، يراجع الفريق المختص بيانات السيارة والخدمة المطلوبة قبل تأكيد الموعد.":"Our specialist team reviews your vehicle and service details before confirming the appointment.","اختيار الفرع":"Choose a location","اختيار التاريخ المفضل":"Select a preferred date","تأكيد الموعد من الفريق":"Confirmation from our team","الاسم":"Name","رقم الهاتف":"Phone Number","السيارة / الموديل":"Vehicle / Model","سنة الصنع":"Model Year","الفرع":"Location","اختر الفرع":"Choose a location","التجمع الخامس - الجوي":"Fifth Settlement – Air Force Branch","التجمع الثالث - المنطقة الصناعية":"Third Settlement – Industrial Area","الشيخ زايد":"Sheikh Zayed","التاريخ المفضل":"Preferred Date","تفاصيل الخدمة":"Service Details","إرسال طلب الحجز":"Submit Booking Request",
+  "طلب قطع الغيار":"Spare Parts Enquiry","أرسل بيانات السيارة والقطعة المطلوبة، وسيتواصل معك فريق قطع الغيار لتأكيد التوفر والسعر.":"Send your vehicle and part details. Our parts team will contact you to confirm availability and price.","بيانات دقيقة، استعلام أسرع":"Accurate details. Faster response.","اكتب رقم الشاسيه كاملًا أو آخر 7 خانات لمساعدتنا في تحديد القطعة المناسبة.":"Enter the full VIN or its last 7 characters to help us identify the correct part.","رقم الشاسيه / آخر 7 خانات":"VIN / Last 7 Characters","كود القطعة إن وجد":"Part Number (if available)","الكمية":"Quantity","القطعة المطلوبة / التفاصيل":"Required Part / Details","إرسال استعلام القطعة":"Submit Parts Enquiry",
+  "أقرب إليك بثلاثة فروع":"Three locations. One standard.","تعرف على عناوين الفروع ومواعيد العمل، واختر الموقع الأنسب لزيارتك.":"View our addresses and opening hours, then choose the most convenient location.","فرع الجوي":"Air Force Branch","فرع المصانع":"Industrial Area Branch","فرع زايد":"Sheikh Zayed Branch","فتح على الخريطة ←":"Open in Maps →","احجز في الفرع المناسب":"Book Your Preferred Location",
+  "نحن هنا لخدمتك":"We’re here to help","أرسل استفسارك، وسيقوم فريق خدمة العملاء بالتواصل معك في أقرب وقت.":"Send your enquiry and our customer care team will contact you shortly.","كيف يمكننا مساعدتك؟":"How can we help?","شاركنا بيانات التواصل وتفاصيل استفسارك، وسيتولى الفريق المختص المتابعة معك.":"Share your contact details and enquiry, and the right specialist will follow up.","الموضوع":"Subject","الرسالة":"Message","إرسال الرسالة":"Send Message",
+  "من داخل ورشنا":"Inside Our Workshops","لقطات من بيئة العمل والعناية التي نقدمها لسيارتك داخل Esotica Auto.":"A closer look at our workshop and the care your vehicle receives at Esotica Auto.","متخصصون في Range Rover وJaguar والعناية بالسيارات الفاخرة.":"Specialists in Range Rover, Jaguar and luxury vehicle care.","إدارة الموقع":"Site Administration","© 2026 Esotica Auto — جميع الحقوق محفوظة":"© 2026 Esotica Auto — All rights reserved",
+  "السبت–الخميس: 10:00 ص – 8:00 م • الجمعة إجازة":"Saturday–Thursday: 10:00 AM–8:00 PM • Friday closed","السبت–الخميس: 10:00 ص – 7:00 م • الجمعة إجازة":"Saturday–Thursday: 10:00 AM–7:00 PM • Friday closed"
+};
+const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
+const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters"};
+function translatePage(lang){
+  const dict=lang==="en"?EN:AR;
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let n; while(n=walker.nextNode()){
+    if(["SCRIPT","STYLE"].includes(n.parentElement?.tagName))continue;
+    const raw=n.nodeValue,trim=raw.trim(),translated=dict[trim];
+    if(translated)n.nodeValue=raw.replace(trim,translated);
+  }
+  document.querySelectorAll("input[placeholder],textarea[placeholder]").forEach(el=>{
+    const current=el.placeholder;
+    if(lang==="en"&&AR_PLACEHOLDERS[current])el.placeholder=AR_PLACEHOLDERS[current];
+    if(lang==="ar"){
+      const found=Object.entries(AR_PLACEHOLDERS).find(([,en])=>en===current);if(found)el.placeholder=found[0];
+    }
+  });
+  const toggle=document.querySelector("#langToggle");
+  if(toggle){toggle.textContent=lang==="en"?"AR":"EN";toggle.setAttribute("aria-label",lang==="en"?"عرض الموقع بالعربية":"View site in English");}
+  localStorage.setItem("esotica-language",lang);
+}
+function initLanguage(){
+  if(!document.querySelector("#langToggle")){
+    const button=document.createElement("button");button.id="langToggle";button.className="lang-toggle";button.type="button";
+    document.querySelector(".nav")?.insertBefore(button,document.querySelector(".nav-cta"));
+    button.addEventListener("click",()=>translatePage(document.documentElement.lang==="en"?"ar":"en"));
+  }
+  translatePage(localStorage.getItem("esotica-language")||"en");
+}
+loadSiteContent().finally(initLanguage);

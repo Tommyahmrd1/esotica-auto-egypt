@@ -26,6 +26,10 @@
 </header>
 <main id="top">
   <section class="hero">
+    <div class="hero-video-stage" aria-hidden="true">
+      <video class="hero-video hero-video-blur" autoplay muted loop playsinline preload="metadata" poster="/site/hero-video-poster.jpg"><source src="/site/hero-video.mp4" type="video/mp4"></video>
+      <video class="hero-video hero-video-main" autoplay muted loop playsinline preload="metadata" poster="/site/hero-video-poster.jpg"><source src="/site/hero-video.mp4" type="video/mp4"></video>
+    </div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
       <p class="eyebrow">RANGE ROVER • JAGUAR • LUXURY CARS</p>
@@ -33,17 +37,13 @@
       <p class="lead" id="heroSubtitle">خدمة متخصصة لسيارات Range Rover وJaguar، وعناية متكاملة بمجموعة مختارة من السيارات الفاخرة.</p>
       <div class="hero-actions">
         <a class="btn btn-gold" id="heroPrimary" href="/booking">حجز صيانة</a>
-        <a class="btn btn-outline" id="heroSecondary" href="/branches">شوف الفروع</a>
-      </div>
-      <div class="hero-stats">
-        <div><b>3</b><span>فروع لخدمتك</span></div>
-        <div><b>JLR</b><span>خبرة متخصصة</span></div>
-        <div><b>360°</b><span>عناية متكاملة</span></div>
+        <a class="btn btn-outline" id="heroSecondary" href="#experience">اكتشف Esotica</a>
       </div>
     </div>
+    <a class="scroll-cue" href="#experience" aria-label="Scroll to explore"><span></span>SCROLL TO EXPLORE</a>
   </section>
 
-  <section class="section">
+  <section class="section" id="experience">
     <div class="section-head">
       <p class="eyebrow">ESOTICA AUTO</p>
       <h2>كل ما تحتاجه لسيارتك</h2>
@@ -92,6 +92,26 @@
     </div>
     <div class="reviews-grid" id="reviewsGrid">
       <div class="card review-placeholder">لا توجد تقييمات منشورة حتى الآن.</div>
+    </div>
+  </section>
+
+  <section class="work-gallery" id="work-gallery" data-section="gallery">
+    <div class="section gallery-inner">
+      <div class="section-head">
+        <p class="eyebrow">INSIDE ESOTICA</p>
+        <h2>من داخل ورشنا</h2>
+        <p>لقطات من بيئة العمل والعناية التي نقدمها لسيارتك داخل Esotica Auto.</p>
+      </div>
+      <div class="gallery-grid">
+        <figure class="gallery-item gallery-wide"><img src="/site/services-showcase.webp" alt="Esotica workshop and Range Rover" loading="lazy"></figure>
+        <figure class="gallery-item gallery-tall"><img src="/site/booking-showcase.webp" alt="Range Rover inside Esotica workshop" loading="lazy"></figure>
+        <figure class="gallery-item"><img src="/site/parts-showcase.webp" alt="JLR spare parts at Esotica" loading="lazy"></figure>
+        <figure class="gallery-item"><img src="/site/contact-showcase.webp" alt="Esotica premium workshop" loading="lazy"></figure>
+        <figure class="gallery-item gallery-video-card">
+          <video controls muted playsinline preload="metadata" poster="/site/hero-video-poster.jpg"><source src="/site/hero-video.mp4" type="video/mp4"></video>
+          <figcaption>ESOTICA IN MOTION</figcaption>
+        </figure>
+      </div>
     </div>
   </section>
 </main>
