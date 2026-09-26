@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Esotica Auto</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container navwrap">
+    <a href="#home" class="brand">ESOTICA <span>AUTO</span></a>
+    <nav>
+      <a href="#services">الخدمات</a>
+      <a href="#branches">الفروع</a>
+      <a href="#booking">حجز صيانة</a>
+      <a href="#parts">قطع الغيار</a>
+      <a href="#contact">تواصل معنا</a>
+    </nav>
+  </div>
+</header>
+
+<main id="home">
+<section class="hero">
+  <div class="hero-overlay"></div>
+  <div class="container hero-content">
+    <p class="eyebrow">Luxury Car Service Center</p>
+    <h1>صيانة احترافية لسيارتك<br><span>بمعايير تليق بها</span></h1>
+    <p class="hero-text">متخصصون في صيانة Range Rover و Jaguar والسيارات الفاخرة في مصر، بفريق فني مدرب وتجهيزات حديثة ومتابعة بعد الخدمة.</p>
+    <div class="hero-actions">
+      <a href="#booking" class="btn primary">احجز موعد صيانة</a>
+      <a href="#parts" class="btn secondary">استعلام قطع غيار</a>
+    </div>
+  </div>
+</section>
+
+<section class="brands-section">
+  <div class="container">
+    <p class="section-kicker">خبرة في صيانة السيارات الفاخرة</p>
+    <div class="brand-grid">
+      <img src="brands/range-rover.svg" alt="Range Rover">
+      <img src="brands/jaguar.svg" alt="Jaguar">
+      <img src="brands/bentley.svg" alt="Bentley">
+      <img src="brands/aston-martin.svg" alt="Aston Martin">
+      <img src="brands/maserati.svg" alt="Maserati">
+      <img src="brands/porsche.svg" alt="Porsche">
+      <img src="brands/ferrari.svg" alt="Ferrari">
+      <img src="brands/lamborghini.svg" alt="Lamborghini">
+      <img src="brands/mclaren.svg" alt="McLaren">
+      <img src="brands/rolls-royce.svg" alt="Rolls-Royce">
+      <img src="brands/mercedes.svg" alt="Mercedes-Benz">
+      <img src="brands/bmw.svg" alt="BMW">
+      <img src="brands/corvette.png" alt="Corvette">
+    </div>
+  </div>
+</section>
+
+<section id="services" class="section alt">
+  <div class="container">
+    <div class="section-head">
+      <p>خدمات Esotica</p>
+      <h2>كل ما تحتاجه سيارتك في مكان واحد</h2>
+    </div>
+    <div class="cards services">
+      <article class="card"><h3>الصيانة الدورية</h3><p>فحص وصيانة دورية باستخدام إجراءات منظمة للحفاظ على أداء السيارة واعتماديتها.</p></article>
+      <article class="card"><h3>الميكانيكا والكهرباء</h3><p>تشخيص احترافي للأعطال وإصلاح أنظمة المحرك والتعليق والكهرباء والإلكترونيات.</p></article>
+      <article class="card"><h3>سمكرة ودهان</h3><p>إصلاحات جسم السيارة والدهان بمعايير دقيقة للحفاظ على الشكل والقيمة.</p></article>
+      <article class="card"><h3>قطع الغيار</h3><p>استعلام عن قطع الغيار المناسبة لسيارتك باستخدام رقم الشاسيه VIN.</p></article>
+      <article class="card"><h3>Mobile Service</h3><p>خدمة متنقلة للحالات المناسبة داخل نطاق التغطية المتاح.</p></article>
+      <article class="card"><h3>فحص شامل</h3><p>فحص متعدد النقاط مع تقرير واضح عن حالة السيارة وما تحتاجه.</p></article>
+    </div>
+  </div>
+</section>
+
+<section id="booking" class="section">
+  <div class="container form-layout">
+    <div>
+      <div class="section-head align-start">
+        <p>حجز الصيانة</p>
+        <h2>احجز موعدك مع Esotica</h2>
+      </div>
+      <p class="muted">املأ البيانات وسيقوم فريقنا بالتواصل معك لتأكيد الموعد.</p>
+    </div>
+    <form id="bookingForm" class="form-card">
+      <label>الاسم<input name="name" required></label>
+      <label>رقم الهاتف<input name="phone" required inputmode="tel"></label>
+      <div class="two">
+        <label>الماركة<select name="brand" required><option value="">اختر</option><option>Range Rover</option><option>Jaguar</option><option>Bentley</option><option>Aston Martin</option><option>Maserati</option><option>Porsche</option><option>Ferrari</option><option>Lamborghini</option><option>McLaren</option><option>Rolls-Royce</option><option>Mercedes-Benz</option><option>BMW</option><option>Corvette</option><option>أخرى</option></select></label>
+        <label>الموديل<input name="model" required></label>
+      </div>
+      <div class="two">
+        <label>السنة<input name="year" inputmode="numeric"></label>
+        <label>الفرع<select name="branch" required><option value="">اختر الفرع</option><option>التجمع الخامس - الجوي</option><option>التجمع الثالث - المنطقة الصناعية</option><option>الشيخ زايد</option></select></label>
+      </div>
+      <div class="two">
+        <label>التاريخ المفضل<input type="date" name="preferred_date"></label>
+        <label>الوقت المفضل<input type="time" name="preferred_time"></label>
+      </div>
+      <label>ملاحظات<textarea name="notes" rows="4"></textarea></label>
+      <button class="btn primary full" type="submit">إرسال طلب الحجز</button>
+      <div id="bookingMsg" class="form-msg"></div>
+    </form>
+  </div>
+</section>
+
+<section id="parts" class="section alt">
+  <div class="container form-layout">
+    <div>
+      <div class="section-head align-start">
+        <p>قطع الغيار</p>
+        <h2>استعلام برقم الشاسيه</h2>
+      </div>
+      <p class="muted">أرسل رقم VIN وبيانات القطعة المطلوبة، وسيتواصل فريقنا معك لتأكيد التوفر والسعر.</p>
+    </div>
+    <form id="partsForm" class="form-card">
+      <label>الاسم<input name="name" required></label>
+      <label>رقم الهاتف<input name="phone" required inputmode="tel"></label>
+      <label>رقم الشاسيه VIN<input name="vin" minlength="17" maxlength="17" required></label>
+      <div class="two">
+        <label>الماركة<input name="brand" required></label>
+        <label>الموديل<input name="model"></label>
+      </div>
+      <label>القطعة المطلوبة<textarea name="part" rows="4" required></textarea></label>
+      <button class="btn primary full" type="submit">إرسال الاستعلام</button>
+      <div id="partsMsg" class="form-msg"></div>
+    </form>
+  </div>
+</section>
+
+<section id="branches" class="section">
+  <div class="container">
+    <div class="section-head"><p>فروعنا</p><h2>اختر الفرع الأقرب لك</h2></div>
+    <div class="cards branches">
+      <article class="card"><h3>التجمع الخامس</h3><p>مجمع البنوك أمام مستشفى الجوي، شارع التسعين، التجمع الخامس.</p><p class="small">10:00 ص – 8:00 م | الجمعة إجازة</p></article>
+      <article class="card"><h3>التجمع الثالث</h3><p>قطعة 100، المنطقة الصناعية، التجمع الثالث، القاهرة الجديدة.</p><p class="small">10:00 ص – 7:00 م | الجمعة إجازة</p></article>
+      <article class="card"><h3>الشيخ زايد</h3><p>جوميرا بلازا، وصلة دهشور، سيتي بارك، الشيخ زايد.</p><p class="small">10:00 ص – 8:00 م | الجمعة إجازة</p></article>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="section dark-section">
+  <div class="container form-layout">
+    <div>
+      <div class="section-head align-start light"><p>تواصل معنا</p><h2>عندك سؤال؟ ابعت لنا</h2></div>
+      <p class="muted light-text">فريق Esotica سيتواصل معك في أقرب وقت.</p>
+    </div>
+    <form id="contactForm" class="form-card dark-card">
+      <label>الاسم<input name="name" required></label>
+      <label>رقم الهاتف<input name="phone" required></label>
+      <label>الرسالة<textarea name="message" rows="5" required></textarea></label>
+      <button class="btn primary full" type="submit">إرسال الرسالة</button>
+      <div id="contactMsg" class="form-msg"></div>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer><div class="container footer-inner"><strong>ESOTICA AUTO</strong><span>© <span id="year"></span> جميع الحقوق محفوظة</span><a href="/admin">الإدارة</a></div></footer>
+<script src="site.js"></script>
+</body>
+</html>
