@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>حجز صيانة | Esotica Auto</title>
+  <meta name="description" content="احجز موعد صيانة سيارتك في أحد فروع Esotica Auto.">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="/" aria-label="Esotica Auto">
+    <span class="brand-mark" id="brandMark">E</span>
+    <span class="brand-text"><b id="brandName">ESOTICA</b><small id="brandSub">AUTO</small></span>
+  </a>
+  <button class="menu-btn" id="menuBtn" aria-label="القائمة">☰</button>
+  <nav id="navLinks">
+    <a href="/services">الخدمات</a>
+    <a href="/booking">حجز صيانة</a>
+    <a href="/parts">قطع الغيار</a>
+    <a href="/branches">الفروع</a>
+    <a href="/contact">تواصل معنا</a>
+  </nav>
+  <a class="btn btn-gold nav-cta" href="/booking">احجز الآن</a>
+</header>
+<main>
+  <section class="inner-hero">
+    <div class="inner-hero-content"><p class="eyebrow">BOOK A SERVICE</p><h1>حجز صيانة</h1><p>اختار الفرع والموعد المناسب، وفريق Esotica هيتواصل معك لتأكيد الحجز.</p></div>
+  </section>
+  <section class="section page-form-section">
+    <div class="split">
+      <div class="copy">
+        <p class="eyebrow">SERVICE BOOKING</p><h2>احجز موعدك</h2>
+        <p>بعد إرسال الطلب، الحجز بيكون قيد التأكيد لحد ما يتواصل معك الفريق المختص.</p>
+        <ul class="ticks"><li>اختيار الفرع</li><li>اختيار التاريخ المفضل</li><li>تأكيد الموعد من الفريق</li></ul>
+      </div>
+      <form class="form glass" id="bookingForm">
+        <div class="grid2">
+          <label>الاسم<input name="name" required maxlength="80"></label>
+          <label>رقم الهاتف<input name="phone" required maxlength="20" inputmode="tel"></label>
+          <label>السيارة / الموديل<input name="carModel" required maxlength="80" placeholder="Range Rover Sport"></label>
+          <label>سنة الصنع<input name="year" required maxlength="4" inputmode="numeric" placeholder="2022"></label>
+          <label>الفرع<select name="branch" required><option value="">اختر الفرع</option><option>التجمع الخامس - الجوي</option><option>التجمع الثالث - المنطقة الصناعية</option><option>الشيخ زايد</option></select></label>
+          <label>التاريخ المفضل<input type="date" name="preferredDate" required></label>
+        </div>
+        <label>تفاصيل الخدمة<textarea name="details" rows="5" maxlength="700" placeholder="اكتب الخدمة أو المشكلة باختصار"></textarea></label>
+        <button class="btn btn-gold full" type="submit">إرسال طلب الحجز</button>
+        <p class="form-msg" id="bookingMsg"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <a class="brand" href="/"><span class="brand-mark">E</span><span class="brand-text"><b id="brandName">ESOTICA</b><small id="brandSub">AUTO</small></span></a>
+  <p>متخصصون في Range Rover وJaguar والعناية بالسيارات الفاخرة.</p>
+  <a class="admin-link" href="/admin">إدارة الموقع</a>
+  <small>© 2026 Esotica Auto — جميع الحقوق محفوظة</small>
+</footer>
+<script src="/site.js" defer></script>
+</body></html>

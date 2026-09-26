@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>تواصل معنا | Esotica Auto</title>
+  <meta name="description" content="تواصل مع فريق Esotica Auto لأي استفسار عن الصيانة أو الخدمات.">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="/" aria-label="Esotica Auto">
+    <span class="brand-mark" id="brandMark">E</span>
+    <span class="brand-text"><b id="brandName">ESOTICA</b><small id="brandSub">AUTO</small></span>
+  </a>
+  <button class="menu-btn" id="menuBtn" aria-label="القائمة">☰</button>
+  <nav id="navLinks">
+    <a href="/services">الخدمات</a>
+    <a href="/booking">حجز صيانة</a>
+    <a href="/parts">قطع الغيار</a>
+    <a href="/branches">الفروع</a>
+    <a href="/contact">تواصل معنا</a>
+  </nav>
+  <a class="btn btn-gold nav-cta" href="/booking">احجز الآن</a>
+</header>
+<main>
+  <section class="inner-hero"><div class="inner-hero-content"><p class="eyebrow">CONTACT</p><h1>تواصل معنا</h1><p>ابعت استفسارك وفريق خدمة العملاء هيتواصل معك.</p></div></section>
+  <section class="section contact-wrap">
+    <div class="copy"><p class="eyebrow">GET IN TOUCH</p><h2>عندك استفسار؟</h2><p>اكتب بياناتك ورسالتك، وسنتواصل معك لتوضيح كل التفاصيل.</p></div>
+    <form class="form glass" id="contactForm">
+      <div class="grid2"><label>الاسم<input name="name" required maxlength="80"></label><label>رقم الهاتف<input name="phone" required maxlength="20"></label></div>
+      <label>الموضوع<input name="subject" required maxlength="120"></label>
+      <label>الرسالة<textarea name="message" required rows="6" maxlength="900"></textarea></label>
+      <button class="btn btn-gold full" type="submit">إرسال الرسالة</button>
+      <p class="form-msg" id="contactMsg"></p>
+    </form>
+  </section>
+</main>
+
+<footer>
+  <a class="brand" href="/"><span class="brand-mark">E</span><span class="brand-text"><b id="brandName">ESOTICA</b><small id="brandSub">AUTO</small></span></a>
+  <p>متخصصون في Range Rover وJaguar والعناية بالسيارات الفاخرة.</p>
+  <a class="admin-link" href="/admin">إدارة الموقع</a>
+  <small>© 2026 Esotica Auto — جميع الحقوق محفوظة</small>
+</footer>
+<script src="/site.js" defer></script>
+</body></html>

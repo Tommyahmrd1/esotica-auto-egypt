@@ -9,177 +9,92 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <header class="nav">
-    <a class="brand" href="#top" aria-label="Esotica Auto">
-      <span class="brand-mark" id="brandMark">E</span>
-      <span class="brand-text"><b id="brandName">ESOTICA</b><small id="brandSub">AUTO</small></span>
-    </a>
-    <button class="menu-btn" id="menuBtn" aria-label="القائمة">☰</button>
-    <nav id="navLinks">
-      <a href="#services">الخدمات</a>
-      <a href="#booking">حجز صيانة</a>
-      <a href="#parts">قطع الغيار</a>
-      <a href="#branches">الفروع</a>
-      <a href="#contact">تواصل معنا</a>
-    </nav>
-    <a class="btn btn-gold nav-cta" href="#booking">احجز الآن</a>
-  </header>
 
-  <main id="top">
-    <section class="hero">
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <p class="eyebrow">RANGE ROVER • JAGUAR • LUXURY CARS</p>
-        <h1 id="heroTitle">صيانة بمستوى<br><span>يليق بسيارتك.</span></h1>
-        <p class="lead" id="heroSubtitle">تشخيص دقيق، فريق متخصص، ومتابعة واضحة من لحظة دخول السيارة وحتى الاستلام.</p>
-        <div class="hero-actions">
-          <a class="btn btn-gold" id="heroPrimary" href="#booking">حجز صيانة</a>
-          <a class="btn btn-outline" id="heroSecondary" href="#branches">شوف الفروع</a>
-        </div>
-        <div class="hero-stats">
-          <div><b>3</b><span>فروع رئيسية</span></div>
-          <div><b>JLR</b><span>تخصص أساسي</span></div>
-          <div><b>VIP</b><span>عناية بالسيارات الفاخرة</span></div>
-        </div>
+<header class="nav">
+  <a class="brand" href="/" aria-label="Esotica Auto">
+    <span class="brand-mark" id="brandMark">E</span>
+    <span class="brand-text"><b id="brandName">ESOTICA</b><small id="brandSub">AUTO</small></span>
+  </a>
+  <button class="menu-btn" id="menuBtn" aria-label="القائمة">☰</button>
+  <nav id="navLinks">
+    <a href="/services">الخدمات</a>
+    <a href="/booking">حجز صيانة</a>
+    <a href="/parts">قطع الغيار</a>
+    <a href="/branches">الفروع</a>
+    <a href="/contact">تواصل معنا</a>
+  </nav>
+  <a class="btn btn-gold nav-cta" href="/booking">احجز الآن</a>
+</header>
+<main id="top">
+  <section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="eyebrow">RANGE ROVER • JAGUAR • LUXURY CARS</p>
+      <h1 id="heroTitle">صيانة بمستوى<br><span>يليق بسيارتك.</span></h1>
+      <p class="lead" id="heroSubtitle">تشخيص دقيق، فريق متخصص، ومتابعة واضحة من لحظة دخول السيارة وحتى الاستلام.</p>
+      <div class="hero-actions">
+        <a class="btn btn-gold" id="heroPrimary" href="/booking">حجز صيانة</a>
+        <a class="btn btn-outline" id="heroSecondary" href="/branches">شوف الفروع</a>
       </div>
-    </section>
-
-    <section class="section" id="services" data-section="services">
-      <div class="section-head">
-        <p class="eyebrow">OUR EXPERTISE</p>
-        <h2>كل ما تحتاجه سيارتك في مكان واحد</h2>
-        <p>خدمات متخصصة للـ Range Rover وJaguar والسيارات الفاخرة والأداء العالي.</p>
+      <div class="hero-stats">
+        <div><b>3</b><span>فروع رئيسية</span></div>
+        <div><b>JLR</b><span>تخصص أساسي</span></div>
+        <div><b>VIP</b><span>عناية بالسيارات الفاخرة</span></div>
       </div>
-      <div class="cards three">
-        <article class="card"><div class="icon">01</div><h3>الصيانة والتشخيص</h3><p>فحص شامل، صيانة دورية، كهرباء وميكانيكا وتشخيص أعطال بأجهزة متخصصة.</p></article>
-        <article class="card"><div class="icon">02</div><h3>السمكرة والدهان</h3><p>إصلاح وتشطيب احترافي مع اهتمام بالتفاصيل وجودة التسليم.</p></article>
-        <article class="card"><div class="icon">03</div><h3>قطع الغيار</h3><p>استعلام وطلب قطع الغيار باستخدام رقم الشاسيه VIN لتقليل احتمالات الخطأ.</p></article>
-      </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="strip">
-      <div><span>LAND ROVER</span><span>JAGUAR</span><span>PORSCHE</span><span>BENTLEY</span><span>BMW</span><span>MERCEDES-BENZ</span></div>
-    </section>
+  <section class="section">
+    <div class="section-head">
+      <p class="eyebrow">ESOTICA AUTO</p>
+      <h2>اختار الخدمة اللي محتاجها</h2>
+      <p>بدل ما كل حاجة تكون في صفحة واحدة، كل خدمة دلوقتي لها صفحة مستقلة وواضحة.</p>
+    </div>
+    <div class="action-grid">
+      <a class="action-card featured" href="/booking">
+        <span class="action-number">01</span><h3>حجز صيانة</h3>
+        <p>احجز موعدك واختر الفرع والتاريخ المناسب.</p><strong>ابدأ الحجز ←</strong>
+      </a>
+      <a class="action-card" href="/parts">
+        <span class="action-number">02</span><h3>قطع الغيار</h3>
+        <p>استعلم برقم الشاسيه عن القطعة المطلوبة.</p><strong>استعلام قطع غيار ←</strong>
+      </a>
+      <a class="action-card" href="/services">
+        <span class="action-number">03</span><h3>خدماتنا</h3>
+        <p>تعرف على الصيانة والتشخيص والسمكرة والدهان والمزيد.</p><strong>عرض الخدمات ←</strong>
+      </a>
+      <a class="action-card" href="/branches">
+        <span class="action-number">04</span><h3>الفروع</h3>
+        <p>العناوين ومواعيد العمل والوصول لكل فرع.</p><strong>شوف الفروع ←</strong>
+      </a>
+      <a class="action-card" href="/contact">
+        <span class="action-number">05</span><h3>تواصل معنا</h3>
+        <p>عندك استفسار؟ ابعت رسالة مباشرة لفريقنا.</p><strong>تواصل معنا ←</strong>
+      </a>
+    </div>
+  </section>
 
-    <section class="section split" id="booking" data-section="booking">
-      <div class="copy">
-        <p class="eyebrow">BOOK A SERVICE</p>
-        <h2>احجز موعد الصيانة</h2>
-        <p>ابعث بيانات السيارة والموعد المناسب، وفريق Esotica يتواصل معك لتأكيد الحجز.</p>
-        <ul class="ticks">
-          <li>اختيار الفرع والموعد المفضل</li>
-          <li>تأكيد الحجز من الفريق المختص</li>
-          <li>متابعة واضحة قبل الزيارة</li>
-        </ul>
-      </div>
-      <form class="form glass" id="bookingForm">
-        <div class="grid2">
-          <label>الاسم<input name="name" required maxlength="80"></label>
-          <label>رقم الهاتف<input name="phone" required maxlength="20" inputmode="tel"></label>
-          <label>السيارة / الموديل<input name="carModel" required maxlength="80" placeholder="Range Rover Sport"></label>
-          <label>سنة الصنع<input name="year" required maxlength="4" inputmode="numeric" placeholder="2022"></label>
-          <label>الفرع<select name="branch" required>
-            <option value="">اختر الفرع</option>
-            <option>التجمع الخامس - الجوي</option>
-            <option>التجمع الثالث - المنطقة الصناعية</option>
-            <option>الشيخ زايد</option>
-          </select></label>
-          <label>التاريخ المفضل<input type="date" name="preferredDate" required></label>
-        </div>
-        <label>تفاصيل الخدمة<textarea name="details" rows="4" maxlength="700" placeholder="اكتب الخدمة أو المشكلة باختصار"></textarea></label>
-        <button class="btn btn-gold full" type="submit">إرسال طلب الحجز</button>
-        <p class="form-msg" id="bookingMsg"></p>
-      </form>
-    </section>
+  <section class="strip">
+    <div><span>LAND ROVER</span><span>JAGUAR</span><span>PORSCHE</span><span>BENTLEY</span><span>BMW</span><span>MERCEDES-BENZ</span></div>
+  </section>
 
-    <section class="section dark-panel" id="parts" data-section="parts">
-      <div class="section-head">
-        <p class="eyebrow">SPARE PARTS</p>
-        <h2>استعلام قطع الغيار برقم الشاسيه</h2>
-        <p>VIN المكوّن من 17 خانة يساعدنا نحدد القطعة المناسبة بدقة أكبر.</p>
-      </div>
-      <form class="form wide" id="partsForm">
-        <div class="grid2">
-          <label>الاسم<input name="name" required maxlength="80"></label>
-          <label>رقم الهاتف<input name="phone" required maxlength="20" inputmode="tel"></label>
-          <label>السيارة / الموديل<input name="carModel" required maxlength="80"></label>
-          <label>سنة الصنع<input name="year" required maxlength="4" inputmode="numeric"></label>
-          <label class="span2">رقم الشاسيه / آخر 7 خانات<input name="vin" required minlength="7" maxlength="17" dir="ltr" class="ltr" placeholder="7 أو 17 خانة"></label>
-          <label>كود القطعة إن وجد<input name="partCode" maxlength="60" dir="ltr" class="ltr"></label>
-          <label>الكمية<input name="quantity" type="number" min="1" max="20" value="1"></label>
-        </div>
-        <label>القطعة المطلوبة / التفاصيل<textarea name="details" required rows="4" maxlength="700"></textarea></label>
-        <button class="btn btn-gold full" type="submit">إرسال استعلام القطعة</button>
-        <p class="form-msg" id="partsMsg"></p>
-      </form>
-    </section>
+  <section class="section reviews-section" id="reviews" data-section="reviews">
+    <div class="section-head">
+      <p class="eyebrow">CLIENT REVIEWS</p>
+      <h2>آراء عملائنا</h2>
+      <p>تجارب حقيقية نضيفها ونحدّثها من لوحة الإدارة.</p>
+    </div>
+    <div class="reviews-grid" id="reviewsGrid">
+      <div class="card review-placeholder">لا توجد تقييمات منشورة حتى الآن.</div>
+    </div>
+  </section>
+</main>
 
-    <section class="section" id="branches" data-section="branches">
-      <div class="section-head">
-        <p class="eyebrow">LOCATIONS</p>
-        <h2>فروع Esotica Auto</h2>
-        <p>اختار الفرع الأنسب لك، وتواصل معنا قبل الزيارة لتأكيد الموعد.</p>
-      </div>
-      <div class="cards three branches">
-        <article class="card">
-          <span class="tag">NEW CAIRO</span><h3>فرع الجوي</h3>
-          <p>مجمع البنوك أمام مستشفى الجوي — شارع التسعين، التجمع الخامس.</p>
-          <small>السبت–الخميس: 10:00 ص – 8:00 م • الجمعة إجازة</small>
-          <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=%D9%85%D8%AC%D9%85%D8%B9+%D8%A7%D9%84%D8%A8%D9%86%D9%88%D9%83+%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89+%D8%A7%D9%84%D8%AC%D9%88%D9%8A+%D8%A7%D9%84%D8%AA%D8%AC%D9%85%D8%B9+%D8%A7%D9%84%D8%AE%D8%A7%D9%85%D8%B3">فتح على الخريطة ←</a>
-        </article>
-        <article class="card">
-          <span class="tag">INDUSTRIAL AREA</span><h3>فرع المصانع</h3>
-          <p>قطعة 100 — المنطقة الصناعية، التجمع الثالث، القاهرة الجديدة.</p>
-          <small>السبت–الخميس: 10:00 ص – 7:00 م • الجمعة إجازة</small>
-          <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=%D9%82%D8%B7%D8%B9%D8%A9+100+%D8%A7%D9%84%D9%85%D9%86%D8%B7%D9%82%D8%A9+%D8%A7%D9%84%D8%B5%D9%86%D8%A7%D8%B9%D9%8A%D8%A9+%D8%A7%D9%84%D8%AA%D8%AC%D9%85%D8%B9+%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB">فتح على الخريطة ←</a>
-        </article>
-        <article class="card">
-          <span class="tag">SHEIKH ZAYED</span><h3>فرع زايد</h3>
-          <p>جوميرا بلازا — وصلة دهشور — سيتي بارك، الشيخ زايد.</p>
-          <small>السبت–الخميس: 10:00 ص – 8:00 م • الجمعة إجازة</small>
-          <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=%D8%AC%D9%88%D9%85%D9%8A%D8%B1%D8%A7+%D8%A8%D9%84%D8%A7%D8%B2%D8%A7+%D9%88%D8%B5%D9%84%D8%A9+%D8%AF%D9%87%D8%B4%D9%88%D8%B1+%D8%A7%D9%84%D8%B4%D9%8A%D8%AE+%D8%B2%D8%A7%D9%8A%D8%AF">فتح على الخريطة ←</a>
-        </article>
-      </div>
-    </section>
-
-
-    <section class="section reviews-section" id="reviews" data-section="reviews">
-      <div class="section-head">
-        <p class="eyebrow">CLIENT REVIEWS</p>
-        <h2>آراء عملائنا</h2>
-        <p>تجارب حقيقية نضيفها ونحدّثها من لوحة الإدارة.</p>
-      </div>
-      <div class="reviews-grid" id="reviewsGrid">
-        <div class="card review-placeholder">لا توجد تقييمات منشورة حتى الآن.</div>
-      </div>
-    </section>
-
-    <section class="section contact-wrap" id="contact" data-section="contact">
-      <div class="copy">
-        <p class="eyebrow">CONTACT</p>
-        <h2>عندك استفسار؟</h2>
-        <p>ابعت رسالتك، وفريق خدمة العملاء يتواصل معك لتأكيد التفاصيل.</p>
-      </div>
-      <form class="form glass" id="contactForm">
-        <div class="grid2">
-          <label>الاسم<input name="name" required maxlength="80"></label>
-          <label>رقم الهاتف<input name="phone" required maxlength="20"></label>
-        </div>
-        <label>الموضوع<input name="subject" required maxlength="120"></label>
-        <label>الرسالة<textarea name="message" required rows="4" maxlength="900"></textarea></label>
-        <button class="btn btn-gold full" type="submit">إرسال الرسالة</button>
-        <p class="form-msg" id="contactMsg"></p>
-      </form>
-    </section>
-  </main>
-
-  <footer>
-    <a class="brand" href="#top"><span class="brand-mark">E</span><span class="brand-text"><b id="brandName">ESOTICA</b><small id="brandSub">AUTO</small></span></a>
-    <p>متخصصون في Range Rover وJaguar والعناية بالسيارات الفاخرة.</p>
-    <a class="admin-link" href="/admin">إدارة الموقع</a>
-    <small>© 2026 Esotica Auto — جميع الحقوق محفوظة</small>
-  </footer>
-
-  <script src="/site.js" defer></script>
-</body>
-</html>
+<footer>
+  <a class="brand" href="/"><span class="brand-mark">E</span><span class="brand-text"><b id="brandName">ESOTICA</b><small id="brandSub">AUTO</small></span></a>
+  <p>متخصصون في Range Rover وJaguar والعناية بالسيارات الفاخرة.</p>
+  <a class="admin-link" href="/admin">إدارة الموقع</a>
+  <small>© 2026 Esotica Auto — جميع الحقوق محفوظة</small>
+</footer>
+<script src="/site.js" defer></script>
+</body></html>

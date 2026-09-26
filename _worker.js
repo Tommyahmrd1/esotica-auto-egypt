@@ -223,7 +223,8 @@ export default{
      if(url.pathname.startsWith("/api/"))return await handleAPI(req,env,url);
      if(url.pathname==="/admin"||url.pathname==="/admin/")return env.ASSETS.fetch(new Request(new URL("/admin/",url),req));
      if(url.pathname==="/admin/login")return Response.redirect(new URL("/admin",url),302);
-     if(["/booking","/booking/","/parts","/parts/","/branches","/branches/","/contact","/contact/"].includes(url.pathname))return env.ASSETS.fetch(new Request(new URL("/index.html",url),req));
+     const pageRoutes={"/booking":"/booking/index.html","/booking/":"/booking/index.html","/parts":"/parts/index.html","/parts/":"/parts/index.html","/services":"/services/index.html","/services/":"/services/index.html","/branches":"/branches/index.html","/branches/":"/branches/index.html","/contact":"/contact/index.html","/contact/":"/contact/index.html"};
+     if(pageRoutes[url.pathname])return env.ASSETS.fetch(new Request(new URL(pageRoutes[url.pathname],url),req));
      return env.ASSETS.fetch(req);
    }catch(e){
      console.error(e);
