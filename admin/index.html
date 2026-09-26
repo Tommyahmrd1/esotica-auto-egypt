@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Esotica Admin</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/admin.css">
+</head>
+<body class="admin-body">
+  <header class="admin-top"><a class="brand" href="/"><span class="brand-mark">E</span><span><b>ESOTICA</b><small>AUTO</small></span></a><button id="logoutBtn" class="btn btn-outline hidden">تسجيل خروج</button></header>
+
+  <main class="admin-main">
+    <section id="loginView" class="login-card">
+      <p class="eyebrow">SECURE ADMIN</p><h1>دخول الإدارة</h1>
+      <p>اسم المستخدم ثابت: <b>admin</b></p>
+      <form id="loginForm" class="form">
+        <label>اسم المستخدم<input name="username" value="admin" autocomplete="username" required></label>
+        <label>كلمة السر<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="btn btn-gold full" type="submit">دخول</button>
+        <p id="loginMsg" class="form-msg"></p>
+      </form>
+    </section>
+
+    <section id="dashView" class="hidden">
+      <div class="dash-head"><div><p class="eyebrow">DASHBOARD</p><h1>لوحة إدارة Esotica</h1><p id="summaryText"></p></div><button id="refreshBtn" class="btn btn-outline">تحديث</button></div>
+      <div class="stats" id="stats"></div>
+      <div class="tabs"><button class="active" data-tab="bookings">الحجوزات</button><button data-tab="parts">قطع الغيار</button><button data-tab="contacts">الرسائل</button><button data-tab="site">إدارة الموقع</button></div>
+      <div id="tableWrap" class="table-wrap"></div>
+
+      <section id="sitePanel" class="cms-panel hidden">
+        <div class="cms-grid">
+          <form id="siteSettingsForm" class="cms-card form">
+            <div>
+              <p class="eyebrow">SITE CONTENT</p>
+              <h2>محتوى ومظهر الموقع</h2>
+            </div>
+            
+            <div class="mini-panel">
+              <h3>اللوجو واسم البراند</h3>
+              <label class="inline-check"><input type="checkbox" name="show_brand_text" checked> إظهار كلمة ESOTICA AUTO بجانب اللوجو</label>
+              <div class="grid2">
+                <label>اسم البراند<input name="brand_name" maxlength="40" placeholder="ESOTICA"></label>
+                <label>الكلمة الصغيرة<input name="brand_subtitle" maxlength="40" placeholder="AUTO"></label>
+              </div>
+              <p class="hint">لو قفلت الاختيار، هيظهر اللوجو فقط من غير أي كتابة بجانبه.</p>
+            </div>
+
+            <label>العنوان الرئيسي<input name="hero_title" maxlength="160"></label>
+            <label>النص تحت العنوان<textarea name="hero_subtitle" rows="3" maxlength="500"></textarea></label>
+            <div class="grid2">
+              <label>اسم الزر الرئيسي<input name="hero_primary_text" maxlength="60"></label>
+              <label>رابط الزر الرئيسي<input name="hero_primary_link" maxlength="200" dir="ltr"></label>
+              <label>اسم الزر الثاني<input name="hero_secondary_text" maxlength="60"></label>
+              <label>رابط الزر الثاني<input name="hero_secondary_link" maxlength="200" dir="ltr"></label>
+            </div>
+            <label>لون الموقع الرئيسي<input name="accent_color" type="color" value="#c7a86a"></label>
+
+            <fieldset class="cms-fieldset">
+              <legend>إظهار الأقسام</legend>
+              <div class="switch-grid">
+                <label><input type="checkbox" name="show_services" checked> الخدمات</label>
+                <label><input type="checkbox" name="show_booking" checked> الحجز</label>
+                <label><input type="checkbox" name="show_parts" checked> قطع الغيار</label>
+                <label><input type="checkbox" name="show_branches" checked> الفروع</label>
+                <label><input type="checkbox" name="show_reviews" checked> آراء العملاء</label>
+                <label><input type="checkbox" name="show_contact" checked> التواصل</label>
+              </div>
+            </fieldset>
+
+            <div>
+              <label>ترتيب الأقسام بالسحب</label>
+              <div id="sectionSorter" class="sorter">
+                <div draggable="true" data-id="services">☰ الخدمات</div>
+                <div draggable="true" data-id="booking">☰ الحجز</div>
+                <div draggable="true" data-id="parts">☰ قطع الغيار</div>
+                <div draggable="true" data-id="branches">☰ الفروع</div>
+                <div draggable="true" data-id="reviews">☰ آراء العملاء</div>
+                <div draggable="true" data-id="contact">☰ التواصل</div>
+              </div>
+            </div>
+            <button class="btn btn-gold full" type="submit">حفظ تغييرات الموقع</button>
+            <p id="siteMsg" class="form-msg"></p>
+          </form>
+
+          <div class="cms-stack">
+            <form id="logoUploadForm" class="cms-card form">
+              <h2>اللوجو</h2>
+              <p>ارفع لوجو جديد وسيتم استخدامه في الموقع.</p>
+              <input type="hidden" name="kind" value="logo">
+              <input type="file" name="file" accept="image/*" required>
+              <button class="btn btn-outline full" type="submit">رفع اللوجو</button>
+              <p class="form-msg" id="logoMsg"></p>
+            </form>
+
+            <form id="heroUploadForm" class="cms-card form">
+              <h2>صورة الخلفية الرئيسية</h2>
+              <p>يفضل صورة أفقية عالية الجودة، بحد أقصى 5MB.</p>
+              <input type="hidden" name="kind" value="hero">
+              <input type="file" name="file" accept="image/*" required>
+              <button class="btn btn-outline full" type="submit">رفع الخلفية</button>
+              <p class="form-msg" id="heroMsg"></p>
+            </form>
+
+            <form id="reviewForm" class="cms-card form">
+              <h2>إضافة Review</h2>
+              <label>اسم العميل<input name="customerName" required maxlength="100"></label>
+              <label>السيارة<input name="car" maxlength="100" placeholder="Range Rover Velar 2021"></label>
+              <label>التقييم<select name="rating">
+                <option value="5">5 نجوم</option><option value="4">4 نجوم</option><option value="3">3 نجوم</option>
+                <option value="2">نجمتان</option><option value="1">نجمة</option>
+              </select></label>
+              <label>التقييم<textarea name="reviewText" required rows="4" maxlength="1000"></textarea></label>
+              <button class="btn btn-gold full" type="submit">إضافة التقييم</button>
+              <p id="reviewMsg" class="form-msg"></p>
+            </form>
+
+            <div class="cms-card">
+              <h2>التقييمات الحالية</h2>
+              <div id="reviewsAdminList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </section>
+  </main>
+<script src="/admin.js" defer></script>
+</body></html>

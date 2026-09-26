@@ -1,0 +1,59 @@
+ESOTICA AUTO — CLOUDFLARE PAGES SETUP
+======================================
+
+هذه النسخة لا تحتاج TypeScript ولا Build Process.
+هي جاهزة كـ static assets + _worker.js وتعمل على Cloudflare Pages.
+
+1) ارفع محتويات هذا المجلد إلى مشروع Cloudflare Pages.
+   يجب أن يكون index.html و _worker.js في ROOT مباشرة.
+
+2) اربط قاعدة D1:
+   Settings > Bindings > Add binding > D1 database
+   Variable name: DB
+   Database: esotica-egypt-db
+
+3) أضف كلمة سر الأدمن:
+   Settings > Variables and Secrets
+   Variable name: ADMIN_PASSWORD
+   Value: اختر كلمة سر قوية (يفضل 10 أحرف أو أكثر)
+
+4) أضف Secret منفصل للجلسة (موصى به):
+   Variable name: ADMIN_SESSION_SECRET
+   Value: نص عشوائي طويل، مثال 32+ حرف
+   (لا تستخدم نفس المثال حرفياً)
+
+5) اعمل Redeploy بعد حفظ الـ Bindings/Variables.
+
+6) دخول الإدارة:
+   https://YOUR-DOMAIN/admin
+   Username: admin
+   Password: القيمة التي وضعتها في ADMIN_PASSWORD
+
+7) اختبار الإعدادات:
+   افتح:
+   https://YOUR-DOMAIN/api/health
+   المطلوب:
+   {"ok":true,"database":true,"adminConfigured":true}
+
+مهم:
+- كلمة سر الأدمن ليست مخزنة داخل D1. هي Environment Variable في Cloudflare.
+- قاعدة D1 تحفظ الحجوزات واستعلامات قطع الغيار ورسائل التواصل.
+- الجداول تُنشأ تلقائياً عند أول طلب.
+
+FIX V2: صفحة الأدمن أصبحت داخل /admin/index.html لمنع Redirect loop في Cloudflare Pages.
+
+FINAL REVIEW V3: تم فحص الملفات والمسارات والـ API، وتم تثبيت مسار /admin مباشرة.
+
+V4 PARTS COMPATIBILITY: تمت إضافة request_type ليتوافق طلب قطع الغيار مع جدول D1 القديم والجديد بدون حذف البيانات.
+
+V5 VALIDATION: رقم الشاسيه يقبل 7 أو 17 خانة، وتاريخ الحجز يمنع الماضي ويمنع حجز نفس اليوم بعد 5 مساءً بتوقيت القاهرة.
+
+V6 CMS:
+- إدارة محتوى الموقع من /admin
+- تغيير العنوان والنصوص والأزرار
+- لون رئيسي للموقع
+- رفع لوجو وصورة Hero حتى 5MB
+- إظهار/إخفاء الأقسام وترتيبها بالسحب
+- إضافة/إخفاء/حذف Reviews
+- VIN يقبل 7 أو 17 خانة
+- منع التاريخ القديم ومنع حجز نفس اليوم بعد 17:00 بتوقيت القاهرة
