@@ -129,3 +129,43 @@ footer{border-top:1px solid var(--line);padding:48px max(22px,calc((100vw - var(
   .footer-bottom{align-items:flex-start;flex-direction:column}
   .offers-grid{grid-template-columns:1fr}
 }
+
+
+/* ===== Contact, About and Privacy finishing layer ===== */
+.footer-live-links{display:flex;flex-direction:column;gap:7px;margin:3px 0 8px}
+.footer-live-links a{color:#c9cdc7!important}
+.footer-live-links a:hover{color:var(--gold2)!important}
+
+.whatsapp-float{position:fixed;right:22px;bottom:22px;z-index:90;display:flex;align-items:center;gap:9px;min-height:48px;padding:0 17px;border-radius:999px;background:#1f9d55;color:#fff;font-size:12px;font-weight:800;box-shadow:0 15px 42px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);transition:transform .2s ease,box-shadow .2s ease}
+html[dir="rtl"] .whatsapp-float{right:auto;left:22px}
+.whatsapp-float:hover{transform:translateY(-3px);box-shadow:0 19px 48px rgba(0,0,0,.48)}
+.wa-icon{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#fff;color:#1f9d55;font-size:19px;line-height:1}
+
+.about-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.32)),url('/site/branches-hero-authentic.webp')}
+.privacy-hero{min-height:330px;background-image:linear-gradient(90deg,rgba(3,5,4,.97),rgba(3,5,4,.48)),url('/site/contact-hero-authentic.webp')}
+.about-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:24px}
+.about-copy,.about-values,.privacy-card{border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,var(--panel2),var(--panel));padding:34px}
+.about-copy h2,.privacy-card h2{font-size:clamp(28px,4vw,45px);line-height:1.2;margin:8px 0 17px}
+.about-copy p,.about-values p,.privacy-card p,.privacy-card li{color:var(--muted)}
+.value-list{display:grid;gap:14px;margin-top:22px}
+.value-item{padding:18px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.018)}
+.value-item strong{display:block;color:#fff;margin-bottom:4px}
+.privacy-wrap{max-width:880px}
+.privacy-card{display:grid;gap:18px}
+.privacy-card section{padding-bottom:18px;border-bottom:1px solid var(--line)}
+.privacy-card section:last-child{border-bottom:0;padding-bottom:0}
+.privacy-card h3{margin:0 0 7px;color:#fff}
+
+.offer-image{aspect-ratio:16/10;overflow:hidden;background:#0c0f0d;border-bottom:1px solid var(--line)}
+.offer-image img{width:100%;height:100%;display:block;object-fit:cover}
+.offer-content{padding:26px;display:flex;flex-direction:column;height:100%}
+.offer-card:has(.offer-image){padding:0;overflow:hidden}
+.offer-dates{margin-top:5px;color:var(--gold2);font-size:12px}
+.gallery-item figcaption{position:absolute;right:12px;bottom:12px;left:12px;padding:9px 12px;border-radius:10px;background:rgba(0,0,0,.68);backdrop-filter:blur(7px);font-size:11px;color:#fff}
+
+@media(max-width:800px){
+  .about-grid{grid-template-columns:1fr}
+  .whatsapp-float{bottom:14px;right:14px}.whatsapp-float span:last-child{display:none}
+  html[dir="rtl"] .whatsapp-float{left:14px;right:auto}
+  .whatsapp-float{width:48px;padding:0;justify-content:center}
+}
