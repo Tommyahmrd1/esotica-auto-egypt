@@ -200,7 +200,7 @@ async function handleAPI(req,env,url){
  if(p==="/api/admin/site-settings"&&req.method==="POST"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);const d=await readJSON(req);if(!d||typeof d!=="object")return bad("بيانات غير صحيحة.");
-   const allowed=["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","logo_media_id","hero_media_id","accent_color","section_order","show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text","brand_name","brand_subtitle"];
+   const allowed=["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","logo_media_id","hero_media_id","accent_color","section_order","show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url"];
    const stmts=[];
    for(const key of allowed){
      if(Object.prototype.hasOwnProperty.call(d,key)){
