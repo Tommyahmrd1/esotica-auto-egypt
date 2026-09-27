@@ -190,27 +190,21 @@ function applyContactDetails(settings={}){
     }
     const cols=footer.querySelectorAll(".footer-col");
     const contact=cols[cols.length-1];
-    if(contact && !contact.querySelector(".footer-live-links")){
-      const links=document.createElement("div");
-      links.className="footer-live-links";
+    if(contact){
+      let links=contact.querySelector(".footer-live-links");
+      if(!links){links=document.createElement("div");links.className="footer-live-links";const btn=contact.querySelector(".footer-contact-btn");contact.insertBefore(links,btn||null)}
       links.innerHTML=
         (phone?'<a href="tel:'+phone.replace(/\s+/g,"")+'">'+escHtml(phone)+'</a>':"")+
         (whatsapp?'<a target="_blank" rel="noreferrer" href="https://wa.me/'+whatsapp+'">WhatsApp</a>':"")+
         (email?'<a href="mailto:'+escHtml(email)+'">'+escHtml(email)+'</a>':"")+
         (instagram?'<a target="_blank" rel="noreferrer" href="'+escHtml(instagram)+'">Instagram</a>':"")+
         (facebook?'<a target="_blank" rel="noreferrer" href="'+escHtml(facebook)+'">Facebook</a>':"");
-      const btn=contact.querySelector(".footer-contact-btn");
-      contact.insertBefore(links,btn||null);
     }
   }
-  if(whatsapp && !document.querySelector(".whatsapp-float")){
-    const a=document.createElement("a");
-    a.className="whatsapp-float";
+  if(whatsapp){
+    let a=document.querySelector(".whatsapp-float");
+    if(!a){a=document.createElement("a");a.className="whatsapp-float";a.target="_blank";a.rel="noreferrer";a.setAttribute("aria-label","WhatsApp");a.innerHTML='<span class="wa-icon">◔</span><span>WhatsApp</span>';document.body.appendChild(a)}
     a.href="https://wa.me/"+whatsapp;
-    a.target="_blank";a.rel="noreferrer";
-    a.setAttribute("aria-label","WhatsApp");
-    a.innerHTML='<span class="wa-icon">◔</span><span>WhatsApp</span>';
-    document.body.appendChild(a);
   }
 }
 async function loadOffers(){
