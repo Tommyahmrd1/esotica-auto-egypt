@@ -144,6 +144,36 @@ const EN={
   "من داخل مركزنا":"Inside Our Center","صور حقيقية من أعمالنا داخل المركز سيتم إضافتها وتحديثها باستمرار.":"Real work from inside our center will be added and updated regularly.",
   "روابط سريعة":"Quick Links","فرع الشيخ زايد":"Sheikh Zayed Branch","للحجز أو الاستفسار استخدم صفحة التواصل وسيقوم الفريق المختص بالمتابعة معك.":"For bookings or enquiries, use our contact page and the appropriate team will follow up.","خبرة متخصصة في صيانة Range Rover وJaguar، وعناية متكاملة بمجموعة مختارة من السيارات الفاخرة.":"Specialist Range Rover and Jaguar service, with complete care for a select range of luxury vehicles."
 };
+Object.assign(EN,{
+  "من نحن":"About Us",
+  "مركز متخصص في صيانة Range Rover وJaguar، مع خدمات مختارة للسيارات الفاخرة وتركيز على التشخيص الدقيق وجودة التنفيذ والمتابعة.":"A specialist Range Rover and Jaguar service center, with selected luxury vehicle services focused on accurate diagnostics, quality workmanship and follow-up.",
+  "عناية تبدأ من التشخيص وتستمر بعد التسليم.":"Care that starts with diagnosis and continues after delivery.",
+  "في Esotica Auto نركز على فهم حالة السيارة بدقة قبل بدء العمل، وتوضيح المطلوب للعميل، وتنفيذ الخدمة بعناية، ثم المتابعة بعد التسليم.":"At Esotica Auto, we focus on understanding the vehicle accurately before work begins, explaining what is needed, carrying out the service carefully, and following up after delivery.",
+  "نخدم عملاءنا من خلال فروع الجوي، المنطقة الصناعية، والشيخ زايد، مع إمكانية إرسال طلب الحجز أو استعلام قطع الغيار مباشرة من الموقع.":"We serve clients through our Air Force, Industrial Area and Sheikh Zayed locations, with online service booking and spare-parts enquiries available directly through the website.",
+  "ما نهتم به":"What Matters to Us",
+  "تشخيص واضح":"Clear Diagnostics",
+  "فهم المشكلة وتحديد الأولويات قبل بدء التنفيذ.":"Understanding the issue and setting priorities before work begins.",
+  "اهتمام بالتفاصيل":"Attention to Detail",
+  "العناية بجودة التنفيذ ومظهر السيارة وتجربة العميل.":"Care for workmanship quality, vehicle appearance and the client experience.",
+  "متابعة مستمرة":"Ongoing Follow-up",
+  "التواصل مع العميل وتأكيد الخطوات ومتابعة ما بعد الخدمة.":"Keeping the client informed, confirming each step and following up after service.",
+  "خدمة متخصصة":"Specialist Service",
+  "تركيز أساسي على Range Rover وJaguar مع خبرة في سيارات فاخرة مختارة.":"A core focus on Range Rover and Jaguar, with experience across selected luxury vehicles.",
+  "سياسة الخصوصية":"Privacy Policy",
+  "توضيح مبسط لكيفية استخدام البيانات التي يرسلها العميل عبر الموقع.":"A simple explanation of how information submitted through the website is used.",
+  "البيانات التي نجمعها":"Information We Collect",
+  "عند استخدام نماذج الحجز أو قطع الغيار أو التواصل، قد ترسل لنا بيانات مثل الاسم، رقم الهاتف، بيانات السيارة، رقم الشاسيه، تفاصيل الطلب، والموعد المفضل.":"When using booking, spare-parts or contact forms, you may provide information such as your name, phone number, vehicle details, VIN, request details and preferred appointment date.",
+  "كيف نستخدم البيانات":"How We Use Information",
+  "تُستخدم البيانات لمراجعة الطلب، التواصل معك، تأكيد المواعيد أو توفر قطع الغيار، ومتابعة الخدمة المتعلقة بطلبك.":"Information is used to review your request, contact you, confirm appointments or parts availability, and follow up on the service related to your request.",
+  "بيانات الدفع":"Payment Information",
+  "الموقع الحالي لا يطلب إدخال بيانات بطاقات دفع أو بيانات مصرفية داخل نماذج الحجز والتواصل.":"The current website does not request payment-card or banking information in its booking and contact forms.",
+  "الروابط الخارجية":"External Links",
+  "قد يحتوي الموقع على روابط إلى خرائط Google وWhatsApp وFacebook وInstagram. عند فتح هذه الروابط تخضع لاستخدام وسياسات الخدمة الخارجية نفسها.":"The website may link to Google Maps, WhatsApp, Facebook and Instagram. When opening those links, the external service's own terms and policies apply.",
+  "الاستفسار عن بياناتك":"Questions About Your Information",
+  "يمكنك التواصل معنا من صفحة «تواصل معنا» إذا كان لديك استفسار بخصوص البيانات التي أرسلتها عبر الموقع.":"You can contact us through the Contact Us page if you have a question about information you submitted through the website.",
+  "تحديث السياسة":"Policy Updates",
+  "قد يتم تحديث هذه الصفحة عند إضافة وظائف أو خدمات جديدة للموقع، وسيظهر النص الأحدث هنا.":"This page may be updated when new website features or services are added, and the latest wording will appear here."
+});
 const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
 const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه المكوّن من 17 خانة":"Enter the complete 17-character VIN"};
 function translatePage(lang){
