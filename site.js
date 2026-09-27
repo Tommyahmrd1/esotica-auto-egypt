@@ -13,6 +13,14 @@ if(bookingDateInput){
 const $=s=>document.querySelector(s);
 const msg=(el,text,ok=true)=>{el.textContent=text;el.className="form-msg "+(ok?"ok":"err")};
 const pageName=(location.pathname.split("/").filter(Boolean)[0]||"home").replace(/\.html$/,'');
+const ESOTICA_CONTACT_DEFAULTS={
+  phone:"+20 111 044 4528",
+  whatsapp:"201110444528",
+  facebook:"https://web.facebook.com/p/Esotica-Auto-61576540748603/",
+  instagram:"https://www.instagram.com/esoticaauto/",
+  email:""
+};
+
 document.body.classList.add(`page-${pageName}`);
 const heroVideo=document.querySelector(".hero-video-main");
 if(heroVideo){
@@ -79,7 +87,9 @@ async function loadSiteContent(){
       document.querySelectorAll(".brand-text").forEach(el=>el.style.display="none");
     }
 
-    if(settings.accent_color && /^#[0-9A-Fa-f]{6}$/.test(settings.accent_color)){
+
+    applyContactDetails(settings);
+        if(settings.accent_color && /^#[0-9A-Fa-f]{6}$/.test(settings.accent_color)){
       document.documentElement.style.setProperty("--gold",settings.accent_color);
       document.documentElement.style.setProperty("--gold2",settings.accent_color);
     }
@@ -165,6 +175,44 @@ function initLanguage(){
   }
   translatePage(localStorage.getItem("esotica-language")||"en");
 }
+function applyContactDetails(settings={}){
+  const phone=settings.contact_phone||ESOTICA_CONTACT_DEFAULTS.phone;
+  const whatsapp=(settings.whatsapp_number||ESOTICA_CONTACT_DEFAULTS.whatsapp).replace(/[^0-9]/g,"");
+  const facebook=settings.facebook_url||ESOTICA_CONTACT_DEFAULTS.facebook;
+  const instagram=settings.instagram_url||ESOTICA_CONTACT_DEFAULTS.instagram;
+  const email=settings.contact_email||ESOTICA_CONTACT_DEFAULTS.email;
+
+  const footer=document.querySelector(".site-footer");
+  if(footer){
+    const quick=footer.querySelector(".footer-col");
+    if(quick && !quick.querySelector('[href="/about"]')){
+      quick.insertAdjacentHTML("beforeend",'<a href="/about">من نحن</a><a href="/privacy">سياسة الخصوصية</a>');
+    }
+    const cols=footer.querySelectorAll(".footer-col");
+    const contact=cols[cols.length-1];
+    if(contact && !contact.querySelector(".footer-live-links")){
+      const links=document.createElement("div");
+      links.className="footer-live-links";
+      links.innerHTML=
+        (phone?'<a href="tel:'+phone.replace(/\s+/g,"")+'">'+escHtml(phone)+'</a>':"")+
+        (whatsapp?'<a target="_blank" rel="noreferrer" href="https://wa.me/'+whatsapp+'">WhatsApp</a>':"")+
+        (email?'<a href="mailto:'+escHtml(email)+'">'+escHtml(email)+'</a>':"")+
+        (instagram?'<a target="_blank" rel="noreferrer" href="'+escHtml(instagram)+'">Instagram</a>':"")+
+        (facebook?'<a target="_blank" rel="noreferrer" href="'+escHtml(facebook)+'">Facebook</a>':"");
+      const btn=contact.querySelector(".footer-contact-btn");
+      contact.insertBefore(links,btn||null);
+    }
+  }
+  if(whatsapp && !document.querySelector(".whatsapp-float")){
+    const a=document.createElement("a");
+    a.className="whatsapp-float";
+    a.href="https://wa.me/"+whatsapp;
+    a.target="_blank";a.rel="noreferrer";
+    a.setAttribute("aria-label","WhatsApp");
+    a.innerHTML='<span class="wa-icon">◔</span><span>WhatsApp</span>';
+    document.body.appendChild(a);
+  }
+}
 async function loadOffers(){
   const grid=document.querySelector("#offersGrid");if(!grid)return;
   try{
@@ -182,5 +230,6 @@ async function loadOffers(){
     </article>`).join("");
   }catch(e){console.warn("Offers unavailable",e)}
 }
+applyContactDetails({});
 loadSiteContent().finally(initLanguage);
 loadOffers();
