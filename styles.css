@@ -24,3 +24,19 @@ footer{border-top:1px solid var(--line);padding:48px max(22px,calc((100vw - var(
 .page-branches .inner-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.26)),url('/site/branches-hero-authentic.webp')}
 .page-contact .inner-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.28)),url('/site/contact-hero-authentic.webp')}
 .gallery-pending{border-top:1px solid var(--line);background:#0b0d0c}.gallery-empty{height:220px;border:1px dashed rgba(200,170,112,.36);border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(200,170,112,.06),rgba(255,255,255,.015));color:#858983;font-size:11px;font-weight:800;letter-spacing:.22em}
+
+/* Real branch photography. */
+.branches{align-items:stretch}
+.branches .branch-card{padding:0;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.branch-photo{position:relative;aspect-ratio:16/10;margin:0;overflow:hidden;background:#151815;border-bottom:1px solid var(--line)}
+.branch-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 54%,rgba(6,8,7,.42));pointer-events:none}
+.branch-photo img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .55s ease,filter .4s ease}
+.branch-photo-gawy img{object-position:62% 52%}
+.branch-photo-industrial img{object-position:center 48%}
+.branch-photo-zayed img{object-position:center 46%}
+.branch-card:hover .branch-photo img{transform:scale(1.035);filter:saturate(1.05)}
+.branch-content{padding:26px 27px 28px;display:flex;flex:1;flex-direction:column}
+.branch-content h3{margin-top:13px}
+.branch-content p{margin:0 0 14px}
+.branch-content small{display:block;margin-bottom:22px;line-height:1.75}
+.branch-content a{margin-top:auto;width:max-content;font-size:13px;font-weight:800}
