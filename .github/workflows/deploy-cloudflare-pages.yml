@@ -24,3 +24,23 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy . --project-name=esotica-auto-egypt --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Smoke test live site
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://esotica-auto-egypt.pages.dev"
+          echo "Waiting for Pages deployment to propagate..."
+          sleep 8
+
+          health="$(curl -fsS --retry 6 --retry-delay 3 --retry-all-errors "$BASE/api/health")"
+          echo "$health"
+          echo "$health" | grep -q '"ok":true'
+          echo "$health" | grep -q '"database":true'
+          echo "$health" | grep -q '"adminConfigured":true'
+
+          for path in / /booking /parts /services /branches /offers /about /privacy /contact /admin; do
+            code="$(curl -sS -o /dev/null -w "%{http_code}" --retry 6 --retry-delay 3 --retry-all-errors "$BASE$path")"
+            echo "$path -> $code"
+            test "$code" = "200"
+          done
