@@ -53,7 +53,7 @@ $("#contactForm")?.addEventListener("submit",e=>{e.preventDefault();sendForm(e.c
 async function loadSiteContent(){
   try{
     const r=await fetch("/api/site-content",{cache:"no-store"});if(!r.ok)return;
-    const {settings={},reviews=[]}=await r.json();
+    const {settings={},reviews=[],gallery=[]}=await r.json();
     const setText=(sel,val)=>{if(val&&document.querySelector(sel))document.querySelector(sel).textContent=val};
     if(settings.hero_title){
       const el=document.querySelector("#heroTitle"); if(el) el.textContent=settings.hero_title;
@@ -110,6 +110,10 @@ async function loadSiteContent(){
           ${x.car?`<small>${escHtml(x.car)}</small>`:""}
         </article>`).join("");
     }
+    const galleryHolder=document.querySelector("#work-gallery .gallery-empty");
+    if(galleryHolder&&gallery.length){
+      galleryHolder.outerHTML='<div class="gallery-grid">'+gallery.map((x,i)=>`<figure class="gallery-item ${i%5===0?"gallery-wide":""}"><img src="/api/media/${encodeURIComponent(x.media_id)}" alt="${escHtml(x.caption||"Esotica Auto")}" loading="lazy">${x.caption?`<figcaption>${escHtml(x.caption)}</figcaption>`:""}</figure>`).join("")+'</div>';
+    }
   }catch(e){console.warn("CMS content unavailable",e)}
 }
 function escHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -161,4 +165,22 @@ function initLanguage(){
   }
   translatePage(localStorage.getItem("esotica-language")||"en");
 }
+async function loadOffers(){
+  const grid=document.querySelector("#offersGrid");if(!grid)return;
+  try{
+    const r=await fetch("/api/offers",{cache:"no-store"}),j=await r.json();
+    if(!r.ok||!Array.isArray(j.offers)||!j.offers.length)return;
+    grid.innerHTML=j.offers.map(x=>`<article class="offer-card">
+      ${x.image_media_id?`<div class="offer-image"><img src="/api/media/${encodeURIComponent(x.image_media_id)}" alt="${escHtml(x.title)}" loading="lazy"></div>`:""}
+      <div class="offer-content">
+        <p class="eyebrow">ESOTICA OFFER</p>
+        <h2>${escHtml(x.title)}</h2>
+        <p>${escHtml(x.description||"")}</p>
+        ${x.end_date?`<div class="offer-dates">متاح حتى ${escHtml(x.end_date)}</div>`:""}
+        <a class="btn btn-gold" href="${escHtml(x.button_link||"/booking")}">${escHtml(x.button_text||"احجز الآن")}</a>
+      </div>
+    </article>`).join("");
+  }catch(e){console.warn("Offers unavailable",e)}
+}
 loadSiteContent().finally(initLanguage);
+loadOffers();
