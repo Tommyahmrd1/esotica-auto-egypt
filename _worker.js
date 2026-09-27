@@ -245,8 +245,13 @@ async function handleAPI(req,env,url){
  if(p==="/api/admin/trash"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);
-   const rows=await env.DB.prepare("SELECT request_type,request_id,note,deleted_at FROM admin_request_meta WHERE deleted_at>0 ORDER BY deleted_at DESC LIMIT 500").all();
-   return json({trash:rows.results||[]});
+   const [b,parts,c]=await env.DB.batch([
+     env.DB.prepare("SELECT 'bookings' AS request_type,b.id AS request_id,b.name,b.phone,b.created_at,m.note,m.deleted_at FROM bookings b JOIN admin_request_meta m ON m.request_type='bookings' AND m.request_id=b.id WHERE m.deleted_at>0"),
+     env.DB.prepare("SELECT 'parts' AS request_type,p.id AS request_id,p.name,p.phone,p.created_at,m.note,m.deleted_at FROM parts_requests p JOIN admin_request_meta m ON m.request_type='parts' AND m.request_id=p.id WHERE m.deleted_at>0"),
+     env.DB.prepare("SELECT 'contacts' AS request_type,c.id AS request_id,c.name,c.phone,c.created_at,m.note,m.deleted_at FROM contact_requests c JOIN admin_request_meta m ON m.request_type='contacts' AND m.request_id=c.id WHERE m.deleted_at>0")
+   ]);
+   const trash=[...(b.results||[]),...(parts.results||[]),...(c.results||[])].sort((a,b)=>Number(b.deleted_at)-Number(a.deleted_at)).slice(0,500);
+   return json({trash});
  }
  const requestAction=p.match(/^\/api\/admin\/request\/(bookings|parts|contacts)\/(\d+)$/);
  if(requestAction&&req.method==="POST"){
@@ -287,7 +292,9 @@ async function handleAPI(req,env,url){
    else if(action==="update"){
      const title=clean(d.title,160),description=clean(d.description,1500),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonText=clean(d.buttonText||"احجز الآن",60),buttonLink=clean(d.buttonLink||"/booking",250);
      if(!title)return bad("اكتب عنوان العرض.");
-     await env.DB.prepare("UPDATE offers SET title=?,description=?,start_date=?,end_date=?,button_text=?,button_link=? WHERE id=?").bind(title,description,startDate,endDate,buttonText,buttonLink,id).run();
+     const imageMediaId=clean(d.imageMediaId,80);
+     if(imageMediaId)await env.DB.prepare("UPDATE offers SET title=?,description=?,start_date=?,end_date=?,button_text=?,button_link=?,image_media_id=? WHERE id=?").bind(title,description,startDate,endDate,buttonText,buttonLink,imageMediaId,id).run();
+     else await env.DB.prepare("UPDATE offers SET title=?,description=?,start_date=?,end_date=?,button_text=?,button_link=? WHERE id=?").bind(title,description,startDate,endDate,buttonText,buttonLink,id).run();
    }else return bad("إجراء غير صحيح.");
    return json({ok:true});
  }
