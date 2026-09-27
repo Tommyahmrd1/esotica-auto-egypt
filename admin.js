@@ -69,7 +69,7 @@ async function loadCMS(){
   cmsData=await r.json();
   const f=$("#siteSettingsForm"),s=cmsData.settings||{};
   if(f){
-    for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle"]){
+    for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url"]){
       if(f.elements[name] && s[name]!=null)f.elements[name].value=s[name];
     }
     for(const name of ["show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text"]){
@@ -106,7 +106,7 @@ async function reviewAction(id,action){
 $("#siteSettingsForm")?.addEventListener("submit",async e=>{
   e.preventDefault();const f=e.currentTarget;
   const payload={};
-  for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle"])payload[name]=f.elements[name].value;
+  for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url"])payload[name]=f.elements[name].value;
   for(const name of ["show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text"])payload[name]=String(f.elements[name].checked);
   payload.section_order=[...$("#sectionSorter").children].map(x=>x.dataset.id).join(",");
   const r=await fetch("/api/admin/site-settings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
@@ -297,7 +297,7 @@ loadCMS=async function(){
   cmsData=await r.json();
   const f=$("#siteSettingsForm"),s=cmsData.settings||{};
   if(f){
-    for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle"]){
+    for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url"]){
       if(f.elements[name]&&s[name]!=null)f.elements[name].value=s[name];
     }
     for(const name of ["show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text"]){
