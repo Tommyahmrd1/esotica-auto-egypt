@@ -42,7 +42,32 @@ async function initDB(env){
  car TEXT NOT NULL DEFAULT '',
  rating INTEGER NOT NULL DEFAULT 5,
  review_text TEXT NOT NULL,
- visible INTEGER NOT NULL DEFAULT 1)`
+ visible INTEGER NOT NULL DEFAULT 1)`,
+`CREATE TABLE IF NOT EXISTS admin_request_meta (
+ request_type TEXT NOT NULL,
+ request_id INTEGER NOT NULL,
+ note TEXT NOT NULL DEFAULT '',
+ deleted_at INTEGER NOT NULL DEFAULT 0,
+ updated_at INTEGER NOT NULL,
+ PRIMARY KEY(request_type,request_id))`,
+`CREATE TABLE IF NOT EXISTS offers (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ created_at INTEGER NOT NULL,
+ title TEXT NOT NULL,
+ description TEXT NOT NULL DEFAULT '',
+ image_media_id TEXT NOT NULL DEFAULT '',
+ start_date TEXT NOT NULL DEFAULT '',
+ end_date TEXT NOT NULL DEFAULT '',
+ button_text TEXT NOT NULL DEFAULT 'احجز الآن',
+ button_link TEXT NOT NULL DEFAULT '/booking',
+ visible INTEGER NOT NULL DEFAULT 1)`,
+`CREATE TABLE IF NOT EXISTS gallery_items (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ created_at INTEGER NOT NULL,
+ media_id TEXT NOT NULL,
+ caption TEXT NOT NULL DEFAULT '',
+ visible INTEGER NOT NULL DEFAULT 1,
+ sort_order INTEGER NOT NULL DEFAULT 0)`
   ];
   await env.DB.batch(sql.map(s=>env.DB.prepare(s)));
 }
@@ -96,14 +121,21 @@ async function handleAPI(req,env,url){
  }
  if(p==="/api/site-content"&&req.method==="GET"){
    await initDB(env);
-   const [settingsRows,reviewsRows]=await env.DB.batch([
+   const [settingsRows,reviewsRows,galleryRows]=await env.DB.batch([
      env.DB.prepare("SELECT key,value FROM site_settings"),
-     env.DB.prepare("SELECT id,customer_name,car,rating,review_text FROM reviews WHERE visible=1 ORDER BY created_at DESC LIMIT 20")
+     env.DB.prepare("SELECT id,customer_name,car,rating,review_text FROM reviews WHERE visible=1 ORDER BY created_at DESC LIMIT 20"),
+     env.DB.prepare("SELECT id,media_id,caption FROM gallery_items WHERE visible=1 ORDER BY sort_order ASC, created_at DESC LIMIT 30")
    ]);
    const settings={};for(const row of settingsRows.results||[])settings[row.key]=row.value;
-   return json({settings,reviews:reviewsRows.results||[]});
+   return json({settings,reviews:reviewsRows.results||[],gallery:galleryRows.results||[]});
  }
- const mediaMatch=p.match(/^\/api\/media\/([A-Za-z0-9_-]+)$/);
+ if(p==="/api/offers"&&req.method==="GET"){
+   await initDB(env);
+   const today=cairoDateParts().date;
+   const rows=await env.DB.prepare("SELECT id,title,description,image_media_id,start_date,end_date,button_text,button_link FROM offers WHERE visible=1 AND (start_date='' OR start_date<=?) AND (end_date='' OR end_date>=?) ORDER BY created_at DESC LIMIT 50").bind(today,today).all();
+   return json({offers:rows.results||[]});
+ }
+  const mediaMatch=p.match(/^\/api\/media\/([A-Za-z0-9_-]+)$/);
  if(mediaMatch&&req.method==="GET"){
    await initDB(env);
    const row=await env.DB.prepare("SELECT content_type,data FROM media_assets WHERE id=?").bind(mediaMatch[1]).first();
@@ -145,20 +177,25 @@ async function handleAPI(req,env,url){
  if(p==="/api/admin/dashboard"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);
-   const [b,parts,c]=await env.DB.batch([
-     env.DB.prepare("SELECT * FROM bookings ORDER BY created_at DESC LIMIT 200"),
-     env.DB.prepare("SELECT * FROM parts_requests ORDER BY created_at DESC LIMIT 200"),
-     env.DB.prepare("SELECT * FROM contact_requests ORDER BY created_at DESC LIMIT 200")
+   const [b,parts,c,trashCount]=await env.DB.batch([
+     env.DB.prepare("SELECT b.*,COALESCE(m.note,'') AS admin_note FROM bookings b LEFT JOIN admin_request_meta m ON m.request_type='bookings' AND m.request_id=b.id WHERE COALESCE(m.deleted_at,0)=0 ORDER BY b.created_at DESC LIMIT 500"),
+     env.DB.prepare("SELECT p.*,COALESCE(m.note,'') AS admin_note FROM parts_requests p LEFT JOIN admin_request_meta m ON m.request_type='parts' AND m.request_id=p.id WHERE COALESCE(m.deleted_at,0)=0 ORDER BY p.created_at DESC LIMIT 500"),
+     env.DB.prepare("SELECT c.*,COALESCE(m.note,'') AS admin_note FROM contact_requests c LEFT JOIN admin_request_meta m ON m.request_type='contacts' AND m.request_id=c.id WHERE COALESCE(m.deleted_at,0)=0 ORDER BY c.created_at DESC LIMIT 500"),
+     env.DB.prepare("SELECT COUNT(*) AS total FROM admin_request_meta WHERE deleted_at>0")
    ]);
-   return json({bookings:b.results||[],parts:parts.results||[],contacts:c.results||[]});
+   return json({bookings:b.results||[],parts:parts.results||[],contacts:c.results||[],trashCount:Number(trashCount.results?.[0]?.total||0)});
  }
  if(p==="/api/admin/site-settings"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);
    const rows=await env.DB.prepare("SELECT key,value FROM site_settings").all();
    const settings={};for(const row of rows.results||[])settings[row.key]=row.value;
-   const reviews=(await env.DB.prepare("SELECT * FROM reviews ORDER BY created_at DESC LIMIT 100").all()).results||[];
-   return json({settings,reviews});
+   const [reviewsRows,offersRows,galleryRows]=await env.DB.batch([
+     env.DB.prepare("SELECT * FROM reviews ORDER BY created_at DESC LIMIT 100"),
+     env.DB.prepare("SELECT * FROM offers ORDER BY created_at DESC LIMIT 100"),
+     env.DB.prepare("SELECT * FROM gallery_items ORDER BY sort_order ASC, created_at DESC LIMIT 100")
+   ]);
+   return json({settings,reviews:reviewsRows.results||[],offers:offersRows.results||[],gallery:galleryRows.results||[]});
  }
  if(p==="/api/admin/site-settings"&&req.method==="POST"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
@@ -205,7 +242,83 @@ async function handleAPI(req,env,url){
    }else return bad("إجراء غير صحيح.");
    return json({ok:true});
  }
- const m=p.match(/^\/api\/admin\/status\/(bookings|parts|contacts)\/(\d+)$/);
+ if(p==="/api/admin/trash"&&req.method==="GET"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);
+   const rows=await env.DB.prepare("SELECT request_type,request_id,note,deleted_at FROM admin_request_meta WHERE deleted_at>0 ORDER BY deleted_at DESC LIMIT 500").all();
+   return json({trash:rows.results||[]});
+ }
+ const requestAction=p.match(/^\/api\/admin\/request\/(bookings|parts|contacts)\/(\d+)$/);
+ if(requestAction&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
+   const type=requestAction[1],id=Number(requestAction[2]),action=clean(d.action,30),now=Date.now();
+   if(action==="note"){
+     const note=clean(d.note,3000);
+     await env.DB.prepare("INSERT INTO admin_request_meta(request_type,request_id,note,deleted_at,updated_at) VALUES(?,?,?,0,?) ON CONFLICT(request_type,request_id) DO UPDATE SET note=excluded.note,updated_at=excluded.updated_at").bind(type,id,note,now).run();
+   }else if(action==="delete"){
+     await env.DB.prepare("INSERT INTO admin_request_meta(request_type,request_id,note,deleted_at,updated_at) VALUES(?,?,COALESCE((SELECT note FROM admin_request_meta WHERE request_type=? AND request_id=?),''),?,?) ON CONFLICT(request_type,request_id) DO UPDATE SET deleted_at=excluded.deleted_at,updated_at=excluded.updated_at").bind(type,id,type,id,now,now).run();
+   }else if(action==="restore"){
+     await env.DB.prepare("UPDATE admin_request_meta SET deleted_at=0,updated_at=? WHERE request_type=? AND request_id=?").bind(now,type,id).run();
+   }else if(action==="permanent"){
+     const table=type==="parts"?"parts_requests":type==="contacts"?"contact_requests":"bookings";
+     await env.DB.batch([
+       env.DB.prepare(`DELETE FROM ${table} WHERE id=?`).bind(id),
+       env.DB.prepare("DELETE FROM admin_request_meta WHERE request_type=? AND request_id=?").bind(type,id)
+     ]);
+   }else return bad("إجراء غير صحيح.");
+   return json({ok:true});
+ }
+ if(p==="/api/admin/offers"&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
+   const title=clean(d.title,160),description=clean(d.description,1500),imageMediaId=clean(d.imageMediaId,80),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonText=clean(d.buttonText||"احجز الآن",60),buttonLink=clean(d.buttonLink||"/booking",250);
+   if(!title)return bad("اكتب عنوان العرض.");
+   await env.DB.prepare("INSERT INTO offers(created_at,title,description,image_media_id,start_date,end_date,button_text,button_link,visible) VALUES(?,?,?,?,?,?,?,?,1)").bind(Date.now(),title,description,imageMediaId,startDate,endDate,buttonText,buttonLink).run();
+   return json({ok:true});
+ }
+ const offerAction=p.match(/^\/api\/admin\/offers\/(\d+)$/);
+ if(offerAction&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
+   const id=Number(offerAction[1]),action=clean(d.action,30);
+   if(action==="toggle")await env.DB.prepare("UPDATE offers SET visible=CASE visible WHEN 1 THEN 0 ELSE 1 END WHERE id=?").bind(id).run();
+   else if(action==="delete")await env.DB.prepare("DELETE FROM offers WHERE id=?").bind(id).run();
+   else if(action==="update"){
+     const title=clean(d.title,160),description=clean(d.description,1500),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonText=clean(d.buttonText||"احجز الآن",60),buttonLink=clean(d.buttonLink||"/booking",250);
+     if(!title)return bad("اكتب عنوان العرض.");
+     await env.DB.prepare("UPDATE offers SET title=?,description=?,start_date=?,end_date=?,button_text=?,button_link=? WHERE id=?").bind(title,description,startDate,endDate,buttonText,buttonLink,id).run();
+   }else return bad("إجراء غير صحيح.");
+   return json({ok:true});
+ }
+ if(p==="/api/admin/gallery"&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);
+   let form;try{form=await req.formData()}catch{return bad("تعذر قراءة البيانات.");}
+   const file=form.get("file"),caption=clean(form.get("caption"),180);
+   if(!(file instanceof File)||!file.type.startsWith("image/"))return bad("اختار صورة صحيحة.");
+   if(file.size>5*1024*1024)return bad("حجم الصورة يجب ألا يتجاوز 5MB.");
+   const mediaId=crypto.randomUUID().replace(/-/g,""),bytes=new Uint8Array(await file.arrayBuffer());
+   const maxRow=await env.DB.prepare("SELECT COALESCE(MAX(sort_order),0) AS mx FROM gallery_items").first();
+   await env.DB.batch([
+     env.DB.prepare("INSERT INTO media_assets(id,created_at,filename,content_type,size,kind,data) VALUES(?,?,?,?,?,?,?)").bind(mediaId,Date.now(),clean(file.name,200),file.type,file.size,"gallery",bytes),
+     env.DB.prepare("INSERT INTO gallery_items(created_at,media_id,caption,visible,sort_order) VALUES(?,?,?,?,?)").bind(Date.now(),mediaId,caption,1,Number(maxRow?.mx||0)+1)
+   ]);
+   return json({ok:true});
+ }
+ const galleryAction=p.match(/^\/api\/admin\/gallery\/(\d+)$/);
+ if(galleryAction&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
+   const id=Number(galleryAction[1]),action=clean(d.action,30);
+   if(action==="toggle")await env.DB.prepare("UPDATE gallery_items SET visible=CASE visible WHEN 1 THEN 0 ELSE 1 END WHERE id=?").bind(id).run();
+   else if(action==="delete")await env.DB.prepare("DELETE FROM gallery_items WHERE id=?").bind(id).run();
+   else if(action==="up")await env.DB.prepare("UPDATE gallery_items SET sort_order=sort_order-1 WHERE id=?").bind(id).run();
+   else if(action==="down")await env.DB.prepare("UPDATE gallery_items SET sort_order=sort_order+1 WHERE id=?").bind(id).run();
+   else return bad("إجراء غير صحيح.");
+   return json({ok:true});
+ }
+  const m=p.match(/^\/api\/admin\/status\/(bookings|parts|contacts)\/(\d+)$/);
  if(m&&req.method==="POST"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);const d=await readJSON(req),status=clean(d?.status,20);
