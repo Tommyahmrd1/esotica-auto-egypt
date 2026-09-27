@@ -140,3 +140,95 @@ $("#reviewForm")?.addEventListener("submit",async e=>{
    if(after)s.insertBefore(dragging,after);else s.appendChild(dragging);
  });
 })();
+
+
+/* ===== Admin productivity upgrade: search, filters, details, CSV export ===== */
+const adminFilters={q:"",status:"",date:""};
+
+function filteredAdminRows(){
+  const rows=state.data?.[state.tab]||[];
+  if(state.tab==="site")return [];
+  return rows.filter(x=>{
+    const q=adminFilters.q.trim().toLowerCase();
+    const hay=Object.values(x).map(v=>String(v??"")).join(" ").toLowerCase();
+    if(q && !hay.includes(q))return false;
+    if(adminFilters.status && x.status!==adminFilters.status)return false;
+    if(adminFilters.date){
+      const d=new Date(Number(x.created_at)||x.created_at);
+      const local=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+      if(local!==adminFilters.date)return false;
+    }
+    return true;
+  });
+}
+
+function adminDetailsButton(type,id){
+  return `<button class="row-action" type="button" data-details-type="${type}" data-details-id="${id}">التفاصيل</button>`;
+}
+
+function renderTable(){
+ const t=state.tab, rows=filteredAdminRows();
+ if(t==="site")return;
+ if(!rows.length){$("#tableWrap").innerHTML='<div class="empty">لا توجد نتائج مطابقة.</div>';return}
+ let head="", body="";
+ if(t==="bookings"){
+  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>الفرع</th><th>الموعد</th><th>التفاصيل</th><th>الحالة</th><th></th>";
+  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td>${esc(x.branch)}</td><td>${esc(x.preferred_date)}</td><td>${esc(x.details)}</td><td>${statusSelect("bookings",x.id,x.status)}</td><td>${adminDetailsButton("bookings",x.id)}</td></tr>`).join("");
+ }else if(t==="parts"){
+  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>VIN</th><th>القطعة</th><th>الحالة</th><th></th>";
+  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td dir="ltr">${esc(x.vin)}</td><td>${esc(x.details)}<br><small>${esc(x.part_code||"")}</small></td><td>${statusSelect("parts",x.id,x.status)}</td><td>${adminDetailsButton("parts",x.id)}</td></tr>`).join("");
+ }else{
+  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>الموضوع</th><th>الرسالة</th><th>الحالة</th><th></th>";
+  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.subject)}</td><td>${esc(x.message)}</td><td>${statusSelect("contacts",x.id,x.status)}</td><td>${adminDetailsButton("contacts",x.id)}</td></tr>`).join("");
+ }
+ $("#tableWrap").innerHTML=`<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+ document.querySelectorAll(".status").forEach(s=>s.addEventListener("change",async e=>{
+   const el=e.currentTarget, r=await fetch(`/api/admin/status/${el.dataset.type}/${el.dataset.id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({status:el.value})});
+   if(!r.ok){alert("تعذر تحديث الحالة");await load()}
+ }));
+ document.querySelectorAll("[data-details-id]").forEach(b=>b.addEventListener("click",()=>openAdminDetails(b.dataset.detailsType,Number(b.dataset.detailsId))));
+}
+
+function openAdminDetails(type,id){
+  const row=(state.data?.[type]||[]).find(x=>Number(x.id)===Number(id));if(!row)return;
+  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة / الموديل",year:"السنة",branch:"الفرع",preferred_date:"الموعد المفضل",details:"التفاصيل",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",status:"الحالة"};
+  const body=$("#adminModalBody");
+  body.innerHTML=Object.entries(row).filter(([k])=>labels[k]).map(([k,v])=>`<div class="detail-row"><span>${labels[k]}</span><strong ${["phone","vin"].includes(k)?'dir="ltr"':""}>${esc(k==="created_at"?date(v):v)}</strong></div>`).join("");
+  $("#adminModal").classList.remove("hidden");
+}
+
+function exportFilteredCSV(){
+  const rows=filteredAdminRows();if(!rows.length){alert("لا توجد بيانات للتصدير.");return}
+  const keys=state.tab==="bookings"?["id","created_at","name","phone","car_model","year","branch","preferred_date","details","status"]:
+    state.tab==="parts"?["id","created_at","name","phone","car_model","year","vin","part_code","quantity","details","status"]:
+    ["id","created_at","name","phone","subject","message","status"];
+  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة",year:"السنة",branch:"الفرع",preferred_date:"الموعد",details:"التفاصيل",status:"الحالة",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة"};
+  const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const csv=[keys.map(k=>q(labels[k]||k)).join(","),...rows.map(r=>keys.map(k=>q(k==="created_at"?date(r[k]):r[k])).join(","))].join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`esotica-${state.tab}-${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+(function initAdminTools(){
+  const wrap=$("#tableWrap");if(!wrap)return;
+  const tools=document.createElement("div");
+  tools.className="admin-tools";
+  tools.innerHTML=`
+    <div class="admin-search"><input id="adminSearch" placeholder="بحث بالاسم أو الهاتف أو رقم الطلب..."></div>
+    <select id="adminStatusFilter"><option value="">كل الحالات</option><option value="new">جديد</option><option value="contacted">تم التواصل</option><option value="confirmed">مؤكد</option><option value="completed">مكتمل</option><option value="cancelled">ملغي</option></select>
+    <input id="adminDateFilter" type="date">
+    <button id="adminClearFilters" class="tool-btn" type="button">مسح الفلاتر</button>
+    <button id="adminExport" class="tool-btn tool-primary" type="button">تحميل Excel/CSV</button>`;
+  wrap.parentNode.insertBefore(tools,wrap);
+  $("#adminSearch").addEventListener("input",e=>{adminFilters.q=e.target.value;renderTable()});
+  $("#adminStatusFilter").addEventListener("change",e=>{adminFilters.status=e.target.value;renderTable()});
+  $("#adminDateFilter").addEventListener("change",e=>{adminFilters.date=e.target.value;renderTable()});
+  $("#adminClearFilters").addEventListener("click",()=>{adminFilters.q=adminFilters.status=adminFilters.date="";$("#adminSearch").value="";$("#adminStatusFilter").value="";$("#adminDateFilter").value="";renderTable()});
+  $("#adminExport").addEventListener("click",exportFilteredCSV);
+
+  const modal=document.createElement("div");modal.id="adminModal";modal.className="admin-modal hidden";
+  modal.innerHTML='<div class="admin-modal-card"><div class="admin-modal-head"><h2>تفاصيل الطلب</h2><button id="adminModalClose" type="button">×</button></div><div id="adminModalBody"></div></div>';
+  document.body.appendChild(modal);
+  $("#adminModalClose").onclick=()=>modal.classList.add("hidden");
+  modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.add("hidden")});
+})();
