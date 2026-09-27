@@ -232,3 +232,150 @@ function exportFilteredCSV(){
   $("#adminModalClose").onclick=()=>modal.classList.add("hidden");
   modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.add("hidden")});
 })();
+
+
+/* ===== Request notes, trash, offers and gallery management ===== */
+const renderRegularAdminTable=renderTable;
+renderTable=function(){
+  if(state.tab!=="trash")return renderRegularAdminTable();
+  const rows=state.data?.trash||[];
+  const q=(adminFilters.q||"").trim().toLowerCase();
+  const list=rows.filter(x=>!q||Object.values(x).join(" ").toLowerCase().includes(q));
+  if(!list.length){$("#tableWrap").innerHTML='<div class="empty">لا توجد طلبات في المحذوفات.</div>';return}
+  $("#tableWrap").innerHTML=`<table><thead><tr><th>النوع</th><th>#</th><th>العميل</th><th>الهاتف</th><th>تاريخ الحذف</th><th>الملاحظة</th><th>إجراءات</th></tr></thead><tbody>${
+    list.map(x=>`<tr>
+      <td>${({bookings:"حجز",parts:"قطع غيار",contacts:"رسالة"})[x.request_type]||x.request_type}</td>
+      <td>${x.request_id}</td><td>${esc(x.name)}</td><td dir="ltr">${esc(x.phone)}</td>
+      <td>${date(x.deleted_at)}</td><td>${esc(x.note||"")}</td>
+      <td><div class="row-actions"><button class="row-action" data-restore="${x.request_type}:${x.request_id}">استرجاع</button><button class="row-action danger" data-permanent="${x.request_type}:${x.request_id}">حذف نهائي</button></div></td>
+    </tr>`).join("")
+  }</tbody></table>`;
+  document.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>trashAction(b.dataset.restore,"restore"));
+  document.querySelectorAll("[data-permanent]").forEach(b=>b.onclick=()=>{if(confirm("حذف نهائي؟ لن يمكن استرجاع الطلب بعد ذلك."))trashAction(b.dataset.permanent,"permanent")});
+};
+
+async function loadTrash(){
+  const r=await fetch("/api/admin/trash",{cache:"no-store"});
+  if(!r.ok)return;
+  const j=await r.json();state.data=state.data||{};state.data.trash=j.trash||[];renderTable();
+}
+document.querySelector('[data-tab="trash"]')?.addEventListener("click",loadTrash);
+
+async function trashAction(key,action){
+  const [type,id]=key.split(":");
+  const r=await fetch(`/api/admin/request/${type}/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action})});
+  if(!r.ok){alert("تعذر تنفيذ الإجراء.");return}
+  await loadTrash();
+}
+
+openAdminDetails=function(type,id){
+  const row=(state.data?.[type]||[]).find(x=>Number(x.id)===Number(id));if(!row)return;
+  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة / الموديل",year:"السنة",branch:"الفرع",preferred_date:"الموعد المفضل",details:"التفاصيل",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",status:"الحالة"};
+  const body=$("#adminModalBody");
+  body.innerHTML=Object.entries(row).filter(([k])=>labels[k]).map(([k,v])=>`<div class="detail-row"><span>${labels[k]}</span><strong ${["phone","vin"].includes(k)?'dir="ltr"':""}>${esc(k==="created_at"?date(v):v)}</strong></div>`).join("")+
+    `<div class="request-note-box"><label>ملاحظة إدارية<textarea id="requestAdminNote" rows="4" maxlength="3000">${esc(row.admin_note||"")}</textarea></label><p id="requestNoteMsg" class="form-msg"></p></div>
+     <div class="modal-actions"><button id="saveRequestNote" class="tool-btn tool-primary" type="button">حفظ الملاحظة</button><button id="deleteRequest" class="tool-btn danger" type="button">نقل للمحذوفات</button></div>`;
+  $("#adminModal").classList.remove("hidden");
+  $("#saveRequestNote").onclick=async()=>{
+    const note=$("#requestAdminNote").value;
+    const r=await fetch(`/api/admin/request/${type}/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"note",note})});
+    $("#requestNoteMsg").textContent=r.ok?"تم حفظ الملاحظة.":"تعذر حفظ الملاحظة.";
+    if(r.ok)row.admin_note=note;
+  };
+  $("#deleteRequest").onclick=async()=>{
+    if(!confirm("نقل الطلب إلى المحذوفات؟"))return;
+    const r=await fetch(`/api/admin/request/${type}/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"delete"})});
+    if(!r.ok){alert("تعذر حذف الطلب.");return}
+    $("#adminModal").classList.add("hidden");await load();
+  };
+};
+
+const previousLoadCMS=loadCMS;
+loadCMS=async function(){
+  const r=await fetch("/api/admin/site-settings",{cache:"no-store"});
+  if(!r.ok)return;
+  cmsData=await r.json();
+  const f=$("#siteSettingsForm"),s=cmsData.settings||{};
+  if(f){
+    for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle"]){
+      if(f.elements[name]&&s[name]!=null)f.elements[name].value=s[name];
+    }
+    for(const name of ["show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text"]){
+      if(f.elements[name])f.elements[name].checked=s[name]!=="false";
+    }
+    if(s.section_order){
+      const order=s.section_order.split(","),sorter=$("#sectionSorter");
+      order.forEach(id=>{const el=sorter?.querySelector(`[data-id="${id}"]`);if(el)sorter.appendChild(el)});
+    }
+  }
+  renderAdminReviews();
+  renderOffersAdmin();
+  renderGalleryAdmin();
+};
+
+function renderOffersAdmin(){
+  const el=$("#offersAdminList");if(!el)return;
+  const rows=cmsData.offers||[];
+  if(!rows.length){el.innerHTML="<p>لا توجد عروض بعد.</p>";return}
+  el.innerHTML=rows.map(x=>`<div class="content-admin-item">
+    ${x.image_media_id?`<img src="/api/media/${x.image_media_id}" alt="">`:""}
+    <div class="content-admin-copy"><strong>${esc(x.title)}</strong><p>${esc(x.description||"")}</p><small>${x.visible?"ظاهر":"مخفي"} ${x.end_date?"• حتى "+esc(x.end_date):""}</small></div>
+    <div class="review-actions"><button data-offer-edit="${x.id}">تعديل</button><button data-offer-toggle="${x.id}">${x.visible?"إخفاء":"إظهار"}</button><button data-offer-delete="${x.id}">حذف</button></div>
+  </div>`).join("");
+  document.querySelectorAll("[data-offer-edit]").forEach(b=>b.onclick=()=>editOffer(Number(b.dataset.offerEdit)));
+  document.querySelectorAll("[data-offer-toggle]").forEach(b=>b.onclick=()=>offerAction(Number(b.dataset.offerToggle),"toggle"));
+  document.querySelectorAll("[data-offer-delete]").forEach(b=>b.onclick=()=>{if(confirm("حذف العرض؟"))offerAction(Number(b.dataset.offerDelete),"delete")});
+}
+
+function editOffer(id){
+  const x=(cmsData.offers||[]).find(o=>Number(o.id)===id),f=$("#offerForm");if(!x||!f)return;
+  f.elements.offerId.value=x.id;f.elements.title.value=x.title||"";f.elements.description.value=x.description||"";
+  f.elements.startDate.value=x.start_date||"";f.elements.endDate.value=x.end_date||"";f.elements.buttonText.value=x.button_text||"احجز الآن";f.elements.buttonLink.value=x.button_link||"/booking";
+  $("#offerCancelEdit").classList.remove("hidden");f.scrollIntoView({behavior:"smooth",block:"center"});
+}
+$("#offerCancelEdit")?.addEventListener("click",()=>{const f=$("#offerForm");f.reset();f.elements.offerId.value="";$("#offerCancelEdit").classList.add("hidden")});
+
+async function offerAction(id,action){
+  const r=await fetch(`/api/admin/offers/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action})});
+  if(!r.ok){alert("تعذر تحديث العرض.");return}await loadCMS();
+}
+
+$("#offerForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.currentTarget,m=$("#offerMsg");m.textContent="جاري الحفظ...";
+  let imageMediaId="";
+  const file=f.elements.image.files?.[0];
+  if(file){
+    const fd=new FormData();fd.append("kind","offer");fd.append("file",file);
+    const mr=await fetch("/api/admin/media",{method:"POST",body:fd}),mj=await mr.json().catch(()=>({}));
+    if(!mr.ok){m.textContent=mj.error||"تعذر رفع صورة العرض.";m.className="form-msg err";return}
+    imageMediaId=mj.id;
+  }
+  const payload={title:f.elements.title.value,description:f.elements.description.value,startDate:f.elements.startDate.value,endDate:f.elements.endDate.value,buttonText:f.elements.buttonText.value,buttonLink:f.elements.buttonLink.value,imageMediaId};
+  const id=f.elements.offerId.value;
+  if(id)payload.action="update";
+  const r=await fetch(id?`/api/admin/offers/${id}`:"/api/admin/offers",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+  m.textContent=r.ok?"تم حفظ العرض.":"تعذر حفظ العرض.";m.className="form-msg "+(r.ok?"ok":"err");
+  if(r.ok){f.reset();f.elements.offerId.value="";$("#offerCancelEdit").classList.add("hidden");await loadCMS()}
+});
+
+function renderGalleryAdmin(){
+  const el=$("#galleryAdminList");if(!el)return;
+  const rows=cmsData.gallery||[];
+  if(!rows.length){el.innerHTML="<p>لا توجد صور مضافة بعد.</p>";return}
+  el.innerHTML=rows.map(x=>`<div class="content-admin-item gallery-admin-item">
+    <img src="/api/media/${x.media_id}" alt="">
+    <div class="content-admin-copy"><strong>${esc(x.caption||"بدون وصف")}</strong><small>${x.visible?"ظاهرة":"مخفية"}</small></div>
+    <div class="review-actions"><button data-gallery-action="up:${x.id}">↑</button><button data-gallery-action="down:${x.id}">↓</button><button data-gallery-action="toggle:${x.id}">${x.visible?"إخفاء":"إظهار"}</button><button data-gallery-action="delete:${x.id}">حذف</button></div>
+  </div>`).join("");
+  document.querySelectorAll("[data-gallery-action]").forEach(b=>b.onclick=()=>{const [action,id]=b.dataset.galleryAction.split(":");if(action==="delete"&&!confirm("حذف الصورة من المعرض؟"))return;galleryAction(Number(id),action)});
+}
+async function galleryAction(id,action){
+  const r=await fetch(`/api/admin/gallery/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action})});
+  if(!r.ok){alert("تعذر تحديث الصورة.");return}await loadCMS();
+}
+$("#galleryForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.currentTarget,m=$("#galleryMsg");m.textContent="جاري رفع الصورة...";
+  const r=await fetch("/api/admin/gallery",{method:"POST",body:new FormData(f)}),j=await r.json().catch(()=>({}));
+  m.textContent=r.ok?"تمت إضافة الصورة إلى «من داخل مركزنا».":j.error||"تعذر إضافة الصورة.";m.className="form-msg "+(r.ok?"ok":"err");
+  if(r.ok){f.reset();await loadCMS()}
+});
