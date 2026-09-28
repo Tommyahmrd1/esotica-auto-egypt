@@ -112,13 +112,17 @@ async function loadSiteContent(){
     const grid=document.querySelector("#reviewsGrid");
     if(grid){
       if(!reviews.length)grid.innerHTML='<div class="card review-placeholder">لا توجد تقييمات منشورة حتى الآن.</div>';
-      else grid.innerHTML=reviews.map(x=>`
-        <article class="card review-card">
-          <div class="stars">${"★".repeat(Math.max(1,Math.min(5,Number(x.rating)||5)))}</div>
-          <p>${escHtml(x.review_text)}</p>
-          <strong>${escHtml(x.customer_name)}</strong>
-          ${x.car?`<small>${escHtml(x.car)}</small>`:""}
-        </article>`).join("");
+      else grid.innerHTML=reviews.map(x=>{
+        const rating=Math.max(1,Math.min(5,Number(x.rating)||5));
+        return `<article class="card review-card">
+          <div class="review-author">
+            <strong>${escHtml(x.customer_name)}</strong>
+            ${x.car?`<small>${escHtml(x.car)}</small>`:""}
+          </div>
+          <div class="stars" aria-label="${rating} من 5">${"★".repeat(rating)}</div>
+          <p class="review-text">${escHtml(x.review_text)}</p>
+        </article>`;
+      }).join("");
     }
     const galleryHolder=document.querySelector("#work-gallery .gallery-empty");
     if(galleryHolder&&gallery.length){
@@ -205,9 +209,17 @@ function initLanguage(){
   }
   translatePage(localStorage.getItem("esotica-language")||"en");
 }
+function formatPublicPhone(value){
+  const digits=String(value||"").replace(/\D/g,"");
+  const dialDigits=digits.startsWith("0")?`20${digits.slice(1)}`:digits;
+  const localDigits=dialDigits.startsWith("20")?`0${dialDigits.slice(2)}`:digits;
+  const display=/^01\d{9}$/.test(localDigits)?`${localDigits.slice(0,3)} ${localDigits.slice(3,7)} ${localDigits.slice(7)}`:String(value||"").trim();
+  return {dial:dialDigits?`+${dialDigits}`:"",display};
+}
 function applyContactDetails(settings={}){
-  const phone=settings.contact_phone||ESOTICA_CONTACT_DEFAULTS.phone;
-  const whatsapp=(settings.whatsapp_number||ESOTICA_CONTACT_DEFAULTS.whatsapp).replace(/[^0-9]/g,"");
+  const phone=formatPublicPhone(settings.contact_phone||ESOTICA_CONTACT_DEFAULTS.phone);
+  const whatsappRaw=String(settings.whatsapp_number||ESOTICA_CONTACT_DEFAULTS.whatsapp).replace(/\D/g,"");
+  const whatsapp=whatsappRaw.startsWith("0")?`20${whatsappRaw.slice(1)}`:whatsappRaw;
   const facebook=settings.facebook_url||ESOTICA_CONTACT_DEFAULTS.facebook;
   const instagram=settings.instagram_url||ESOTICA_CONTACT_DEFAULTS.instagram;
   const email=settings.contact_email||ESOTICA_CONTACT_DEFAULTS.email;
@@ -215,25 +227,36 @@ function applyContactDetails(settings={}){
   const footer=document.querySelector(".site-footer");
   if(footer){
     const quick=footer.querySelector(".footer-col");
-    if(quick && !quick.querySelector('[href="/about"]')){
-      quick.insertAdjacentHTML("beforeend",'<a href="/about">من نحن</a><a href="/privacy">سياسة الخصوصية</a>');
+    if(quick){
+      const quickLinks=[["/branches","فروعنا"],["/about","من نحن"],["/privacy","سياسة الخصوصية"]];
+      for(const [href,label] of quickLinks){
+        if(!quick.querySelector(`a[href="${href}"]`))quick.insertAdjacentHTML("beforeend",`<a href="${href}">${label}</a>`);
+      }
     }
-    const cols=footer.querySelectorAll(".footer-col");
+    const initialCols=[...footer.querySelectorAll(".footer-col")];
+    const branchCol=initialCols.find((col,index)=>index>0&&col.querySelector('a[href="/branches"]'));
+    if(branchCol)branchCol.remove();
+
+    const cols=[...footer.querySelectorAll(".footer-col")];
     const contact=cols[cols.length-1];
     if(contact){
       let links=contact.querySelector(".footer-live-links");
       if(!links){links=document.createElement("div");links.className="footer-live-links";const btn=contact.querySelector(".footer-contact-btn");contact.insertBefore(links,btn||null)}
+      const socialLinks=[
+        whatsapp?`<a class="footer-social-icon" target="_blank" rel="noreferrer" href="https://wa.me/${whatsapp}" aria-label="WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.5 4.1 1.6 5.9L0 24l6.5-1.7c1.7.9 3.6 1.4 5.6 1.4 6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.4-8.4Z"/></svg></a>`:"",
+        instagram?`<a class="footer-social-icon instagram-icon" target="_blank" rel="noreferrer" href="${escHtml(instagram)}" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle class="social-dot" cx="17.4" cy="6.6" r="1"></circle></svg></a>`:"",
+        facebook?`<a class="footer-social-icon" target="_blank" rel="noreferrer" href="${escHtml(facebook)}" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.2 8.2V6.5c0-.8.5-1 1-1h2.6V2.1L14.4 2C11 2 9.8 4 9.8 6.2v2H7v4h2.8V22h4.4v-9.8h3.3l.5-4h-3.8Z"/></svg></a>`:""
+      ].join("");
       links.innerHTML=
-        (phone?'<a href="tel:'+phone.replace(/\s+/g,"")+'">'+escHtml(phone)+'</a>':"")+
-        (whatsapp?'<a target="_blank" rel="noreferrer" href="https://wa.me/'+whatsapp+'">WhatsApp</a>':"")+
-        (email?'<a href="mailto:'+escHtml(email)+'">'+escHtml(email)+'</a>':"")+
-        (instagram?'<a target="_blank" rel="noreferrer" href="'+escHtml(instagram)+'">Instagram</a>':"")+
-        (facebook?'<a target="_blank" rel="noreferrer" href="'+escHtml(facebook)+'">Facebook</a>':"");
+        (phone.dial?`<a class="footer-phone" dir="ltr" href="tel:${phone.dial}">${escHtml(phone.display)}</a>`:"")+
+        (email?`<a class="footer-email" dir="ltr" href="mailto:${escHtml(email)}">${escHtml(email)}</a>`:"")+
+        (socialLinks?`<div class="footer-social-icons">${socialLinks}</div>`:"");
     }
   }
   if(whatsapp){
     let a=document.querySelector(".whatsapp-float");
-    if(!a){a=document.createElement("a");a.className="whatsapp-float";a.target="_blank";a.rel="noreferrer";a.setAttribute("aria-label","WhatsApp");a.innerHTML='<span class="wa-icon">◔</span><span>WhatsApp</span>';document.body.appendChild(a)}
+    if(!a){a=document.createElement("a");a.className="whatsapp-float";a.target="_blank";a.rel="noreferrer";a.setAttribute("aria-label","WhatsApp");document.body.appendChild(a)}
+    a.innerHTML='<span class="wa-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.5 4.1 1.6 5.9L0 24l6.5-1.7c1.7.9 3.6 1.4 5.6 1.4 6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.4-8.4Z"/></svg></span><span>WhatsApp</span>';
     a.href="https://wa.me/"+whatsapp;
   }
 }
