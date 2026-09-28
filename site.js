@@ -23,13 +23,59 @@ const ESOTICA_CONTACT_DEFAULTS={
 
 document.body.classList.add(`page-${pageName}`);
 const heroVideo=document.querySelector(".hero-video-main");
+const heroSoundToggle=document.querySelector("#heroSoundToggle");
+const heroMobileQuery=window.matchMedia("(max-width: 768px)");
+function updateHeroSoundButton(){
+  if(!heroSoundToggle||!heroVideo)return;
+  const muted=heroVideo.muted;
+  const arabic=document.documentElement.lang==="ar";
+  const label=muted?(arabic?"تشغيل الصوت":"Sound on"):(arabic?"كتم الصوت":"Mute");
+  heroSoundToggle.classList.toggle("is-muted",muted);
+  heroSoundToggle.setAttribute("aria-pressed",String(!muted));
+  heroSoundToggle.setAttribute("aria-label",label);
+  const text=heroSoundToggle.querySelector(".hero-sound-label");if(text)text.textContent=label;
+}
+function loadResponsiveHeroVideo(){
+  if(!heroVideo)return;
+  const preferred=heroMobileQuery.matches?heroVideo.dataset.mobileSrc:heroVideo.dataset.desktopSrc;
+  const fallback=heroVideo.dataset.fallbackSrc;
+  const target=preferred||fallback;
+  if(!target||heroVideo.dataset.activeSrc===target)return;
+  heroVideo.dataset.activeSrc=target;
+  heroVideo.dataset.fallbackApplied="false";
+  heroVideo.classList.remove("is-fallback");
+  heroVideo.src=target;
+  heroVideo.load();
+  heroVideo.play().catch(()=>{});
+}
 if(heroVideo){
   heroVideo.muted=true;
-  heroVideo.addEventListener("canplay",()=>heroVideo.play().catch(()=>{}),{once:true});
+  heroVideo.addEventListener("error",()=>{
+    const fallback=heroVideo.dataset.fallbackSrc;
+    if(!fallback||heroVideo.dataset.fallbackApplied==="true")return;
+    heroVideo.dataset.fallbackApplied="true";
+    heroVideo.dataset.activeSrc=fallback;
+    heroVideo.classList.add("is-fallback");
+    heroVideo.src=fallback;
+    heroVideo.load();
+    heroVideo.play().catch(()=>{});
+  });
+  heroVideo.addEventListener("canplay",()=>heroVideo.play().catch(()=>{}));
   heroVideo.addEventListener("ended",()=>{heroVideo.currentTime=0;heroVideo.play().catch(()=>{})});
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&heroVideo.paused)heroVideo.play().catch(()=>{})});
   window.setInterval(()=>{if(heroVideo.paused&&!document.hidden)heroVideo.play().catch(()=>{})},1500);
+  if(heroMobileQuery.addEventListener)heroMobileQuery.addEventListener("change",loadResponsiveHeroVideo);
+  else heroMobileQuery.addListener(loadResponsiveHeroVideo);
+  loadResponsiveHeroVideo();
+  updateHeroSoundButton();
 }
+heroSoundToggle?.addEventListener("click",()=>{
+  if(!heroVideo)return;
+  heroVideo.muted=!heroVideo.muted;
+  if(!heroVideo.muted)heroVideo.volume=1;
+  heroVideo.play().catch(()=>{heroVideo.muted=true;updateHeroSoundButton()});
+  updateHeroSoundButton();
+});
 $("#menuBtn")?.addEventListener("click",()=>$("#navLinks").classList.toggle("open"));
 document.querySelectorAll("#navLinks a").forEach(a=>a.addEventListener("click",()=>$("#navLinks").classList.remove("open")));
 
@@ -191,7 +237,40 @@ Object.assign(EN,{
   "من":"From",
   "إلى":"To",
   "فرع التجمع الخامس":"Fifth Settlement Branch",
-  "فرع التجمع الثالث":"Third Settlement Branch"});
+  "فرع التجمع الثالث":"Third Settlement Branch",
+  "الضمان والتأمين":"Warranty & Insurance",
+  "خدمة الضمان وشركات التأمين":"Warranty Service & Insurance Partners",
+  "إدارة واضحة ومتكاملة لأعمال الضمان والتأمين، من الفحص والتوثيق حتى التنفيذ والتسليم.":"A clear, complete process for warranty and insurance work, from inspection and documentation through repair and delivery.",
+  "خدمة الضمان":"Warranty Service",
+  "شركات التأمين":"Insurance Partners",
+  "ضمان واضح على الخدمة":"Clear Warranty Coverage",
+  "نوضح لك نطاق التغطية قبل بدء العمل، ونوثق الخدمة المنفذة حتى تكون المتابعة بعد التسليم سهلة وواضحة.":"We explain the coverage before work begins and document the completed service for clear, straightforward follow-up.",
+  "فحص وتوثيق":"Inspection & Documentation",
+  "تسجيل حالة السيارة وتفاصيل العمل المطلوب قبل بدء التنفيذ.":"We record the vehicle condition and required work before repairs begin.",
+  "نطاق تغطية واضح":"Clear Coverage Scope",
+  "توضيح الأعمال والقطع المشمولة وشروط التغطية الخاصة بكل خدمة.":"The covered work, parts and service-specific conditions are explained clearly.",
+  "تنفيذ دقيق":"Precise Workmanship",
+  "تنفيذ الأعمال المعتمدة وفق إجراءات فنية واضحة ومراجعة الجودة.":"Approved work is completed through clear technical procedures and quality checks.",
+  "متابعة بعد التسليم":"After-Service Follow-Up",
+  "فريقنا متاح لمراجعة أي ملاحظة مرتبطة بالخدمة خلال نطاق الضمان.":"Our team is available to review any service-related concern within the warranty scope.",
+  "معلومة مهمة":"Important Information",
+  "تختلف مدة ونطاق الضمان حسب نوع العمل والقطعة، ويتم توضيح التفاصيل عند اعتماد أمر الإصلاح.":"Warranty duration and scope vary by repair and part; the details are confirmed when the repair order is approved.",
+  "استفسر عن الضمان":"Ask About Warranty",
+  "تعاون منظم مع شركات التأمين":"Organised Insurance Support",
+  "نتولى خطوات الفحص والتوثيق والمتابعة الفنية لتسهيل إجراءات الإصلاح مع شركة التأمين.":"We handle inspection, documentation and technical follow-up to streamline repairs with the insurer.",
+  "تقييم الحالة":"Damage Assessment",
+  "فحص السيارة وتحديد الأعمال المطلوبة بدقة.":"The vehicle is inspected and the required work is identified accurately.",
+  "إعداد المستندات":"Document Preparation",
+  "تجهيز الصور والتقرير الفني وعرض الإصلاح.":"We prepare photos, the technical report and repair estimate.",
+  "متابعة الموافقة":"Approval Follow-Up",
+  "التنسيق بشأن الأعمال المعتمدة قبل بدء التنفيذ.":"We coordinate the approved work before repairs begin.",
+  "الإصلاح والتسليم":"Repair & Delivery",
+  "تنفيذ الأعمال ومراجعة الجودة قبل تسليم السيارة.":"Repairs are completed and quality-checked before delivery.",
+  "شركات التأمين المتعاقد معها":"Contracted Insurance Partners",
+  "سيتم إضافة أسماء وشعارات الشركات المتعاقد معها هنا فور استلام القائمة المعتمدة.":"Approved partner names and logos will be added here once the confirmed list is received.",
+  "للاستفسار عن تغطية شركتك":"Check Your Coverage",
+  "تشغيل الصوت":"Sound on",
+  "كتم الصوت":"Mute"});
 const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
 const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه المكوّن من 17 خانة":"Enter the complete 17-character VIN"};
 function translatePage(lang){
@@ -214,6 +293,7 @@ function translatePage(lang){
   const toggle=document.querySelector("#langToggle");
   if(toggle){toggle.textContent=lang==="en"?"AR":"EN";toggle.setAttribute("aria-label",lang==="en"?"عرض الموقع بالعربية":"View site in English");}
   if(typeof renderEvents==="function")renderEvents(publicEvents,lang);
+  if(typeof updateHeroSoundButton==="function")updateHeroSoundButton();
   localStorage.setItem("esotica-language",lang);
 }
 function initLanguage(){
@@ -243,7 +323,7 @@ function applyContactDetails(settings={}){
   if(footer){
     const quick=footer.querySelector(".footer-col");
     if(quick){
-      const quickLinks=[["/branches","فروعنا"],["/about","من نحن"],["/privacy","سياسة الخصوصية"]];
+      const quickLinks=[["/warranty-insurance","الضمان والتأمين"],["/branches","فروعنا"],["/about","من نحن"],["/privacy","سياسة الخصوصية"]];
       for(const [href,label] of quickLinks){
         if(!quick.querySelector(`a[href="${href}"]`))quick.insertAdjacentHTML("beforeend",`<a href="${href}">${label}</a>`);
       }
@@ -372,8 +452,33 @@ async function loadOffers(){
     </article>`).join("");
   }catch(e){console.warn("Offers unavailable",e)}
 }
+
+function initWarrantyTabs(){
+  const tabs=[...document.querySelectorAll("[data-warranty-tab]")];
+  const panels=[...document.querySelectorAll("[data-warranty-panel]")];
+  if(!tabs.length)return;
+  const activate=name=>{
+    tabs.forEach(tab=>{
+      const active=tab.dataset.warrantyTab===name;
+      tab.classList.toggle("is-active",active);
+      tab.setAttribute("aria-selected",String(active));
+      tab.tabIndex=active?0:-1;
+    });
+    panels.forEach(panel=>{
+      const active=panel.dataset.warrantyPanel===name;
+      panel.classList.toggle("is-active",active);
+      panel.hidden=!active;
+    });
+    if(name==="insurance")history.replaceState(null,"","#insurance");
+    else if(location.hash==="#insurance")history.replaceState(null,"",location.pathname+location.search);
+  };
+  tabs.forEach(tab=>tab.addEventListener("click",()=>activate(tab.dataset.warrantyTab)));
+  activate(location.hash==="#insurance"?"insurance":"warranty");
+}
+
 applyContactDetails({});
 initOffersTabs();
+initWarrantyTabs();
 loadSiteContent().finally(initLanguage);
 loadOffers();
 loadEvents();
