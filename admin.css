@@ -24,3 +24,19 @@
 
 .admin-top{min-height:78px}.admin-brand .brand-logo{width:176px;height:54px}.admin-top-label{margin-inline-start:12px;padding:5px 9px;border:1px solid var(--line);border-radius:999px;color:#8f948e;font-size:9px;font-weight:800;letter-spacing:.18em}.dash-head h1{letter-spacing:-.02em}.stats>div{box-shadow:0 12px 34px rgba(0,0,0,.14)}.tabs{position:sticky;top:0;z-index:15;background:rgba(8,10,9,.9);backdrop-filter:blur(12px);padding-block:8px}
 @media(max-width:620px){.admin-top-label{display:none}.admin-brand .brand-logo{width:142px;height:46px}}
+
+
+/* Events management */
+.cms-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.cms-title-row h2{margin:0}
+.cms-kicker{margin:0 0 5px!important;color:var(--gold)!important;font-size:10px!important;font-weight:900;letter-spacing:.16em}
+.cms-note{align-self:center;padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:#aeb3ad;font-size:11px}
+.event-admin-heading{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:4px}
+.event-admin-heading strong{display:inline}
+.admin-event-status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900}
+.admin-event-status.is-available{color:#8cf0ad;background:rgba(43,181,91,.13);border:1px solid rgba(75,215,121,.3)}
+.admin-event-status.is-unavailable{color:#ff9c9c;background:rgba(211,55,55,.13);border:1px solid rgba(244,93,93,.3)}
+.admin-event-status.is-coming{color:#efd389;background:rgba(207,174,92,.12);border:1px solid rgba(207,174,92,.3)}
+.admin-empty-state{display:grid;gap:5px;padding:18px;border:1px dashed var(--line);border-radius:12px;color:#aeb3ad}
+.admin-empty-state strong{color:#f2f3ef}
+.event-admin-item:not(:has(>img)){grid-template-columns:1fr}

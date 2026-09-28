@@ -310,6 +310,7 @@ loadCMS=async function(){
   }
   renderAdminReviews();
   renderOffersAdmin();
+  renderEventsAdmin();
   renderGalleryAdmin();
 };
 
@@ -356,6 +357,98 @@ $("#offerForm")?.addEventListener("submit",async e=>{
   const r=await fetch(id?`/api/admin/offers/${id}`:"/api/admin/offers",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
   m.textContent=r.ok?"تم حفظ العرض.":"تعذر حفظ العرض.";m.className="form-msg "+(r.ok?"ok":"err");
   if(r.ok){f.reset();f.elements.offerId.value="";$("#offerCancelEdit").classList.add("hidden");await loadCMS()}
+});
+
+
+const EVENT_ADMIN_STATUS={
+  available:"متاح الآن",
+  unavailable:"غير متاح حاليًا",
+  coming:"قريبًا"
+};
+function renderEventsAdmin(){
+  const el=$("#eventsAdminList");if(!el)return;
+  const rows=cmsData.events||[];
+  if(!rows.length){el.innerHTML='<div class="admin-empty-state"><strong>لا توجد أحداث بعد.</strong><span>أضف خدمة الساحل أو الونش أو الموبايل سيرفس من النموذج بالأعلى.</span></div>';return}
+  el.innerHTML=rows.map(x=>`<div class="content-admin-item event-admin-item">
+    ${x.image_media_id?`<img src="/api/media/${x.image_media_id}" alt="">`:""}
+    <div class="content-admin-copy">
+      <div class="event-admin-heading"><strong>${esc(x.title_ar)}</strong><span class="admin-event-status is-${esc(x.availability||"available")}">${esc(EVENT_ADMIN_STATUS[x.availability]||EVENT_ADMIN_STATUS.available)}</span></div>
+      ${x.title_en?`<small dir="ltr">${esc(x.title_en)}</small>`:""}
+      <p>${esc(x.description_ar||"")}</p>
+      <small>${x.visible?"ظاهر على الموقع":"مخفي من الموقع"}${x.location_ar?" • "+esc(x.location_ar):""}${x.end_date?" • حتى "+esc(x.end_date):""}</small>
+    </div>
+    <div class="review-actions">
+      <button data-event-edit="${x.id}">تعديل</button>
+      <button data-event-toggle="${x.id}">${x.visible?"إخفاء":"إظهار"}</button>
+      <button class="danger" data-event-delete="${x.id}">حذف</button>
+    </div>
+  </div>`).join("");
+  document.querySelectorAll("[data-event-edit]").forEach(button=>button.onclick=()=>editEvent(Number(button.dataset.eventEdit)));
+  document.querySelectorAll("[data-event-toggle]").forEach(button=>button.onclick=()=>eventAction(Number(button.dataset.eventToggle),"toggle"));
+  document.querySelectorAll("[data-event-delete]").forEach(button=>button.onclick=()=>{if(confirm("حذف الحدث نهائيًا؟"))eventAction(Number(button.dataset.eventDelete),"delete")});
+}
+function editEvent(id){
+  const x=(cmsData.events||[]).find(item=>Number(item.id)===id),f=$("#eventForm");if(!x||!f)return;
+  f.elements.eventId.value=x.id;
+  f.elements.titleAr.value=x.title_ar||"";
+  f.elements.titleEn.value=x.title_en||"";
+  f.elements.descriptionAr.value=x.description_ar||"";
+  f.elements.descriptionEn.value=x.description_en||"";
+  f.elements.locationAr.value=x.location_ar||"";
+  f.elements.locationEn.value=x.location_en||"";
+  f.elements.availability.value=x.availability||"available";
+  f.elements.startDate.value=x.start_date||"";
+  f.elements.endDate.value=x.end_date||"";
+  f.elements.buttonTextAr.value=x.button_text_ar||"اعرف التفاصيل";
+  f.elements.buttonTextEn.value=x.button_text_en||"View Details";
+  f.elements.buttonLink.value=x.button_link||"/contact";
+  $("#eventCancelEdit").classList.remove("hidden");
+  f.scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("#eventCancelEdit")?.addEventListener("click",()=>{
+  const f=$("#eventForm");if(!f)return;
+  f.reset();f.elements.eventId.value="";$("#eventCancelEdit").classList.add("hidden");
+});
+async function eventAction(id,action){
+  const response=await fetch(`/api/admin/events/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action})});
+  if(!response.ok){const data=await response.json().catch(()=>({}));alert(data.error||"تعذر تحديث الحدث.");return}
+  await loadCMS();
+}
+$("#eventForm")?.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const f=event.currentTarget,m=$("#eventMsg");
+  m.textContent="جاري حفظ الحدث...";m.className="form-msg";
+  let imageMediaId="";
+  const file=f.elements.image.files?.[0];
+  if(file){
+    const formData=new FormData();formData.append("kind","event");formData.append("file",file);
+    const mediaResponse=await fetch("/api/admin/media",{method:"POST",body:formData});
+    const mediaData=await mediaResponse.json().catch(()=>({}));
+    if(!mediaResponse.ok){m.textContent=mediaData.error||"تعذر رفع صورة الحدث.";m.className="form-msg err";return}
+    imageMediaId=mediaData.id;
+  }
+  const payload={
+    titleAr:f.elements.titleAr.value,
+    titleEn:f.elements.titleEn.value,
+    descriptionAr:f.elements.descriptionAr.value,
+    descriptionEn:f.elements.descriptionEn.value,
+    locationAr:f.elements.locationAr.value,
+    locationEn:f.elements.locationEn.value,
+    availability:f.elements.availability.value,
+    startDate:f.elements.startDate.value,
+    endDate:f.elements.endDate.value,
+    buttonTextAr:f.elements.buttonTextAr.value,
+    buttonTextEn:f.elements.buttonTextEn.value,
+    buttonLink:f.elements.buttonLink.value,
+    imageMediaId
+  };
+  const id=f.elements.eventId.value;
+  if(id)payload.action="update";
+  const response=await fetch(id?`/api/admin/events/${id}`:"/api/admin/events",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+  const data=await response.json().catch(()=>({}));
+  m.textContent=response.ok?"تم حفظ الحدث ونشر التحديث.":data.error||"تعذر حفظ الحدث.";
+  m.className="form-msg "+(response.ok?"ok":"err");
+  if(response.ok){f.reset();f.elements.eventId.value="";$("#eventCancelEdit").classList.add("hidden");await loadCMS()}
 });
 
 function renderGalleryAdmin(){

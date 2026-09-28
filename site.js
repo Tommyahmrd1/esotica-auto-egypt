@@ -177,7 +177,21 @@ Object.assign(EN,{
   "يمكنك التواصل معنا من صفحة «تواصل معنا» إذا كان لديك استفسار بخصوص البيانات التي أرسلتها عبر الموقع.":"You can contact us through the Contact Us page if you have a question about information you submitted through the website.",
   "تحديث السياسة":"Policy Updates",
   "قد يتم تحديث هذه الصفحة عند إضافة وظائف أو خدمات جديدة للموقع، وسيظهر النص الأحدث هنا.":"This page may be updated when new website features or services are added, and the latest wording will appear here."
-});
+,
+  "العروض والأحداث":"Offers & Events",
+  "العروض":"Offers",
+  "الأحداث":"Events",
+  "تابع أحدث العروض والخدمات والأحداث الموسمية، واعرف المتاح حاليًا قبل التواصل أو الحجز.":"Follow our latest offers, services and seasonal events, and check current availability before booking.",
+  "لا توجد أحداث منشورة حاليًا":"No events are currently published",
+  "ستظهر هنا الخدمات المتنقلة والأحداث الموسمية فور الإعلان عنها.":"Mobile services and seasonal events will appear here as soon as they are announced.",
+  "متاح الآن":"Available Now",
+  "غير متاح حاليًا":"Currently Unavailable",
+  "قريبًا":"Coming Soon",
+  "اعرف التفاصيل":"View Details",
+  "من":"From",
+  "إلى":"To",
+  "فرع التجمع الخامس":"Fifth Settlement Branch",
+  "فرع التجمع الثالث":"Third Settlement Branch"});
 const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
 const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه المكوّن من 17 خانة":"Enter the complete 17-character VIN"};
 function translatePage(lang){
@@ -199,6 +213,7 @@ function translatePage(lang){
   });
   const toggle=document.querySelector("#langToggle");
   if(toggle){toggle.textContent=lang==="en"?"AR":"EN";toggle.setAttribute("aria-label",lang==="en"?"عرض الموقع بالعربية":"View site in English");}
+  if(typeof renderEvents==="function")renderEvents(publicEvents,lang);
   localStorage.setItem("esotica-language",lang);
 }
 function initLanguage(){
@@ -243,9 +258,9 @@ function applyContactDetails(settings={}){
       let links=contact.querySelector(".footer-live-links");
       if(!links){links=document.createElement("div");links.className="footer-live-links";const btn=contact.querySelector(".footer-contact-btn");contact.insertBefore(links,btn||null)}
       const socialLinks=[
-        whatsapp?`<a class="footer-social-icon" target="_blank" rel="noreferrer" href="https://wa.me/${whatsapp}" aria-label="WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.5 4.1 1.6 5.9L0 24l6.5-1.7c1.7.9 3.6 1.4 5.6 1.4 6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.4-8.4Z"/></svg></a>`:"",
+        whatsapp?`<a class="footer-social-icon whatsapp-icon" target="_blank" rel="noreferrer" href="https://wa.me/${whatsapp}" aria-label="WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.5 4.1 1.6 5.9L0 24l6.5-1.7c1.7.9 3.6 1.4 5.6 1.4 6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.4-8.4Z"/></svg></a>`:"",
         instagram?`<a class="footer-social-icon instagram-icon" target="_blank" rel="noreferrer" href="${escHtml(instagram)}" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle class="social-dot" cx="17.4" cy="6.6" r="1"></circle></svg></a>`:"",
-        facebook?`<a class="footer-social-icon" target="_blank" rel="noreferrer" href="${escHtml(facebook)}" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.2 8.2V6.5c0-.8.5-1 1-1h2.6V2.1L14.4 2C11 2 9.8 4 9.8 6.2v2H7v4h2.8V22h4.4v-9.8h3.3l.5-4h-3.8Z"/></svg></a>`:""
+        facebook?`<a class="footer-social-icon facebook-icon" target="_blank" rel="noreferrer" href="${escHtml(facebook)}" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.2 8.2V6.5c0-.8.5-1 1-1h2.6V2.1L14.4 2C11 2 9.8 4 9.8 6.2v2H7v4h2.8V22h4.4v-9.8h3.3l.5-4h-3.8Z"/></svg></a>`:""
       ].join("");
       links.innerHTML=
         (phone.dial?`<a class="footer-phone" dir="ltr" href="tel:${phone.dial}">${escHtml(phone.display)}</a>`:"")+
@@ -260,6 +275,86 @@ function applyContactDetails(settings={}){
     a.href="https://wa.me/"+whatsapp;
   }
 }
+
+let publicEvents=[];
+const EVENT_STATUS_LABELS={
+  available:{ar:"متاح الآن",en:"Available Now"},
+  unavailable:{ar:"غير متاح حاليًا",en:"Currently Unavailable"},
+  coming:{ar:"قريبًا",en:"Coming Soon"}
+};
+function eventDate(value,lang){
+  if(!value)return "";
+  const date=new Date(value+"T12:00:00");
+  if(Number.isNaN(date.getTime()))return escHtml(value);
+  return date.toLocaleDateString(lang==="ar"?"ar-EG":"en-GB",{day:"numeric",month:"long",year:"numeric"});
+}
+function safeEventLink(value){
+  const link=String(value||"/contact").trim();
+  return /^(\/|https?:\/\/)/i.test(link)?link:"/contact";
+}
+function renderEvents(items,lang){
+  const grid=document.querySelector("#eventsGrid");if(!grid)return;
+  const activeLang=lang||document.documentElement.lang||"en";
+  if(!Array.isArray(items)||!items.length){
+    grid.innerHTML=`<div class="empty-offers"><p class="eyebrow">ESOTICA EVENTS</p><h2>${activeLang==="ar"?"لا توجد أحداث منشورة حاليًا":"No events are currently published"}</h2><p>${activeLang==="ar"?"ستظهر هنا الخدمات المتنقلة والأحداث الموسمية فور الإعلان عنها.":"Mobile services and seasonal events will appear here as soon as they are announced."}</p><a class="btn btn-outline" href="/contact">${activeLang==="ar"?"تواصل معنا":"Contact Us"}</a></div>`;
+    return;
+  }
+  grid.innerHTML=items.map(x=>{
+    const status=EVENT_STATUS_LABELS[x.availability]||EVENT_STATUS_LABELS.available;
+    const title=activeLang==="ar"?(x.title_ar||x.title_en):(x.title_en||x.title_ar);
+    const description=activeLang==="ar"?(x.description_ar||x.description_en):(x.description_en||x.description_ar);
+    const location=activeLang==="ar"?(x.location_ar||x.location_en):(x.location_en||x.location_ar);
+    const buttonText=activeLang==="ar"?(x.button_text_ar||"اعرف التفاصيل"):(x.button_text_en||"View Details");
+    const dateParts=[];
+    if(x.start_date)dateParts.push(`${activeLang==="ar"?"من":"From"} ${eventDate(x.start_date,activeLang)}`);
+    if(x.end_date)dateParts.push(`${activeLang==="ar"?"إلى":"To"} ${eventDate(x.end_date,activeLang)}`);
+    const unavailable=x.availability==="unavailable";
+    return `<article class="event-card">
+      ${x.image_media_id?`<div class="event-image"><img src="/api/media/${encodeURIComponent(x.image_media_id)}" alt="${escHtml(title)}" loading="lazy"></div>`:""}
+      <div class="event-content">
+        <div class="event-card-top"><p class="eyebrow">ESOTICA EVENT</p><span class="event-status is-${escHtml(x.availability||"available")}">${escHtml(status[activeLang]||status.en)}</span></div>
+        <h2>${escHtml(title)}</h2>
+        ${description?`<p>${escHtml(description)}</p>`:""}
+        ${location?`<div class="event-meta"><span aria-hidden="true">⌖</span><span>${escHtml(location)}</span></div>`:""}
+        ${dateParts.length?`<div class="event-dates">${dateParts.map(part=>`<span>${part}</span>`).join("")}</div>`:""}
+        ${unavailable?`<span class="btn btn-outline event-cta-disabled" aria-disabled="true">${escHtml(status[activeLang]||status.en)}</span>`:`<a class="btn btn-gold" href="${escHtml(safeEventLink(x.button_link))}">${escHtml(buttonText)}</a>`}
+      </div>
+    </article>`;
+  }).join("");
+}
+async function loadEvents(){
+  const grid=document.querySelector("#eventsGrid");if(!grid)return;
+  try{
+    const response=await fetch("/api/events",{cache:"no-store"});
+    const data=await response.json();
+    if(!response.ok||!Array.isArray(data.events))throw new Error(data.error||"events unavailable");
+    publicEvents=data.events;
+    renderEvents(publicEvents,document.documentElement.lang||"en");
+  }catch(error){console.warn("Events unavailable",error)}
+}
+function initOffersTabs(){
+  const tabs=[...document.querySelectorAll("[data-offers-tab]")];
+  const panels=[...document.querySelectorAll("[data-offers-panel]")];
+  if(!tabs.length)return;
+  const activate=name=>{
+    tabs.forEach(tab=>{
+      const active=tab.dataset.offersTab===name;
+      tab.classList.toggle("is-active",active);
+      tab.setAttribute("aria-selected",String(active));
+      tab.tabIndex=active?0:-1;
+    });
+    panels.forEach(panel=>{
+      const active=panel.dataset.offersPanel===name;
+      panel.classList.toggle("is-active",active);
+      panel.hidden=!active;
+    });
+    if(name==="events")history.replaceState(null,"","#events");
+    else if(location.hash==="#events")history.replaceState(null,"",location.pathname+location.search);
+  };
+  tabs.forEach(tab=>tab.addEventListener("click",()=>activate(tab.dataset.offersTab)));
+  activate(location.hash==="#events"?"events":"offers");
+}
+
 async function loadOffers(){
   const grid=document.querySelector("#offersGrid");if(!grid)return;
   try{
@@ -278,5 +373,7 @@ async function loadOffers(){
   }catch(e){console.warn("Offers unavailable",e)}
 }
 applyContactDetails({});
+initOffersTabs();
 loadSiteContent().finally(initLanguage);
 loadOffers();
+loadEvents();

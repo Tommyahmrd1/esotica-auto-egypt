@@ -16,8 +16,29 @@
   <a class="btn btn-gold nav-cta" href="/booking">احجز الآن</a>
 </header>
 <main>
-  <section class="inner-hero offers-hero"><div class="inner-hero-content"><p class="eyebrow">ESOTICA OFFERS</p><h1>العروض الحالية</h1><p>هنا ستجد أحدث عروض الصيانة والخدمات المتاحة في Esotica Auto.</p></div></section>
-  <section class="section"><div class="offers-grid"><div class="empty-offers"><p class="eyebrow">COMING SOON</p><h2>لا توجد عروض منشورة حاليًا</h2><p>سيتم إضافة العروض الجديدة هنا فور توفرها.</p><a class="btn btn-gold" href="/booking">احجز صيانة</a></div></div></section>
+  <section class="inner-hero offers-hero">
+    <div class="inner-hero-content">
+      <p class="eyebrow">ESOTICA OFFERS &amp; EVENTS</p>
+      <h1>العروض والأحداث</h1>
+      <p>تابع أحدث العروض والخدمات والأحداث الموسمية، واعرف المتاح حاليًا قبل التواصل أو الحجز.</p>
+    </div>
+  </section>
+  <section class="section offers-hub">
+    <div class="offers-tabs" role="tablist" aria-label="العروض والأحداث">
+      <button class="offers-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="offersPanel" data-offers-tab="offers">العروض</button>
+      <button class="offers-tab" type="button" role="tab" aria-selected="false" aria-controls="eventsPanel" data-offers-tab="events">الأحداث</button>
+    </div>
+    <section id="offersPanel" class="offers-panel is-active" role="tabpanel" data-offers-panel="offers">
+      <div class="offers-grid" id="offersGrid">
+        <div class="empty-offers"><p class="eyebrow">COMING SOON</p><h2>لا توجد عروض منشورة حاليًا</h2><p>سيتم إضافة العروض الجديدة هنا فور توفرها.</p><a class="btn btn-gold" href="/booking">احجز صيانة</a></div>
+      </div>
+    </section>
+    <section id="eventsPanel" class="offers-panel" role="tabpanel" data-offers-panel="events" hidden>
+      <div class="events-grid" id="eventsGrid">
+        <div class="empty-offers"><p class="eyebrow">ESOTICA EVENTS</p><h2>لا توجد أحداث منشورة حاليًا</h2><p>ستظهر هنا الخدمات المتنقلة والأحداث الموسمية فور الإعلان عنها.</p><a class="btn btn-outline" href="/contact">تواصل معنا</a></div>
+      </div>
+    </section>
+  </section>
 </main>
 <footer class="site-footer">
   <div class="footer-grid">

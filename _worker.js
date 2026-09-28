@@ -61,6 +61,23 @@ async function initDB(env){
  button_text TEXT NOT NULL DEFAULT 'احجز الآن',
  button_link TEXT NOT NULL DEFAULT '/booking',
  visible INTEGER NOT NULL DEFAULT 1)`,
+`CREATE TABLE IF NOT EXISTS service_events (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ created_at INTEGER NOT NULL,
+ title_ar TEXT NOT NULL,
+ title_en TEXT NOT NULL DEFAULT '',
+ description_ar TEXT NOT NULL DEFAULT '',
+ description_en TEXT NOT NULL DEFAULT '',
+ location_ar TEXT NOT NULL DEFAULT '',
+ location_en TEXT NOT NULL DEFAULT '',
+ availability TEXT NOT NULL DEFAULT 'available',
+ image_media_id TEXT NOT NULL DEFAULT '',
+ start_date TEXT NOT NULL DEFAULT '',
+ end_date TEXT NOT NULL DEFAULT '',
+ button_text_ar TEXT NOT NULL DEFAULT 'اعرف التفاصيل',
+ button_text_en TEXT NOT NULL DEFAULT 'View Details',
+ button_link TEXT NOT NULL DEFAULT '/contact',
+ visible INTEGER NOT NULL DEFAULT 1)`,
 `CREATE TABLE IF NOT EXISTS gallery_items (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  created_at INTEGER NOT NULL,
@@ -135,6 +152,11 @@ async function handleAPI(req,env,url){
    const rows=await env.DB.prepare("SELECT id,title,description,image_media_id,start_date,end_date,button_text,button_link FROM offers WHERE visible=1 AND (start_date='' OR start_date<=?) AND (end_date='' OR end_date>=?) ORDER BY created_at DESC LIMIT 50").bind(today,today).all();
    return json({offers:rows.results||[]});
  }
+ if(p==="/api/events"&&req.method==="GET"){
+   await initDB(env);
+   const rows=await env.DB.prepare("SELECT id,title_ar,title_en,description_ar,description_en,location_ar,location_en,availability,image_media_id,start_date,end_date,button_text_ar,button_text_en,button_link FROM service_events WHERE visible=1 ORDER BY created_at DESC LIMIT 50").all();
+   return json({events:rows.results||[]});
+ }
   const mediaMatch=p.match(/^\/api\/media\/([A-Za-z0-9_-]+)$/);
  if(mediaMatch&&req.method==="GET"){
    await initDB(env);
@@ -190,12 +212,13 @@ async function handleAPI(req,env,url){
    await initDB(env);
    const rows=await env.DB.prepare("SELECT key,value FROM site_settings").all();
    const settings={};for(const row of rows.results||[])settings[row.key]=row.value;
-   const [reviewsRows,offersRows,galleryRows]=await env.DB.batch([
+   const [reviewsRows,offersRows,eventsRows,galleryRows]=await env.DB.batch([
      env.DB.prepare("SELECT * FROM reviews ORDER BY created_at DESC LIMIT 100"),
      env.DB.prepare("SELECT * FROM offers ORDER BY created_at DESC LIMIT 100"),
+     env.DB.prepare("SELECT * FROM service_events ORDER BY created_at DESC LIMIT 100"),
      env.DB.prepare("SELECT * FROM gallery_items ORDER BY sort_order ASC, created_at DESC LIMIT 100")
    ]);
-   return json({settings,reviews:reviewsRows.results||[],offers:offersRows.results||[],gallery:galleryRows.results||[]});
+   return json({settings,reviews:reviewsRows.results||[],offers:offersRows.results||[],events:eventsRows.results||[],gallery:galleryRows.results||[]});
  }
  if(p==="/api/admin/site-settings"&&req.method==="POST"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
@@ -295,6 +318,33 @@ async function handleAPI(req,env,url){
      const imageMediaId=clean(d.imageMediaId,80);
      if(imageMediaId)await env.DB.prepare("UPDATE offers SET title=?,description=?,start_date=?,end_date=?,button_text=?,button_link=?,image_media_id=? WHERE id=?").bind(title,description,startDate,endDate,buttonText,buttonLink,imageMediaId,id).run();
      else await env.DB.prepare("UPDATE offers SET title=?,description=?,start_date=?,end_date=?,button_text=?,button_link=? WHERE id=?").bind(title,description,startDate,endDate,buttonText,buttonLink,id).run();
+   }else return bad("إجراء غير صحيح.");
+   return json({ok:true});
+ }
+ if(p==="/api/admin/events"&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
+   const titleAr=clean(d.titleAr,160),titleEn=clean(d.titleEn,160),descriptionAr=clean(d.descriptionAr,1500),descriptionEn=clean(d.descriptionEn,1500),locationAr=clean(d.locationAr,180),locationEn=clean(d.locationEn,180);
+   const availability=clean(d.availability||"available",20),imageMediaId=clean(d.imageMediaId,80),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonTextAr=clean(d.buttonTextAr||"اعرف التفاصيل",60),buttonTextEn=clean(d.buttonTextEn||"View Details",60),buttonLink=clean(d.buttonLink||"/contact",250);
+   if(!titleAr)return bad("اكتب اسم الحدث بالعربي.");
+   if(!["available","unavailable","coming"].includes(availability))return bad("حالة التوفر غير صحيحة.");
+   await env.DB.prepare("INSERT INTO service_events(created_at,title_ar,title_en,description_ar,description_en,location_ar,location_en,availability,image_media_id,start_date,end_date,button_text_ar,button_text_en,button_link,visible) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)").bind(Date.now(),titleAr,titleEn,descriptionAr,descriptionEn,locationAr,locationEn,availability,imageMediaId,startDate,endDate,buttonTextAr,buttonTextEn,buttonLink).run();
+   return json({ok:true});
+ }
+ const eventAction=p.match(/^\/api\/admin\/events\/(\d+)$/);
+ if(eventAction&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
+   const id=Number(eventAction[1]),action=clean(d.action,30);
+   if(action==="toggle")await env.DB.prepare("UPDATE service_events SET visible=CASE visible WHEN 1 THEN 0 ELSE 1 END WHERE id=?").bind(id).run();
+   else if(action==="delete")await env.DB.prepare("DELETE FROM service_events WHERE id=?").bind(id).run();
+   else if(action==="update"){
+     const titleAr=clean(d.titleAr,160),titleEn=clean(d.titleEn,160),descriptionAr=clean(d.descriptionAr,1500),descriptionEn=clean(d.descriptionEn,1500),locationAr=clean(d.locationAr,180),locationEn=clean(d.locationEn,180);
+     const availability=clean(d.availability||"available",20),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonTextAr=clean(d.buttonTextAr||"اعرف التفاصيل",60),buttonTextEn=clean(d.buttonTextEn||"View Details",60),buttonLink=clean(d.buttonLink||"/contact",250),imageMediaId=clean(d.imageMediaId,80);
+     if(!titleAr)return bad("اكتب اسم الحدث بالعربي.");
+     if(!["available","unavailable","coming"].includes(availability))return bad("حالة التوفر غير صحيحة.");
+     if(imageMediaId)await env.DB.prepare("UPDATE service_events SET title_ar=?,title_en=?,description_ar=?,description_en=?,location_ar=?,location_en=?,availability=?,start_date=?,end_date=?,button_text_ar=?,button_text_en=?,button_link=?,image_media_id=? WHERE id=?").bind(titleAr,titleEn,descriptionAr,descriptionEn,locationAr,locationEn,availability,startDate,endDate,buttonTextAr,buttonTextEn,buttonLink,imageMediaId,id).run();
+     else await env.DB.prepare("UPDATE service_events SET title_ar=?,title_en=?,description_ar=?,description_en=?,location_ar=?,location_en=?,availability=?,start_date=?,end_date=?,button_text_ar=?,button_text_en=?,button_link=? WHERE id=?").bind(titleAr,titleEn,descriptionAr,descriptionEn,locationAr,locationEn,availability,startDate,endDate,buttonTextAr,buttonTextEn,buttonLink,id).run();
    }else return bad("إجراء غير صحيح.");
    return json({ok:true});
  }
