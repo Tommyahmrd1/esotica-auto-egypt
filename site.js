@@ -80,7 +80,7 @@ function initLeadAttribution(){
   if(currentLeadAttribution.type!=="direct"){
     const banner=document.createElement("aside");banner.className=`lead-context is-${currentLeadAttribution.type}`;banner.dataset.leadContext="";banner.setAttribute("role","status");
     banner.innerHTML='<span class="lead-context-mark" aria-hidden="true"></span><div><small>ESOTICA REQUEST SOURCE</small><strong class="lead-context-text"></strong></div>';
-    form.insertAdjacentElement("beforebegin",banner);renderLeadContext();
+    form.prepend(banner);renderLeadContext();
   }
 }
 
