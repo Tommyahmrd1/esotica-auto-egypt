@@ -165,6 +165,15 @@ function filteredAdminRows(){
 function adminDetailsButton(type,id){
   return `<button class="row-action" type="button" data-details-type="${type}" data-details-id="${id}">التفاصيل</button>`;
 }
+const ADMIN_SOURCE_NAMES={offer:"عرض",event:"حدث",warranty:"خدمة الضمان",insurance:"شركات التأمين",service:"خدمة",page:"صفحة",direct:"دخول مباشر"};
+function adminLeadSourceText(row){
+  const type=ADMIN_SOURCE_NAMES[row?.source_type]||(!row?.source_type?"طلب قديم — المصدر غير مسجل":"مصدر آخر");
+  return row?.source_label?`${type} — ${row.source_label}`:type;
+}
+function adminLeadSourceBadge(row){
+  const safeType=Object.hasOwn(ADMIN_SOURCE_NAMES,row?.source_type)?row.source_type:"legacy";
+  return `<span class="lead-source-badge is-${safeType}"><small>مصدر الطلب</small><strong>${esc(adminLeadSourceText(row))}</strong></span>`;
+}
 
 function renderTable(){
  const t=state.tab, rows=filteredAdminRows();
@@ -172,14 +181,14 @@ function renderTable(){
  if(!rows.length){$("#tableWrap").innerHTML='<div class="empty">لا توجد نتائج مطابقة.</div>';return}
  let head="", body="";
  if(t==="bookings"){
-  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>الفرع</th><th>الموعد</th><th>التفاصيل</th><th>الحالة</th><th></th>";
-  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td>${esc(x.branch)}</td><td>${esc(x.preferred_date)}</td><td>${esc(x.details)}</td><td>${statusSelect("bookings",x.id,x.status)}</td><td>${adminDetailsButton("bookings",x.id)}</td></tr>`).join("");
+  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>الفرع</th><th>الموعد</th><th>التفاصيل</th><th>مصدر الطلب</th><th>الحالة</th><th></th>";
+  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td>${esc(x.branch)}</td><td>${esc(x.preferred_date)}</td><td>${esc(x.details)}</td><td>${adminLeadSourceBadge(x)}</td><td>${statusSelect("bookings",x.id,x.status)}</td><td>${adminDetailsButton("bookings",x.id)}</td></tr>`).join("");
  }else if(t==="parts"){
-  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>VIN</th><th>القطعة</th><th>الحالة</th><th></th>";
-  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td dir="ltr">${esc(x.vin)}</td><td>${esc(x.details)}<br><small>${esc(x.part_code||"")}</small></td><td>${statusSelect("parts",x.id,x.status)}</td><td>${adminDetailsButton("parts",x.id)}</td></tr>`).join("");
+  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>VIN</th><th>القطعة</th><th>مصدر الطلب</th><th>الحالة</th><th></th>";
+  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td dir="ltr">${esc(x.vin)}</td><td>${esc(x.details)}<br><small>${esc(x.part_code||"")}</small></td><td>${adminLeadSourceBadge(x)}</td><td>${statusSelect("parts",x.id,x.status)}</td><td>${adminDetailsButton("parts",x.id)}</td></tr>`).join("");
  }else{
-  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>الموضوع</th><th>الرسالة</th><th>الحالة</th><th></th>";
-  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.subject)}</td><td>${esc(x.message)}</td><td>${statusSelect("contacts",x.id,x.status)}</td><td>${adminDetailsButton("contacts",x.id)}</td></tr>`).join("");
+  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>الموضوع</th><th>الرسالة</th><th>مصدر الطلب</th><th>الحالة</th><th></th>";
+  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.subject)}</td><td>${esc(x.message)}</td><td>${adminLeadSourceBadge(x)}</td><td>${statusSelect("contacts",x.id,x.status)}</td><td>${adminDetailsButton("contacts",x.id)}</td></tr>`).join("");
  }
  $("#tableWrap").innerHTML=`<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
  document.querySelectorAll(".status").forEach(s=>s.addEventListener("change",async e=>{
@@ -199,12 +208,12 @@ function openAdminDetails(type,id){
 
 function exportFilteredCSV(){
   const rows=filteredAdminRows();if(!rows.length){alert("لا توجد بيانات للتصدير.");return}
-  const keys=state.tab==="bookings"?["id","created_at","name","phone","car_model","year","branch","preferred_date","details","status"]:
-    state.tab==="parts"?["id","created_at","name","phone","car_model","year","vin","part_code","quantity","details","status"]:
-    ["id","created_at","name","phone","subject","message","status"];
-  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة",year:"السنة",branch:"الفرع",preferred_date:"الموعد",details:"التفاصيل",status:"الحالة",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة"};
+  const keys=state.tab==="bookings"?["id","created_at","name","phone","car_model","year","branch","preferred_date","details","source_summary","source_id","source_page","status"]:
+    state.tab==="parts"?["id","created_at","name","phone","car_model","year","vin","part_code","quantity","details","source_summary","source_id","source_page","status"]:
+    ["id","created_at","name","phone","subject","message","source_summary","source_id","source_page","status"];
+  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة",year:"السنة",branch:"الفرع",preferred_date:"الموعد",details:"التفاصيل",status:"الحالة",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",source_summary:"مصدر الطلب",source_id:"رقم العرض / الحدث",source_page:"الصفحة الأصلية"};
   const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
-  const csv=[keys.map(k=>q(labels[k]||k)).join(","),...rows.map(r=>keys.map(k=>q(k==="created_at"?date(r[k]):r[k])).join(","))].join("\r\n");
+  const csv=[keys.map(k=>q(labels[k]||k)).join(","),...rows.map(r=>keys.map(k=>q(k==="created_at"?date(r[k]):k==="source_summary"?adminLeadSourceText(r):r[k])).join(","))].join("\r\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`esotica-${state.tab}-${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
@@ -270,9 +279,9 @@ async function trashAction(key,action){
 
 openAdminDetails=function(type,id){
   const row=(state.data?.[type]||[]).find(x=>Number(x.id)===Number(id));if(!row)return;
-  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة / الموديل",year:"السنة",branch:"الفرع",preferred_date:"الموعد المفضل",details:"التفاصيل",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",status:"الحالة"};
+  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة / الموديل",year:"السنة",branch:"الفرع",preferred_date:"الموعد المفضل",details:"التفاصيل",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",status:"الحالة",source_type:"نوع المصدر",source_label:"اسم العرض / الحدث / الخدمة",source_id:"رقم العرض / الحدث",source_page:"الصفحة الأصلية"};
   const body=$("#adminModalBody");
-  body.innerHTML=Object.entries(row).filter(([k])=>labels[k]).map(([k,v])=>`<div class="detail-row"><span>${labels[k]}</span><strong ${["phone","vin"].includes(k)?'dir="ltr"':""}>${esc(k==="created_at"?date(v):v)}</strong></div>`).join("")+
+  body.innerHTML=`<div class="request-source-panel"><small>مصدر الطلب</small><strong>${esc(adminLeadSourceText(row))}</strong>${row.source_page?`<span dir="ltr">${esc(row.source_page)}</span>`:""}</div>`+Object.entries(row).filter(([k])=>labels[k]).map(([k,v])=>`<div class="detail-row"><span>${labels[k]}</span><strong ${["phone","vin","source_page"].includes(k)?'dir="ltr"':""}>${esc(k==="created_at"?date(v):v)}</strong></div>`).join("")+
     `<div class="request-note-box"><label>ملاحظة إدارية<textarea id="requestAdminNote" rows="4" maxlength="3000">${esc(row.admin_note||"")}</textarea></label><p id="requestNoteMsg" class="form-msg"></p></div>
      <div class="modal-actions"><button id="saveRequestNote" class="tool-btn tool-primary" type="button">حفظ الملاحظة</button><button id="deleteRequest" class="tool-btn danger" type="button">نقل للمحذوفات</button></div>`;
   $("#adminModal").classList.remove("hidden");

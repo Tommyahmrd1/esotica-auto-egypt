@@ -40,3 +40,12 @@
 .admin-empty-state{display:grid;gap:5px;padding:18px;border:1px dashed var(--line);border-radius:12px;color:#aeb3ad}
 .admin-empty-state strong{color:#f2f3ef}
 .event-admin-item:not(:has(>img)){grid-template-columns:1fr}
+
+/* Request source attribution */
+.lead-source-badge{display:grid;gap:4px;min-width:150px;max-width:230px;padding:9px 11px;border:1px solid rgba(200,170,112,.3);border-radius:11px;background:rgba(200,170,112,.08)}
+.lead-source-badge small{color:#9da29c;font-size:9px;font-weight:700;letter-spacing:.08em}.lead-source-badge strong{color:#ead39e;font-size:12px;line-height:1.55;word-break:break-word}
+.lead-source-badge.is-event{border-color:rgba(111,177,255,.35);background:rgba(70,130,200,.1)}.lead-source-badge.is-event strong{color:#b8d8ff}
+.lead-source-badge.is-warranty,.lead-source-badge.is-insurance{border-color:rgba(123,211,166,.32);background:rgba(75,160,116,.09)}.lead-source-badge.is-warranty strong,.lead-source-badge.is-insurance strong{color:#afe6c8}
+.lead-source-badge.is-legacy{opacity:.68}
+.request-source-panel{display:grid;gap:5px;margin:0 0 18px;padding:16px 18px;border:1px solid rgba(200,170,112,.35);border-radius:14px;background:linear-gradient(135deg,rgba(200,170,112,.14),rgba(17,20,17,.55))}
+.request-source-panel small{color:#aeb2ac;font-size:10px}.request-source-panel strong{color:#ead39e;font-size:17px}.request-source-panel span{color:#8e938d;font-size:11px;direction:ltr;text-align:right}

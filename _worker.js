@@ -10,6 +10,8 @@ async function initDB(env){
  created_at INTEGER NOT NULL,
  name TEXT NOT NULL, phone TEXT NOT NULL, car_model TEXT NOT NULL, year TEXT NOT NULL,
  branch TEXT NOT NULL, preferred_date TEXT NOT NULL, details TEXT NOT NULL DEFAULT '',
+ source_type TEXT NOT NULL DEFAULT '', source_label TEXT NOT NULL DEFAULT '',
+ source_id TEXT NOT NULL DEFAULT '', source_page TEXT NOT NULL DEFAULT '',
  status TEXT NOT NULL DEFAULT 'new')`,
 `CREATE TABLE IF NOT EXISTS parts_requests (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,11 +19,15 @@ async function initDB(env){
  request_type TEXT NOT NULL DEFAULT 'inquiry',
  name TEXT NOT NULL, phone TEXT NOT NULL, car_model TEXT NOT NULL, year TEXT NOT NULL,
  vin TEXT NOT NULL, part_code TEXT NOT NULL DEFAULT '', quantity INTEGER NOT NULL DEFAULT 1,
- details TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new')`,
+ details TEXT NOT NULL, source_type TEXT NOT NULL DEFAULT '', source_label TEXT NOT NULL DEFAULT '',
+ source_id TEXT NOT NULL DEFAULT '', source_page TEXT NOT NULL DEFAULT '',
+ status TEXT NOT NULL DEFAULT 'new')`,
 `CREATE TABLE IF NOT EXISTS contact_requests (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  created_at INTEGER NOT NULL,
  name TEXT NOT NULL, phone TEXT NOT NULL, subject TEXT NOT NULL, message TEXT NOT NULL,
+ source_type TEXT NOT NULL DEFAULT '', source_label TEXT NOT NULL DEFAULT '',
+ source_id TEXT NOT NULL DEFAULT '', source_page TEXT NOT NULL DEFAULT '',
  status TEXT NOT NULL DEFAULT 'new')`,
 `CREATE TABLE IF NOT EXISTS site_settings (
  key TEXT PRIMARY KEY,
@@ -87,8 +93,26 @@ async function initDB(env){
  sort_order INTEGER NOT NULL DEFAULT 0)`
   ];
   await env.DB.batch(sql.map(s=>env.DB.prepare(s)));
+  const leadColumns=[
+    ["source_type","TEXT NOT NULL DEFAULT ''"],
+    ["source_label","TEXT NOT NULL DEFAULT ''"],
+    ["source_id","TEXT NOT NULL DEFAULT ''"],
+    ["source_page","TEXT NOT NULL DEFAULT ''"]
+  ];
+  for(const table of ["bookings","parts_requests","contact_requests"]){
+    const info=await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+    const existing=new Set((info.results||[]).map(row=>row.name));
+    for(const [column,definition] of leadColumns){
+      if(!existing.has(column)){try{await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run()}catch(error){if(!String(error?.message||error).toLowerCase().includes("duplicate column"))throw error}}
+    }
+  }
 }
 function clean(v,max=500){return String(v??"").trim().slice(0,max)}
+function leadSource(d){
+ const allowed=new Set(["offer","event","warranty","insurance","service","page","direct"]);
+ const rawType=clean(d?.sourceType,30);
+ return {type:allowed.has(rawType)?rawType:"direct",label:clean(d?.sourceLabel,160),id:clean(d?.sourceId,80),page:clean(d?.sourcePage,220)};
+}
 function validPhone(v){return /^[0-9+\s()-]{8,20}$/.test(v)}
 function validYear(v){return /^\d{4}$/.test(v)&&Number(v)>=1980&&Number(v)<=2100}
 function cairoDateParts(){
@@ -167,24 +191,24 @@ async function handleAPI(req,env,url){
 
  if(p==="/api/booking"&&req.method==="POST"){
    await initDB(env); const d=await readJSON(req); if(!d)return bad("بيانات غير صحيحة.");
-   const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),branch=clean(d.branch,100),preferredDate=clean(d.preferredDate,20),details=clean(d.details,700);
+   const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),branch=clean(d.branch,100),preferredDate=clean(d.preferredDate,20),details=clean(d.details,700),source=leadSource(d);
    if(!name||!validPhone(phone)||!carModel||!validYear(year)||!branch||!preferredDate)return bad("راجع البيانات المطلوبة ورقم الهاتف وسنة الصنع.");
    const dateError=validateBookingDate(preferredDate);if(dateError)return bad(dateError);
-   await env.DB.prepare("INSERT INTO bookings(created_at,name,phone,car_model,year,branch,preferred_date,details,status) VALUES(?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,carModel,year,branch,preferredDate,details,"new").run();
+   await env.DB.prepare("INSERT INTO bookings(created_at,name,phone,car_model,year,branch,preferred_date,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,carModel,year,branch,preferredDate,details,source.type,source.label,source.id,source.page,"new").run();
    return json({message:"تم استلام طلب الحجز. سيتواصل معك فريق Esotica لتأكيد الموعد."});
  }
  if(p==="/api/parts"&&req.method==="POST"){
    await initDB(env); const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
-   const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),vin=clean(d.vin,17).toUpperCase(),partCode=clean(d.partCode,60),details=clean(d.details,700),quantity=Math.min(20,Math.max(1,Number(d.quantity)||1));
+   const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),vin=clean(d.vin,17).toUpperCase(),partCode=clean(d.partCode,60),details=clean(d.details,700),quantity=Math.min(20,Math.max(1,Number(d.quantity)||1)),source=leadSource(d);
    if(!name||!validPhone(phone)||!carModel||!validYear(year)||!(/^([A-HJ-NPR-Z0-9]{7}|[A-HJ-NPR-Z0-9]{17})$/.test(vin))||!details)return bad("راجع البيانات. رقم الشاسيه يجب أن يكون 7 أو 17 خانة صحيحة.");
-   await env.DB.prepare("INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,status) VALUES(?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,"new").run();
+   await env.DB.prepare("INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new").run();
    return json({message:"تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر."});
  }
  if(p==="/api/contact"&&req.method==="POST"){
    await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
-   const name=clean(d.name,80),phone=clean(d.phone,20),subject=clean(d.subject,120),message=clean(d.message,900);
+   const name=clean(d.name,80),phone=clean(d.phone,20),subject=clean(d.subject,120),message=clean(d.message,900),source=leadSource(d);
    if(!name||!validPhone(phone)||!subject||!message)return bad("راجع البيانات المطلوبة.");
-   await env.DB.prepare("INSERT INTO contact_requests(created_at,name,phone,subject,message,status) VALUES(?,?,?,?,?,?)").bind(Date.now(),name,phone,subject,message,"new").run();
+   await env.DB.prepare("INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new").run();
    return json({message:"تم استلام رسالتك. سيتواصل معك فريق Esotica."});
  }
 

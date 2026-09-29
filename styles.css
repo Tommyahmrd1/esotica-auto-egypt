@@ -284,3 +284,10 @@ html[dir="rtl"] .whatsapp-float{right:auto;left:22px}
   .warranty-feature,.insurance-process article{min-height:0}
   .warranty-note,.insurance-partners{align-items:flex-start;flex-direction:column;padding:23px}
 }
+
+/* Request source context */
+.lead-context{display:flex;align-items:flex-start;gap:14px;margin:0 0 18px;padding:16px 18px;border:1px solid rgba(200,170,112,.34);border-radius:16px;background:linear-gradient(135deg,rgba(200,170,112,.12),rgba(17,20,17,.78));box-shadow:0 14px 36px rgba(0,0,0,.16)}
+.lead-context-mark{flex:0 0 10px;width:10px;height:10px;margin-top:9px;border-radius:50%;background:var(--gold2);box-shadow:0 0 0 6px rgba(200,170,112,.12)}
+.lead-context>div{display:grid;gap:2px}.lead-context small{color:var(--gold);font-size:9px;font-weight:800;letter-spacing:.16em}.lead-context strong{color:#f7f5ef;font-size:14px;line-height:1.65}
+html[dir="ltr"] .lead-context{text-align:left}
+@media(max-width:600px){.lead-context{padding:14px 15px;border-radius:14px}.lead-context strong{font-size:13px}}

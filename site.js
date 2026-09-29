@@ -20,11 +20,77 @@ const ESOTICA_CONTACT_DEFAULTS={
   instagram:"https://www.instagram.com/esoticaauto/",
   email:""
 };
+const TRACKED_LEAD_PATHS=new Set(["/booking","/contact","/parts"]);
+const LEAD_SOURCE_TYPES=new Set(["offer","event","warranty","insurance","service","page","direct"]);
+const PAGE_SOURCE_LABELS={home:"الصفحة الرئيسية",services:"صفحة الخدمات",offers:"صفحة العروض والأحداث",branches:"صفحة الفروع",about:"صفحة من نحن","warranty-insurance":"صفحة الضمان والتأمين",booking:"صفحة الحجز",parts:"صفحة قطع الغيار",contact:"صفحة التواصل"};
+function leadValue(value,max=160){return String(value||"").trim().slice(0,max)}
+function trackedInternalLink(raw,type,label,id=""){
+  const value=String(raw||"").trim()||"/contact";
+  try{
+    const url=new URL(value,location.origin);
+    const cleanPath=url.pathname.replace(/\.html$/,"");
+    if(url.origin!==location.origin||!TRACKED_LEAD_PATHS.has(cleanPath))return value;
+    if(!url.searchParams.has("source_type"))url.searchParams.set("source_type",LEAD_SOURCE_TYPES.has(type)?type:"page");
+    if(label&&!url.searchParams.has("source_label"))url.searchParams.set("source_label",leadValue(label));
+    if(id!==""&&!url.searchParams.has("source_id"))url.searchParams.set("source_id",leadValue(id,80));
+    if(!url.searchParams.has("source_page"))url.searchParams.set("source_page",location.pathname);
+    return `${url.pathname}${url.search}${url.hash}`;
+  }catch{return value}
+}
+function readLeadAttribution(){
+  const params=new URLSearchParams(location.search);
+  const rawType=leadValue(params.get("source_type"),30);
+  const type=LEAD_SOURCE_TYPES.has(rawType)?rawType:"direct";
+  return {type,label:leadValue(params.get("source_label")),id:leadValue(params.get("source_id"),80),page:leadValue(params.get("source_page"),220)};
+}
+const currentLeadAttribution=readLeadAttribution();
+function initTrackedLeadLinks(){
+  document.querySelectorAll("a[href]").forEach(link=>{
+    const raw=link.getAttribute("href")||"";
+    try{
+      const url=new URL(raw,location.origin),cleanPath=url.pathname.replace(/\.html$/,"");
+      if(url.origin!==location.origin||!TRACKED_LEAD_PATHS.has(cleanPath)||url.searchParams.has("source_type"))return;
+      const card=link.closest("article,.service-card,.location-card,.info-card");
+      const cardTitle=leadValue(card?.querySelector("h1,h2,h3")?.textContent);
+      const type=cardTitle?"service":"page";
+      const label=cardTitle||PAGE_SOURCE_LABELS[pageName]||`صفحة ${pageName}`;
+      link.setAttribute("href",trackedInternalLink(raw,type,label));
+    }catch{}
+  });
+}
+function leadContextText(lang){
+  const ar=lang==="ar";
+  const names={offer:ar?"عرض":"Offer",event:ar?"حدث":"Event",warranty:ar?"خدمة الضمان":"Warranty service",insurance:ar?"شركات التأمين":"Insurance partners",service:ar?"خدمة":"Service",page:ar?"صفحة":"Page",direct:ar?"دخول مباشر":"Direct visit"};
+  const label=currentLeadAttribution.label||names[currentLeadAttribution.type]||names.direct;
+  return ar?`سيتم تسجيل طلبك من خلال ${names[currentLeadAttribution.type]||"المصدر"}: ${label}`:`Your request will be linked to ${names[currentLeadAttribution.type]||"source"}: ${label}`;
+}
+function renderLeadContext(){
+  const banner=document.querySelector("[data-lead-context]");
+  if(!banner)return;
+  const text=banner.querySelector(".lead-context-text");if(text)text.textContent=leadContextText(document.documentElement.lang||"en");
+}
+function initLeadAttribution(){
+  const form=document.querySelector("#bookingForm,#partsForm,#contactForm");if(!form)return;
+  const fields={sourceType:currentLeadAttribution.type,sourceLabel:currentLeadAttribution.label,sourceId:currentLeadAttribution.id,sourcePage:currentLeadAttribution.page||location.pathname};
+  Object.entries(fields).forEach(([name,value])=>{
+    let input=form.elements[name];
+    if(!input){input=document.createElement("input");input.type="hidden";input.name=name;form.appendChild(input)}
+    input.value=value;input.defaultValue=value;
+  });
+  if(currentLeadAttribution.type!=="direct"){
+    const banner=document.createElement("aside");banner.className=`lead-context is-${currentLeadAttribution.type}`;banner.dataset.leadContext="";banner.setAttribute("role","status");
+    banner.innerHTML='<span class="lead-context-mark" aria-hidden="true"></span><div><small>ESOTICA REQUEST SOURCE</small><strong class="lead-context-text"></strong></div>';
+    form.insertAdjacentElement("beforebegin",banner);renderLeadContext();
+  }
+}
+
 
 document.body.classList.add(`page-${pageName}`);
 const heroVideo=document.querySelector(".hero-video-main");
 const heroSoundToggle=document.querySelector("#heroSoundToggle");
 const heroMobileQuery=window.matchMedia("(max-width: 768px)");
+let heroSoundChoice=null;
+let heroAutoplayMuted=false;
 function updateHeroSoundButton(){
   if(!heroSoundToggle||!heroVideo)return;
   const muted=heroVideo.muted;
@@ -34,6 +100,21 @@ function updateHeroSoundButton(){
   heroSoundToggle.setAttribute("aria-pressed",String(!muted));
   heroSoundToggle.setAttribute("aria-label",label);
   const text=heroSoundToggle.querySelector(".hero-sound-label");if(text)text.textContent=label;
+}
+async function playHeroVideo(requestSound=true){
+  if(!heroVideo)return;
+  const wantsSound=heroSoundChoice==="muted"?false:(heroSoundChoice==="sound"?true:requestSound);
+  heroVideo.muted=!wantsSound;
+  if(wantsSound)heroVideo.volume=1;
+  try{
+    await heroVideo.play();heroAutoplayMuted=false;
+  }catch{
+    if(wantsSound){
+      heroVideo.muted=true;heroAutoplayMuted=true;
+      try{await heroVideo.play()}catch{}
+    }
+  }
+  updateHeroSoundButton();
 }
 function loadResponsiveHeroVideo(){
   if(!heroVideo)return;
@@ -46,10 +127,15 @@ function loadResponsiveHeroVideo(){
   heroVideo.classList.remove("is-fallback");
   heroVideo.src=target;
   heroVideo.load();
-  heroVideo.play().catch(()=>{});
+  void playHeroVideo(heroSoundChoice!=="muted"&&!heroAutoplayMuted);
+}
+function unlockHeroSound(event){
+  if(!heroVideo||!heroAutoplayMuted||heroSoundChoice!==null||event?.target?.closest?.("#heroSoundToggle"))return;
+  heroVideo.muted=false;heroVideo.volume=1;
+  heroVideo.play().then(()=>{heroAutoplayMuted=false;updateHeroSoundButton()}).catch(()=>{heroVideo.muted=true;updateHeroSoundButton()});
 }
 if(heroVideo){
-  heroVideo.muted=true;
+  heroVideo.muted=false;heroVideo.defaultMuted=false;heroVideo.volume=1;
   heroVideo.addEventListener("error",()=>{
     const fallback=heroVideo.dataset.fallbackSrc;
     if(!fallback||heroVideo.dataset.fallbackApplied==="true")return;
@@ -58,12 +144,14 @@ if(heroVideo){
     heroVideo.classList.add("is-fallback");
     heroVideo.src=fallback;
     heroVideo.load();
-    heroVideo.play().catch(()=>{});
+    void playHeroVideo(heroSoundChoice==="sound");
   });
-  heroVideo.addEventListener("canplay",()=>heroVideo.play().catch(()=>{}));
-  heroVideo.addEventListener("ended",()=>{heroVideo.currentTime=0;heroVideo.play().catch(()=>{})});
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&heroVideo.paused)heroVideo.play().catch(()=>{})});
-  window.setInterval(()=>{if(heroVideo.paused&&!document.hidden)heroVideo.play().catch(()=>{})},1500);
+  heroVideo.addEventListener("canplay",()=>{if(heroVideo.paused)void playHeroVideo(heroSoundChoice==="sound"||(!heroAutoplayMuted&&heroSoundChoice!=="muted"))});
+  heroVideo.addEventListener("ended",()=>{heroVideo.currentTime=0;void heroVideo.play().catch(()=>{})});
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&heroVideo.paused)void heroVideo.play().catch(()=>{})});
+  window.setInterval(()=>{if(heroVideo.paused&&!document.hidden)void heroVideo.play().catch(()=>{})},1500);
+  document.addEventListener("pointerdown",unlockHeroSound,{once:true,capture:true});
+  document.addEventListener("keydown",unlockHeroSound,{once:true,capture:true});
   if(heroMobileQuery.addEventListener)heroMobileQuery.addEventListener("change",loadResponsiveHeroVideo);
   else heroMobileQuery.addListener(loadResponsiveHeroVideo);
   loadResponsiveHeroVideo();
@@ -71,9 +159,11 @@ if(heroVideo){
 }
 heroSoundToggle?.addEventListener("click",()=>{
   if(!heroVideo)return;
-  heroVideo.muted=!heroVideo.muted;
-  if(!heroVideo.muted)heroVideo.volume=1;
-  heroVideo.play().catch(()=>{heroVideo.muted=true;updateHeroSoundButton()});
+  const wantsSound=heroVideo.muted;
+  heroSoundChoice=wantsSound?"sound":"muted";
+  heroVideo.muted=!wantsSound;
+  if(wantsSound)heroVideo.volume=1;
+  heroVideo.play().then(()=>{heroAutoplayMuted=false;updateHeroSoundButton()}).catch(()=>{heroVideo.muted=true;heroAutoplayMuted=true;updateHeroSoundButton()});
   updateHeroSoundButton();
 });
 $("#menuBtn")?.addEventListener("click",()=>$("#navLinks").classList.toggle("open"));
@@ -294,6 +384,7 @@ function translatePage(lang){
   if(toggle){toggle.textContent=lang==="en"?"AR":"EN";toggle.setAttribute("aria-label",lang==="en"?"عرض الموقع بالعربية":"View site in English");}
   if(typeof renderEvents==="function")renderEvents(publicEvents,lang);
   if(typeof updateHeroSoundButton==="function")updateHeroSoundButton();
+  if(typeof renderLeadContext==="function")renderLeadContext();
   localStorage.setItem("esotica-language",lang);
 }
 function initLanguage(){
@@ -397,7 +488,7 @@ function renderEvents(items,lang){
         ${description?`<p>${escHtml(description)}</p>`:""}
         ${location?`<div class="event-meta"><span aria-hidden="true">⌖</span><span>${escHtml(location)}</span></div>`:""}
         ${dateParts.length?`<div class="event-dates">${dateParts.map(part=>`<span>${part}</span>`).join("")}</div>`:""}
-        ${unavailable?`<span class="btn btn-outline event-cta-disabled" aria-disabled="true">${escHtml(status[activeLang]||status.en)}</span>`:`<a class="btn btn-gold" href="${escHtml(safeEventLink(x.button_link))}">${escHtml(buttonText)}</a>`}
+        ${unavailable?`<span class="btn btn-outline event-cta-disabled" aria-disabled="true">${escHtml(status[activeLang]||status.en)}</span>`:`<a class="btn btn-gold" href="${escHtml(trackedInternalLink(safeEventLink(x.button_link),"event",title,x.id))}">${escHtml(buttonText)}</a>`}
       </div>
     </article>`;
   }).join("");
@@ -447,7 +538,7 @@ async function loadOffers(){
         <h2>${escHtml(x.title)}</h2>
         <p>${escHtml(x.description||"")}</p>
         ${x.end_date?`<div class="offer-dates">متاح حتى ${escHtml(x.end_date)}</div>`:""}
-        <a class="btn btn-gold" href="${escHtml(x.button_link||"/booking")}">${escHtml(x.button_text||"احجز الآن")}</a>
+        <a class="btn btn-gold" href="${escHtml(trackedInternalLink(x.button_link||"/booking","offer",x.title,x.id))}">${escHtml(x.button_text||"احجز الآن")}</a>
       </div>
     </article>`).join("");
   }catch(e){console.warn("Offers unavailable",e)}
@@ -477,6 +568,8 @@ function initWarrantyTabs(){
 }
 
 applyContactDetails({});
+initTrackedLeadLinks();
+initLeadAttribution();
 initOffersTabs();
 initWarrantyTabs();
 loadSiteContent().finally(initLanguage);
