@@ -75,7 +75,7 @@ function initLeadAttribution(){
   Object.entries(fields).forEach(([name,value])=>{
     let input=form.elements[name];
     if(!input){input=document.createElement("input");input.type="hidden";input.name=name;form.appendChild(input)}
-    input.value=value;input.defaultValue=value;
+    input.defaultValue=value;input.setAttribute("value",value);input.value=value;
   });
   if(currentLeadAttribution.type!=="direct"){
     const banner=document.createElement("aside");banner.className=`lead-context is-${currentLeadAttribution.type}`;banner.dataset.leadContext="";banner.setAttribute("role","status");
@@ -175,6 +175,7 @@ async function sendForm(form,url,msgEl){
   msg(msgEl,"جاري الإرسال...",true);
   try{
     const data=Object.fromEntries(new FormData(form).entries());
+    Object.assign(data,{sourceType:currentLeadAttribution.type,sourceLabel:currentLeadAttribution.label,sourceId:currentLeadAttribution.id,sourcePage:currentLeadAttribution.page||location.pathname});
     if(data.quantity) data.quantity=Number(data.quantity);
     const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data)});
     const j=await r.json().catch(()=>({}));
