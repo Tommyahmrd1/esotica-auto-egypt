@@ -21,8 +21,7 @@ const ESOTICA_CONTACT_DEFAULTS={
   email:""
 };
 const TRACKED_LEAD_PATHS=new Set(["/booking","/contact","/parts"]);
-const LEAD_SOURCE_TYPES=new Set(["offer","event","warranty","insurance","service","page","direct"]);
-const PAGE_SOURCE_LABELS={home:"الصفحة الرئيسية",services:"صفحة الخدمات",offers:"صفحة العروض والأحداث",branches:"صفحة الفروع",about:"صفحة من نحن","warranty-insurance":"صفحة الضمان والتأمين",booking:"صفحة الحجز",parts:"صفحة قطع الغيار",contact:"صفحة التواصل"};
+const LEAD_SOURCE_TYPES=new Set(["offer","event","warranty","insurance","direct"]);
 function leadValue(value,max=160){return String(value||"").trim().slice(0,max)}
 function trackedInternalLink(raw,type,label,id=""){
   const value=String(raw||"").trim()||"/contact";
@@ -30,7 +29,7 @@ function trackedInternalLink(raw,type,label,id=""){
     const url=new URL(value,location.origin);
     const cleanPath=url.pathname.replace(/\.html$/,"");
     if(url.origin!==location.origin||!TRACKED_LEAD_PATHS.has(cleanPath))return value;
-    if(!url.searchParams.has("source_type"))url.searchParams.set("source_type",LEAD_SOURCE_TYPES.has(type)?type:"page");
+    if(!url.searchParams.has("source_type"))url.searchParams.set("source_type",LEAD_SOURCE_TYPES.has(type)?type:"direct");
     if(label&&!url.searchParams.has("source_label"))url.searchParams.set("source_label",leadValue(label));
     if(id!==""&&!url.searchParams.has("source_id"))url.searchParams.set("source_id",leadValue(id,80));
     if(!url.searchParams.has("source_page"))url.searchParams.set("source_page",location.pathname);
@@ -41,26 +40,13 @@ function readLeadAttribution(){
   const params=new URLSearchParams(location.search);
   const rawType=leadValue(params.get("source_type"),30);
   const type=LEAD_SOURCE_TYPES.has(rawType)?rawType:"direct";
+  if(type==="direct")return {type:"direct",label:"",id:"",page:""};
   return {type,label:leadValue(params.get("source_label")),id:leadValue(params.get("source_id"),80),page:leadValue(params.get("source_page"),220)};
 }
 const currentLeadAttribution=readLeadAttribution();
-function initTrackedLeadLinks(){
-  document.querySelectorAll("a[href]").forEach(link=>{
-    const raw=link.getAttribute("href")||"";
-    try{
-      const url=new URL(raw,location.origin),cleanPath=url.pathname.replace(/\.html$/,"");
-      if(url.origin!==location.origin||!TRACKED_LEAD_PATHS.has(cleanPath)||url.searchParams.has("source_type"))return;
-      const card=link.closest("article,.service-card,.location-card,.info-card");
-      const cardTitle=leadValue(card?.querySelector("h1,h2,h3")?.textContent);
-      const type=cardTitle?"service":"page";
-      const label=cardTitle||PAGE_SOURCE_LABELS[pageName]||`صفحة ${pageName}`;
-      link.setAttribute("href",trackedInternalLink(raw,type,label));
-    }catch{}
-  });
-}
 function leadContextText(lang){
   const ar=lang==="ar";
-  const names={offer:ar?"عرض":"Offer",event:ar?"حدث":"Event",warranty:ar?"خدمة الضمان":"Warranty service",insurance:ar?"شركات التأمين":"Insurance partners",service:ar?"خدمة":"Service",page:ar?"صفحة":"Page",direct:ar?"دخول مباشر":"Direct visit"};
+  const names={offer:ar?"عرض":"Offer",event:ar?"حدث":"Event",warranty:ar?"خدمة الضمان":"Warranty service",insurance:ar?"شركات التأمين":"Insurance partners",direct:ar?"دخول مباشر":"Direct visit"};
   const label=currentLeadAttribution.label||names[currentLeadAttribution.type]||names.direct;
   return ar?`سيتم تسجيل طلبك من خلال ${names[currentLeadAttribution.type]||"المصدر"}: ${label}`:`Your request will be linked to ${names[currentLeadAttribution.type]||"source"}: ${label}`;
 }
@@ -569,7 +555,6 @@ function initWarrantyTabs(){
 }
 
 applyContactDetails({});
-initTrackedLeadLinks();
 initLeadAttribution();
 initOffersTabs();
 initWarrantyTabs();

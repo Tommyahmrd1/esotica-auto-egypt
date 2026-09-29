@@ -109,9 +109,10 @@ async function initDB(env){
 }
 function clean(v,max=500){return String(v??"").trim().slice(0,max)}
 function leadSource(d){
- const allowed=new Set(["offer","event","warranty","insurance","service","page","direct"]);
- const rawType=clean(d?.sourceType,30);
- return {type:allowed.has(rawType)?rawType:"direct",label:clean(d?.sourceLabel,160),id:clean(d?.sourceId,80),page:clean(d?.sourcePage,220)};
+ const allowed=new Set(["offer","event","warranty","insurance","direct"]);
+ const rawType=clean(d?.sourceType,30),type=allowed.has(rawType)?rawType:"direct";
+ if(type==="direct")return {type,label:"",id:"",page:""};
+ return {type,label:clean(d?.sourceLabel,160),id:clean(d?.sourceId,80),page:clean(d?.sourcePage,220)};
 }
 function validPhone(v){return /^[0-9+\s()-]{8,20}$/.test(v)}
 function validYear(v){return /^\d{4}$/.test(v)&&Number(v)>=1980&&Number(v)<=2100}
