@@ -291,3 +291,26 @@ html[dir="rtl"] .whatsapp-float{right:auto;left:22px}
 .lead-context>div{display:grid;gap:2px}.lead-context small{color:var(--gold);font-size:9px;font-weight:800;letter-spacing:.16em}.lead-context strong{color:#f7f5ef;font-size:14px;line-height:1.65}
 html[dir="ltr"] .lead-context{text-align:left}
 @media(max-width:600px){.lead-context{padding:14px 15px;border-radius:14px}.lead-context strong{font-size:13px}}
+
+
+/* Home hero: keep the workshop film unobstructed and use only compact actions. */
+.hero.hero-video-only .hero-overlay{
+  background:linear-gradient(180deg,rgba(3,5,4,.24) 0%,rgba(3,5,4,.03) 42%,rgba(3,5,4,.46) 100%);
+}
+.hero-content.hero-actions-only{
+  height:100%;
+  display:flex;
+  align-items:flex-end;
+  padding:0 0 84px;
+}
+.hero-content.hero-actions-only .hero-actions{
+  margin:0;
+  flex-wrap:wrap;
+}
+@media(max-width:900px){
+  .hero-content.hero-actions-only{align-self:auto;padding:0 0 132px}
+}
+@media(max-width:560px){
+  .hero-content.hero-actions-only .hero-actions{flex-direction:row}
+  .hero-content.hero-actions-only .hero-actions .btn{width:auto}
+}
