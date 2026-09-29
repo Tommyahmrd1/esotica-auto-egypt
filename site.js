@@ -48,7 +48,7 @@ function leadContextText(lang){
   const ar=lang==="ar";
   const names={offer:ar?"عرض":"Offer",event:ar?"حدث":"Event",warranty:ar?"خدمة الضمان":"Warranty service",insurance:ar?"شركات التأمين":"Insurance partners",direct:ar?"دخول مباشر":"Direct visit"};
   const label=currentLeadAttribution.label||names[currentLeadAttribution.type]||names.direct;
-  return ar?`سيتم تسجيل طلبك من خلال ${names[currentLeadAttribution.type]||"المصدر"}: ${label}`:`Your request will be linked to ${names[currentLeadAttribution.type]||"source"}: ${label}`;
+  return ar?`مصدر الطلب: ${label}`:`Request source: ${label}`;
 }
 function renderLeadContext(){
   const banner=document.querySelector("[data-lead-context]");
