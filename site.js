@@ -144,7 +144,7 @@ if(heroVideo){
     heroVideo.classList.add("is-fallback");
     heroVideo.src=fallback;
     heroVideo.load();
-    void playHeroVideo(heroSoundChoice==="sound");
+    void playHeroVideo(heroSoundChoice!=="muted");
   });
   heroVideo.addEventListener("canplay",()=>{if(heroVideo.paused)void playHeroVideo(heroSoundChoice==="sound"||(!heroAutoplayMuted&&heroSoundChoice!=="muted"))});
   heroVideo.addEventListener("ended",()=>{heroVideo.currentTime=0;void heroVideo.play().catch(()=>{})});
