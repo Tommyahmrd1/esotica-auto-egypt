@@ -365,7 +365,7 @@ Object.assign(EN,{
   "سيتم إضافة أسماء وشعارات الشركات المتعاقد معها هنا فور استلام القائمة المعتمدة.":"Approved partner names and logos will be added here once the confirmed list is received.",
   "شركاؤنا من شركات التأمين":"Our Insurance Partners",
   "نتعاون مع شبكة متنوعة من شركات التأمين لتسهيل إجراءات الفحص والموافقة والإصلاح، مع متابعة واضحة في كل مرحلة.":"We work with a diverse network of insurance companies to streamline inspection, approval and repair, with clear follow-up at every stage.",
-  "شركاء تأمين":"Insurance Partners",
+  "شركات تأمين":"Insurance Companies",
   "المصرية للتأمين التكافلي":"Egyptian Takaful",
   "مصر للتأمين":"Misr Insurance",
   "ثروة للتأمين":"Sarwa Insurance",
