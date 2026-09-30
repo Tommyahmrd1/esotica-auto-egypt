@@ -4,6 +4,18 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&
 function showLogin(){ $("#loginView").classList.remove("hidden");$("#dashView").classList.add("hidden");$("#logoutBtn").classList.add("hidden") }
 function showDash(){ $("#loginView").classList.add("hidden");$("#dashView").classList.remove("hidden");$("#logoutBtn").classList.remove("hidden") }
 function date(v){try{return new Date(v).toLocaleString("ar-EG")}catch{return v}}
+const adminNumber=new Intl.NumberFormat("ar-EG");
+function renderTraffic(traffic={}){
+ const el=$("#visitorStats");if(!el)return;
+ const values=[
+  {label:"متواجدون الآن",value:traffic.online,detail:`نشطون خلال آخر ${traffic.onlineWindowMinutes||5} دقائق`,live:true},
+  {label:"زوار الشهر الحالي",value:traffic.month,detail:"زوار مميزون هذا الشهر"},
+  {label:"إجمالي الزوار",value:traffic.total,detail:"منذ تشغيل العداد"}
+ ];
+ el.innerHTML=values.map(x=>`<div class="traffic-stat ${x.live?"is-live":""}"><span>${x.label}</span><b>${adminNumber.format(Number(x.value)||0)}</b><small>${x.detail}</small></div>`).join("");
+ const note=$("#trafficNote");
+ if(note)note.textContent=traffic.startedAt?`بدأ تسجيل الزيارات: ${date(traffic.startedAt)} — تحديث الصفحة لا يُحتسب كزائر جديد.`:"سيبدأ تسجيل الزيارات مع أول زائر بعد تفعيل العداد.";
+}
 function render(){
  const d=state.data;if(!d)return;
  const all=[...d.bookings,...d.parts,...d.contacts], fresh=all.filter(x=>x.status==="new").length;
@@ -11,6 +23,7 @@ function render(){
  $("#stats").innerHTML=[
   ["إجمالي الطلبات",all.length],["جديدة",fresh],["حجوزات",d.bookings.length],["قطع غيار",d.parts.length]
  ].map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join("");
+ renderTraffic(d.traffic||{});
  renderTable();
 }
 function statusSelect(type,id,value){
@@ -54,6 +67,15 @@ $("#loginForm").addEventListener("submit",async e=>{
 });
 $("#logoutBtn").addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});showLogin()});
 $("#refreshBtn").addEventListener("click",load);
+async function refreshTraffic(){
+ if($("#dashView").classList.contains("hidden"))return;
+ try{
+  const r=await fetch("/api/admin/traffic",{cache:"no-store"});if(!r.ok)return;
+  const j=await r.json();state.data=state.data||{};state.data.traffic=j.traffic||{};renderTraffic(state.data.traffic);
+ }catch{}
+}
+window.setInterval(refreshTraffic,60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)void refreshTraffic()});
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");state.tab=b.dataset.tab;
   if(state.tab==="site"){$("#tableWrap").classList.add("hidden");$("#sitePanel").classList.remove("hidden");loadCMS()}

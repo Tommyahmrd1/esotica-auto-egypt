@@ -2,6 +2,29 @@ const JSON_HEADERS={"content-type":"application/json; charset=utf-8","cache-cont
 const json=(data,status=200,extra={})=>new Response(JSON.stringify(data),{status,headers:{...JSON_HEADERS,...extra}});
 const bad=(message,status=400)=>json({error:message},status);
 
+let analyticsSchemaPromise=null;
+async function initAnalyticsDB(env){
+  if(!env.DB)throw new Error("Missing D1 binding: DB");
+  if(!analyticsSchemaPromise){
+    analyticsSchemaPromise=env.DB.batch([
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS site_visitors (
+        visitor_id TEXT PRIMARY KEY,
+        first_seen INTEGER NOT NULL,
+        last_seen INTEGER NOT NULL,
+        last_page TEXT NOT NULL DEFAULT '')`),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS site_visitor_months (
+        visitor_id TEXT NOT NULL,
+        month_key TEXT NOT NULL,
+        first_seen INTEGER NOT NULL,
+        last_seen INTEGER NOT NULL,
+        PRIMARY KEY(visitor_id,month_key))`),
+      env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_site_visitors_last_seen ON site_visitors(last_seen)"),
+      env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_site_visitor_months_month ON site_visitor_months(month_key)")
+    ]).catch(error=>{analyticsSchemaPromise=null;throw error});
+  }
+  return analyticsSchemaPromise;
+}
+
 async function initDB(env){
   if(!env.DB) throw new Error("Missing D1 binding: DB");
   const sql=[
@@ -90,7 +113,20 @@ async function initDB(env){
  media_id TEXT NOT NULL,
  caption TEXT NOT NULL DEFAULT '',
  visible INTEGER NOT NULL DEFAULT 1,
- sort_order INTEGER NOT NULL DEFAULT 0)`
+ sort_order INTEGER NOT NULL DEFAULT 0)`,
+`CREATE TABLE IF NOT EXISTS site_visitors (
+ visitor_id TEXT PRIMARY KEY,
+ first_seen INTEGER NOT NULL,
+ last_seen INTEGER NOT NULL,
+ last_page TEXT NOT NULL DEFAULT '')`,
+`CREATE TABLE IF NOT EXISTS site_visitor_months (
+ visitor_id TEXT NOT NULL,
+ month_key TEXT NOT NULL,
+ first_seen INTEGER NOT NULL,
+ last_seen INTEGER NOT NULL,
+ PRIMARY KEY(visitor_id,month_key))`,
+`CREATE INDEX IF NOT EXISTS idx_site_visitors_last_seen ON site_visitors(last_seen)`,
+`CREATE INDEX IF NOT EXISTS idx_site_visitor_months_month ON site_visitor_months(month_key)`
   ];
   await env.DB.batch(sql.map(s=>env.DB.prepare(s)));
   const leadColumns=[
@@ -149,10 +185,28 @@ async function auth(req,env){
 }
 function sessionCookie(value){return `esotica_admin_session=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=43200`}
 function logoutCookie(){return `esotica_admin_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`}
+function visitorCookie(value){return `esotica_visitor=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`}
 async function readJSON(req){try{return await req.json()}catch{return null}}
 function sameOrigin(req){
  const o=req.headers.get("origin"); if(!o)return true;
  try{return new URL(o).origin===new URL(req.url).origin}catch{return false}
+}
+async function trafficSnapshot(env){
+  await initAnalyticsDB(env);
+  const now=Date.now(),monthKey=cairoDateParts().date.slice(0,7),onlineSince=now-(5*60*1000);
+  const row=await env.DB.prepare(`SELECT
+    (SELECT COUNT(*) FROM site_visitors WHERE last_seen>=?) AS online_now,
+    (SELECT COUNT(*) FROM site_visitor_months WHERE month_key=?) AS month_unique,
+    (SELECT COUNT(*) FROM site_visitors) AS all_time,
+    (SELECT MIN(first_seen) FROM site_visitors) AS started_at`).bind(onlineSince,monthKey).first();
+  return {
+    online:Number(row?.online_now||0),
+    month:Number(row?.month_unique||0),
+    total:Number(row?.all_time||0),
+    startedAt:Number(row?.started_at||0),
+    monthKey,
+    onlineWindowMinutes:5
+  };
 }
 async function handleAPI(req,env,url){
  const p=url.pathname;
@@ -160,6 +214,20 @@ async function handleAPI(req,env,url){
 
  if(p==="/api/health"){
    return json({ok:true,database:!!env.DB,adminConfigured:!!env.ADMIN_PASSWORD});
+ }
+ if(p==="/api/analytics/heartbeat"&&req.method==="POST"){
+   await initAnalyticsDB(env);
+   const data=await readJSON(req)||{},now=Date.now(),monthKey=cairoDateParts().date.slice(0,7),cookies=cookieMap(req.headers.get("cookie"));
+   let visitorId=String(cookies.esotica_visitor||"").toLowerCase(),setVisitorCookie=false;
+   if(!/^[a-f0-9]{32}$/.test(visitorId)){
+     visitorId=crypto.randomUUID().replace(/-/g,"");setVisitorCookie=true;
+   }
+   const page=clean(data.page,160).split("?")[0]||"/";
+   await env.DB.batch([
+     env.DB.prepare("INSERT INTO site_visitors(visitor_id,first_seen,last_seen,last_page) VALUES(?,?,?,?) ON CONFLICT(visitor_id) DO UPDATE SET last_seen=excluded.last_seen,last_page=excluded.last_page").bind(visitorId,now,now,page),
+     env.DB.prepare("INSERT INTO site_visitor_months(visitor_id,month_key,first_seen,last_seen) VALUES(?,?,?,?) ON CONFLICT(visitor_id,month_key) DO UPDATE SET last_seen=excluded.last_seen").bind(visitorId,monthKey,now,now)
+   ]);
+   return json({ok:true},200,setVisitorCookie?{"set-cookie":visitorCookie(visitorId)}:{});
  }
  if(p==="/api/site-content"&&req.method==="GET"){
    await initDB(env);
@@ -221,6 +289,11 @@ async function handleAPI(req,env,url){
  }
  if(p==="/api/admin/logout"&&req.method==="POST")return json({ok:true},200,{"set-cookie":logoutCookie()});
 
+ if(p==="/api/admin/traffic"&&req.method==="GET"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   return json({traffic:await trafficSnapshot(env)});
+ }
+
  if(p==="/api/admin/dashboard"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);
@@ -230,7 +303,8 @@ async function handleAPI(req,env,url){
      env.DB.prepare("SELECT c.*,COALESCE(m.note,'') AS admin_note FROM contact_requests c LEFT JOIN admin_request_meta m ON m.request_type='contacts' AND m.request_id=c.id WHERE COALESCE(m.deleted_at,0)=0 ORDER BY c.created_at DESC LIMIT 500"),
      env.DB.prepare("SELECT COUNT(*) AS total FROM admin_request_meta WHERE deleted_at>0")
    ]);
-   return json({bookings:b.results||[],parts:parts.results||[],contacts:c.results||[],trashCount:Number(trashCount.results?.[0]?.total||0)});
+   const traffic=await trafficSnapshot(env);
+   return json({bookings:b.results||[],parts:parts.results||[],contacts:c.results||[],trashCount:Number(trashCount.results?.[0]?.total||0),traffic});
  }
  if(p==="/api/admin/site-settings"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);

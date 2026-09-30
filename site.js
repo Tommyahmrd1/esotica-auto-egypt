@@ -20,6 +20,25 @@ const ESOTICA_CONTACT_DEFAULTS={
   instagram:"https://www.instagram.com/esoticaauto/",
   email:""
 };
+
+const VISITOR_HEARTBEAT_MS=90000;
+async function sendVisitorHeartbeat(){
+  if(document.hidden||location.pathname.startsWith("/admin"))return;
+  try{
+    await fetch("/api/analytics/heartbeat",{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({page:location.pathname}),
+      credentials:"same-origin",
+      cache:"no-store",
+      keepalive:true
+    });
+  }catch{}
+}
+void sendVisitorHeartbeat();
+window.setInterval(()=>{void sendVisitorHeartbeat()},VISITOR_HEARTBEAT_MS);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)void sendVisitorHeartbeat()});
+window.addEventListener("pageshow",()=>{void sendVisitorHeartbeat()});
 const TRACKED_LEAD_PATHS=new Set(["/booking","/contact","/parts"]);
 const LEAD_SOURCE_TYPES=new Set(["offer","event","warranty","insurance","direct"]);
 function leadValue(value,max=160){return String(value||"").trim().slice(0,max)}
@@ -292,6 +311,8 @@ Object.assign(EN,{
   "عند استخدام نماذج الحجز أو قطع الغيار أو التواصل، قد ترسل لنا بيانات مثل الاسم، رقم الهاتف، بيانات السيارة، رقم الشاسيه، تفاصيل الطلب، والموعد المفضل.":"When using booking, spare-parts or contact forms, you may provide information such as your name, phone number, vehicle details, VIN, request details and preferred appointment date.",
   "كيف نستخدم البيانات":"How We Use Information",
   "تُستخدم البيانات لمراجعة الطلب، التواصل معك، تأكيد المواعيد أو توفر قطع الغيار، ومتابعة الخدمة المتعلقة بطلبك.":"Information is used to review your request, contact you, confirm appointments or parts availability, and follow up on the service related to your request.",
+  "إحصاءات الزيارة":"Visit Analytics",
+  "يستخدم الموقع رمزًا عشوائيًا محفوظًا على جهازك لحساب الزوار المميزين وتقدير عدد المتواجدين حاليًا، من دون تخزين اسمك أو رقم هاتفك أو عنوان IP ضمن إحصاءات الزيارة.":"The website uses a random identifier stored on your device to count unique visitors and estimate current activity, without storing your name, phone number or IP address in visit analytics.",
   "بيانات الدفع":"Payment Information",
   "الموقع الحالي لا يطلب إدخال بيانات بطاقات دفع أو بيانات مصرفية داخل نماذج الحجز والتواصل.":"The current website does not request payment-card or banking information in its booking and contact forms.",
   "الروابط الخارجية":"External Links",

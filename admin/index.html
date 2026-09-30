@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Esotica Admin</title><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20260930-1"><link rel="stylesheet" href="/admin.css?v=20260930-1">
+<title>Esotica Admin</title><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20260930-4"><link rel="stylesheet" href="/admin.css?v=20260930-3">
 </head>
 <body class="admin-body">
   <header class="admin-top"><a class="brand admin-brand" href="/"><span class="brand-logo"><img src="/site/logo.webp?v=20260930-1" alt="Esotica Auto"></span></a><span class="admin-top-label">CONTROL CENTER</span><button id="logoutBtn" class="btn btn-outline hidden">تسجيل خروج</button></header>
@@ -21,6 +21,18 @@
 
     <section id="dashView" class="hidden">
       <div class="dash-head"><div><p class="eyebrow">DASHBOARD</p><h1>لوحة إدارة Esotica</h1><p id="summaryText"></p></div><button id="refreshBtn" class="btn btn-outline">تحديث</button></div>
+      <section class="traffic-panel" aria-labelledby="trafficTitle">
+        <div class="traffic-head">
+          <div><p class="eyebrow">LIVE WEBSITE TRAFFIC</p><h2 id="trafficTitle">زوار الموقع</h2></div>
+          <span class="traffic-live"><i aria-hidden="true"></i> تحديث تلقائي كل دقيقة</span>
+        </div>
+        <div class="traffic-stats" id="visitorStats">
+          <div class="traffic-stat is-live"><span>متواجدون الآن</span><b>—</b><small>آخر 5 دقائق</small></div>
+          <div class="traffic-stat"><span>زوار الشهر الحالي</span><b>—</b><small>زوار مميزون</small></div>
+          <div class="traffic-stat"><span>إجمالي الزوار</span><b>—</b><small>منذ تشغيل العداد</small></div>
+        </div>
+        <p class="traffic-note" id="trafficNote">يبدأ التسجيل من أول زيارة بعد تفعيل العداد، ولا يتم احتساب تحديث الصفحة كزائر جديد.</p>
+      </section>
       <div class="stats" id="stats"></div>
       <div class="tabs"><button class="active" data-tab="bookings">الحجوزات</button><button data-tab="parts">قطع الغيار</button><button data-tab="contacts">الرسائل</button><button data-tab="trash">المحذوفات</button><button data-tab="site">إدارة الموقع</button></div>
       <div id="tableWrap" class="table-wrap"></div>
@@ -223,5 +235,5 @@
 
     </section>
   </main>
-<script src="/admin.js?v=20260930-2" defer></script>
+<script src="/admin.js?v=20260930-3" defer></script>
 </body></html>
