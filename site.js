@@ -450,6 +450,11 @@ function safeEventLink(value){
   const link=String(value||"/contact").trim();
   return /^(\/|https?:\/\/)/i.test(link)?link:"/contact";
 }
+function publicEventImage(item={}){
+  if(item.image_media_id)return `/api/media/${encodeURIComponent(item.image_media_id)}`;
+  const title=`${item.title_ar||""} ${item.title_en||""}`.toLowerCase();
+  return title.includes("mobile")||title.includes("موبايل")||title.includes("متنقلة")?"/site/mobile-service-event.jpeg?v=20260930-1":"";
+}
 function renderEvents(items,lang){
   const grid=document.querySelector("#eventsGrid");if(!grid)return;
   const activeLang=lang||document.documentElement.lang||"en";
@@ -467,8 +472,9 @@ function renderEvents(items,lang){
     if(x.start_date)dateParts.push(`${activeLang==="ar"?"من":"From"} ${eventDate(x.start_date,activeLang)}`);
     if(x.end_date)dateParts.push(`${activeLang==="ar"?"إلى":"To"} ${eventDate(x.end_date,activeLang)}`);
     const unavailable=x.availability==="unavailable";
+    const imageUrl=publicEventImage(x);
     return `<article class="event-card">
-      ${x.image_media_id?`<div class="event-image"><img src="/api/media/${encodeURIComponent(x.image_media_id)}" alt="${escHtml(title)}" loading="lazy"></div>`:""}
+      ${imageUrl?`<div class="event-image"><img src="${imageUrl}" alt="${escHtml(title)}" loading="lazy"></div>`:""}
       <div class="event-content">
         <div class="event-card-top"><p class="eyebrow">ESOTICA EVENT</p><span class="event-status is-${escHtml(x.availability||"available")}">${escHtml(status[activeLang]||status.en)}</span></div>
         <h2>${escHtml(title)}</h2>

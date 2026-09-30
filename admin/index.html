@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Esotica Admin</title><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20260930-1"><link rel="stylesheet" href="/admin.css?v=20260929-2">
+<title>Esotica Admin</title><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20260930-1"><link rel="stylesheet" href="/admin.css?v=20260930-1">
 </head>
 <body class="admin-body">
   <header class="admin-top"><a class="brand admin-brand" href="/"><span class="brand-logo"><img src="/site/logo.webp?v=20260930-1" alt="Esotica Auto"></span></a><span class="admin-top-label">CONTROL CENTER</span><button id="logoutBtn" class="btn btn-outline hidden">تسجيل خروج</button></header>
@@ -178,12 +178,17 @@
                     <option value="unavailable">غير متاح حاليًا</option>
                   </select>
                 </label>
-                <label>صورة الحدث<input name="image" type="file" accept="image/*"></label>
+                <label>صورة الحدث (اختيارية)<input name="image" type="file" accept="image/*"></label>
                 <label>تاريخ البداية<input name="startDate" type="date"></label>
                 <label>تاريخ الانتهاء<input name="endDate" type="date"></label>
                 <label>اسم الزر بالعربي<input name="buttonTextAr" maxlength="60" value="اعرف التفاصيل"></label>
                 <label>اسم الزر بالإنجليزي<input name="buttonTextEn" maxlength="60" value="View Details" dir="ltr"></label>
               </div>
+              <div id="eventImagePreview" class="event-upload-preview hidden" aria-live="polite">
+                <img alt="معاينة صورة الحدث">
+                <div><strong>معاينة صورة الحدث</strong><small id="eventImagePreviewNote">الصورة التي ستظهر في صفحة الأحداث</small></div>
+              </div>
+              <p class="hint">بعد اختيار الصورة ستظهر المعاينة هنا. حدث Mobile Service يستخدم الصورة الجاهزة تلقائيًا إذا لم تختر صورة أخرى.</p>
               <label>رابط الزر<input name="buttonLink" maxlength="250" value="/contact" dir="ltr"></label>
               <div class="review-actions">
                 <button class="btn btn-gold" type="submit">حفظ الحدث</button>
@@ -218,5 +223,5 @@
 
     </section>
   </main>
-<script src="/admin.js?v=20260929-2" defer></script>
+<script src="/admin.js?v=20260930-1" defer></script>
 </body></html>

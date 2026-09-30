@@ -374,12 +374,37 @@ const EVENT_ADMIN_STATUS={
   unavailable:"غير متاح حاليًا",
   coming:"قريبًا"
 };
+const MOBILE_SERVICE_IMAGE="/site/mobile-service-event.jpeg?v=20260930-1";
+let eventPreviewObjectUrl="";
+function isMobileServiceEvent(item={}){
+  const title=`${item.title_ar||item.titleAr||""} ${item.title_en||item.titleEn||""}`.toLowerCase();
+  return title.includes("mobile")||title.includes("موبايل")||title.includes("متنقلة");
+}
+function eventAdminImage(item={}){
+  return item.image_media_id?`/api/media/${encodeURIComponent(item.image_media_id)}`:(isMobileServiceEvent(item)?MOBILE_SERVICE_IMAGE:"");
+}
+function setEventImagePreview(src="",note=""){
+  const box=$("#eventImagePreview"),img=box?.querySelector("img"),caption=$("#eventImagePreviewNote");
+  if(!box||!img)return;
+  if(!src){box.classList.add("hidden");img.removeAttribute("src");return}
+  img.src=src;caption.textContent=note||"الصورة التي ستظهر في صفحة الأحداث";box.classList.remove("hidden");
+}
+function refreshEventImagePreview(){
+  const f=$("#eventForm");if(!f)return;
+  const file=f.elements.image.files?.[0];
+  if(eventPreviewObjectUrl){URL.revokeObjectURL(eventPreviewObjectUrl);eventPreviewObjectUrl=""}
+  if(file){eventPreviewObjectUrl=URL.createObjectURL(file);setEventImagePreview(eventPreviewObjectUrl,`${file.name} • ${(file.size/1024).toFixed(0)} KB`);return}
+  const id=Number(f.elements.eventId.value||0),current=(cmsData.events||[]).find(item=>Number(item.id)===id);
+  const source=current||{titleAr:f.elements.titleAr.value,titleEn:f.elements.titleEn.value};
+  const src=eventAdminImage(source);
+  setEventImagePreview(src,src===MOBILE_SERVICE_IMAGE?"صورة Mobile Service الجاهزة":"الصورة الحالية للحدث");
+}
 function renderEventsAdmin(){
   const el=$("#eventsAdminList");if(!el)return;
   const rows=cmsData.events||[];
   if(!rows.length){el.innerHTML='<div class="admin-empty-state"><strong>لا توجد أحداث بعد.</strong><span>أضف خدمة الساحل أو الونش أو الموبايل سيرفس من النموذج بالأعلى.</span></div>';return}
   el.innerHTML=rows.map(x=>`<div class="content-admin-item event-admin-item">
-    ${x.image_media_id?`<img src="/api/media/${x.image_media_id}" alt="">`:""}
+    ${eventAdminImage(x)?`<img src="${eventAdminImage(x)}" alt="${esc(x.title_ar||x.title_en||"")}">`:""}
     <div class="content-admin-copy">
       <div class="event-admin-heading"><strong>${esc(x.title_ar)}</strong><span class="admin-event-status is-${esc(x.availability||"available")}">${esc(EVENT_ADMIN_STATUS[x.availability]||EVENT_ADMIN_STATUS.available)}</span></div>
       ${x.title_en?`<small dir="ltr">${esc(x.title_en)}</small>`:""}
@@ -412,12 +437,16 @@ function editEvent(id){
   f.elements.buttonTextEn.value=x.button_text_en||"View Details";
   f.elements.buttonLink.value=x.button_link||"/contact";
   $("#eventCancelEdit").classList.remove("hidden");
+  refreshEventImagePreview();
   f.scrollIntoView({behavior:"smooth",block:"start"});
 }
 $("#eventCancelEdit")?.addEventListener("click",()=>{
   const f=$("#eventForm");if(!f)return;
-  f.reset();f.elements.eventId.value="";$("#eventCancelEdit").classList.add("hidden");
+  f.reset();f.elements.eventId.value="";$("#eventCancelEdit").classList.add("hidden");refreshEventImagePreview();
 });
+$("#eventForm [name=image]")?.addEventListener("change",refreshEventImagePreview);
+$("#eventForm [name=titleAr]")?.addEventListener("input",refreshEventImagePreview);
+$("#eventForm [name=titleEn]")?.addEventListener("input",refreshEventImagePreview);
 async function eventAction(id,action){
   const response=await fetch(`/api/admin/events/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action})});
   if(!response.ok){const data=await response.json().catch(()=>({}));alert(data.error||"تعذر تحديث الحدث.");return}
@@ -457,7 +486,7 @@ $("#eventForm")?.addEventListener("submit",async event=>{
   const data=await response.json().catch(()=>({}));
   m.textContent=response.ok?"تم حفظ الحدث ونشر التحديث.":data.error||"تعذر حفظ الحدث.";
   m.className="form-msg "+(response.ok?"ok":"err");
-  if(response.ok){f.reset();f.elements.eventId.value="";$("#eventCancelEdit").classList.add("hidden");await loadCMS()}
+  if(response.ok){f.reset();f.elements.eventId.value="";$("#eventCancelEdit").classList.add("hidden");refreshEventImagePreview();await loadCMS()}
 });
 
 function renderGalleryAdmin(){

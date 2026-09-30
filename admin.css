@@ -40,6 +40,10 @@
 .admin-empty-state{display:grid;gap:5px;padding:18px;border:1px dashed var(--line);border-radius:12px;color:#aeb3ad}
 .admin-empty-state strong{color:#f2f3ef}
 .event-admin-item:not(:has(>img)){grid-template-columns:1fr}
+.event-upload-preview{display:grid;grid-template-columns:minmax(150px,240px) 1fr;gap:16px;align-items:center;padding:14px;border:1px solid rgba(207,174,92,.32);border-radius:14px;background:rgba(207,174,92,.06)}
+.event-upload-preview img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:10px;background:#090b0a}
+.event-upload-preview div{display:grid;gap:5px}.event-upload-preview strong{color:#f2f3ef}.event-upload-preview small{color:#9da29c}
+@media(max-width:560px){.event-upload-preview{grid-template-columns:1fr}.event-upload-preview img{max-height:220px}}
 
 /* Request source attribution */
 .lead-source-badge{display:grid;gap:4px;min-width:150px;max-width:230px;padding:9px 11px;border:1px solid rgba(200,170,112,.3);border-radius:11px;background:rgba(200,170,112,.08)}
