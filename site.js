@@ -25,7 +25,7 @@ const VISITOR_HEARTBEAT_MS=90000;
 async function sendVisitorHeartbeat(){
   if(document.hidden||location.pathname.startsWith("/admin"))return;
   try{
-    await fetch("/api/analytics/heartbeat",{
+    const response=await fetch("/api/analytics/heartbeat",{
       method:"POST",
       headers:{"content-type":"application/json"},
       body:JSON.stringify({page:location.pathname}),
@@ -33,6 +33,7 @@ async function sendVisitorHeartbeat(){
       cache:"no-store",
       keepalive:true
     });
+    if(!response.ok)console.warn("Visitor analytics heartbeat unavailable",response.status);
   }catch{}
 }
 void sendVisitorHeartbeat();
