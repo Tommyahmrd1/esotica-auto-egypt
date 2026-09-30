@@ -62,6 +62,9 @@ footer{border-top:1px solid var(--line);padding:48px max(22px,calc((100vw - var(
 .footer-bottom{padding-top:22px;display:flex;justify-content:space-between;align-items:center;gap:18px}
 .footer-bottom .admin-link{color:#666;font-size:12px}
 .site-footer .brand-logo{width:190px;height:58px}
+html[dir="rtl"] .site-footer .footer-brand{text-align:right}
+html[dir="rtl"] .site-footer .footer-brand .brand{width:100%;justify-content:flex-end}
+html[dir="rtl"] .site-footer .footer-brand .brand-logo img{object-position:right center}
 
 .offers-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.96),rgba(3,5,4,.30)),url('/site/services-hero-authentic.webp')}
 .offers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
