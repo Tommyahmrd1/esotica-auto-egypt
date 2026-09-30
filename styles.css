@@ -314,3 +314,34 @@ html[dir="ltr"] .lead-context{text-align:left}
   .hero-content.hero-actions-only .hero-actions{flex-direction:row}
   .hero-content.hero-actions-only .hero-actions .btn{width:auto}
 }
+
+/* Original-colour marque artwork, normalized to one compact visual system. */
+.strip>.brand-strip-grid{
+  grid-template-columns:repeat(6,minmax(130px,1fr));
+  gap:14px;
+}
+.brand-chip{
+  min-height:90px;
+  padding:8px 14px;
+  overflow:hidden;
+  background:linear-gradient(145deg,#faf9f5,#ece9df);
+  border-color:rgba(200,170,112,.22);
+}
+.strip .brand-chip img{
+  display:block;
+  width:100%;
+  height:68px;
+  max-width:150px;
+  aspect-ratio:2/1;
+  object-fit:contain;
+  filter:none!important;
+  opacity:1!important;
+}
+@media(max-width:1000px){
+  .strip>.brand-strip-grid{grid-template-columns:repeat(3,minmax(120px,1fr))}
+}
+@media(max-width:620px){
+  .strip>.brand-strip-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .brand-chip{min-height:82px;padding:7px 10px}
+  .strip .brand-chip img{height:62px;max-width:136px}
+}
