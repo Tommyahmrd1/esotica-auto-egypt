@@ -383,6 +383,14 @@ function isMobileServiceEvent(item={}){
 function eventAdminImage(item={}){
   return item.image_media_id?`/api/media/${encodeURIComponent(item.image_media_id)}`:(isMobileServiceEvent(item)?MOBILE_SERVICE_IMAGE:"");
 }
+function activateEventImageFallbacks(container){
+  container?.querySelectorAll("img[data-event-fallback]").forEach(image=>{
+    const fallback=image.dataset.eventFallback;
+    const recover=()=>{if(!fallback||image.src.includes("mobile-service-event.jpeg"))return;image.removeAttribute("data-event-fallback");image.src=fallback};
+    image.addEventListener("error",recover,{once:true});
+    if(image.complete&&!image.naturalWidth)recover();
+  });
+}
 function setEventImagePreview(src="",note=""){
   const box=$("#eventImagePreview"),img=box?.querySelector("img"),caption=$("#eventImagePreviewNote");
   if(!box||!img)return;
@@ -404,7 +412,7 @@ function renderEventsAdmin(){
   const rows=cmsData.events||[];
   if(!rows.length){el.innerHTML='<div class="admin-empty-state"><strong>لا توجد أحداث بعد.</strong><span>أضف خدمة الساحل أو الونش أو الموبايل سيرفس من النموذج بالأعلى.</span></div>';return}
   el.innerHTML=rows.map(x=>`<div class="content-admin-item event-admin-item">
-    ${eventAdminImage(x)?`<img src="${eventAdminImage(x)}" alt="${esc(x.title_ar||x.title_en||"")}">`:""}
+    ${eventAdminImage(x)?`<img src="${eventAdminImage(x)}" ${x.image_media_id&&isMobileServiceEvent(x)?`data-event-fallback="${MOBILE_SERVICE_IMAGE}"`:""} alt="${esc(x.title_ar||x.title_en||"")}">`:""}
     <div class="content-admin-copy">
       <div class="event-admin-heading"><strong>${esc(x.title_ar)}</strong><span class="admin-event-status is-${esc(x.availability||"available")}">${esc(EVENT_ADMIN_STATUS[x.availability]||EVENT_ADMIN_STATUS.available)}</span></div>
       ${x.title_en?`<small dir="ltr">${esc(x.title_en)}</small>`:""}
@@ -417,6 +425,7 @@ function renderEventsAdmin(){
       <button class="danger" data-event-delete="${x.id}">حذف</button>
     </div>
   </div>`).join("");
+  activateEventImageFallbacks(el);
   document.querySelectorAll("[data-event-edit]").forEach(button=>button.onclick=()=>editEvent(Number(button.dataset.eventEdit)));
   document.querySelectorAll("[data-event-toggle]").forEach(button=>button.onclick=()=>eventAction(Number(button.dataset.eventToggle),"toggle"));
   document.querySelectorAll("[data-event-delete]").forEach(button=>button.onclick=()=>{if(confirm("حذف الحدث نهائيًا؟"))eventAction(Number(button.dataset.eventDelete),"delete")});

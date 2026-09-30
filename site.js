@@ -455,6 +455,18 @@ function publicEventImage(item={}){
   const title=`${item.title_ar||""} ${item.title_en||""}`.toLowerCase();
   return title.includes("mobile")||title.includes("موبايل")||title.includes("متنقلة")?"/site/mobile-service-event.jpeg?v=20260930-1":"";
 }
+function publicEventFallback(item={}){
+  const title=`${item.title_ar||""} ${item.title_en||""}`.toLowerCase();
+  return title.includes("mobile")||title.includes("موبايل")||title.includes("متنقلة")?"/site/mobile-service-event.jpeg?v=20260930-1":"";
+}
+function activatePublicEventImageFallbacks(container){
+  container?.querySelectorAll("img[data-event-fallback]").forEach(image=>{
+    const fallback=image.dataset.eventFallback;
+    const recover=()=>{if(!fallback||image.src.includes("mobile-service-event.jpeg"))return;image.removeAttribute("data-event-fallback");image.src=fallback};
+    image.addEventListener("error",recover,{once:true});
+    if(image.complete&&!image.naturalWidth)recover();
+  });
+}
 function renderEvents(items,lang){
   const grid=document.querySelector("#eventsGrid");if(!grid)return;
   const activeLang=lang||document.documentElement.lang||"en";
@@ -473,8 +485,9 @@ function renderEvents(items,lang){
     if(x.end_date)dateParts.push(`${activeLang==="ar"?"إلى":"To"} ${eventDate(x.end_date,activeLang)}`);
     const unavailable=x.availability==="unavailable";
     const imageUrl=publicEventImage(x);
+    const fallbackImage=publicEventFallback(x);
     return `<article class="event-card">
-      ${imageUrl?`<div class="event-image"><img src="${imageUrl}" alt="${escHtml(title)}" loading="lazy"></div>`:""}
+      ${imageUrl?`<div class="event-image"><img src="${imageUrl}" ${fallbackImage&&imageUrl!==fallbackImage?`data-event-fallback="${fallbackImage}"`:""} alt="${escHtml(title)}" loading="lazy"></div>`:""}
       <div class="event-content">
         <div class="event-card-top"><p class="eyebrow">ESOTICA EVENT</p><span class="event-status is-${escHtml(x.availability||"available")}">${escHtml(status[activeLang]||status.en)}</span></div>
         <h2>${escHtml(title)}</h2>
@@ -485,6 +498,7 @@ function renderEvents(items,lang){
       </div>
     </article>`;
   }).join("");
+  activatePublicEventImageFallbacks(grid);
 }
 async function loadEvents(){
   const grid=document.querySelector("#eventsGrid");if(!grid)return;
