@@ -245,7 +245,7 @@ html[dir="rtl"] .whatsapp-float{right:auto;left:22px}
 .nav nav a[href="/warranty-insurance"]{white-space:nowrap}
 .hero-video-main{object-fit:cover}
 .hero-video-main.is-fallback{object-fit:contain}
-.hero-sound-toggle{position:absolute;z-index:6;right:max(22px,calc((100vw - var(--max))/2));left:auto;bottom:84px;display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:9px 14px;border:1px solid rgba(255,255,255,.26);border-radius:999px;background:rgba(5,8,7,.68);color:#fff;backdrop-filter:blur(14px);cursor:pointer;font-size:12px;font-weight:800;box-shadow:0 10px 32px rgba(0,0,0,.3);transition:.25s}
+.hero-sound-toggle{position:absolute;z-index:6;inset-inline-end:max(22px,calc((100vw - var(--max))/2));inset-inline-start:auto;bottom:84px;display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:9px 14px;border:1px solid rgba(255,255,255,.26);border-radius:999px;background:rgba(5,8,7,.68);color:#fff;backdrop-filter:blur(14px);cursor:pointer;font-size:12px;font-weight:800;box-shadow:0 10px 32px rgba(0,0,0,.3);transition:.25s}
 .hero-sound-toggle:hover{border-color:var(--gold);background:rgba(12,15,13,.88);transform:translateY(-2px)}
 .hero-sound-toggle svg{width:21px;height:21px;fill:currentColor}
 .hero-sound-toggle .sound-waves,.hero-sound-toggle .sound-slash{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
@@ -265,25 +265,60 @@ html[dir="rtl"] .whatsapp-float{right:auto;left:22px}
 .warranty-feature>span,.insurance-process article>span{display:grid;place-items:center;width:38px;height:38px;margin-bottom:30px;border-radius:50%;border:1px solid rgba(200,170,112,.42);color:var(--gold2);font-size:11px;font-weight:900}
 .warranty-feature h3,.insurance-process h3{margin:0 0 9px;font-size:19px}
 .warranty-feature p,.insurance-process p{margin:0;color:var(--muted);font-size:14px;line-height:1.8}
-.warranty-note,.insurance-partners{display:flex;align-items:center;justify-content:space-between;gap:28px;margin-top:24px;padding:28px 30px;border:1px solid rgba(200,170,112,.26);border-radius:20px;background:linear-gradient(120deg,rgba(200,170,112,.09),rgba(255,255,255,.025))}
+.warranty-note{display:flex;align-items:center;justify-content:space-between;gap:28px;margin-top:24px;padding:28px 30px;border:1px solid rgba(200,170,112,.26);border-radius:20px;background:linear-gradient(120deg,rgba(200,170,112,.09),rgba(255,255,255,.025))}
 .warranty-note strong{display:block;margin-bottom:5px;color:var(--gold2)}
-.warranty-note p,.insurance-partners p{margin:0;color:var(--muted)}
-.insurance-partners{margin-top:28px}
-.insurance-partners h2{margin:7px 0 6px;font-size:clamp(27px,3vw,38px)}
-.insurance-partners .btn,.warranty-note .btn{flex:0 0 auto}
+.warranty-note p{margin:0;color:var(--muted)}
+.warranty-note .btn{flex:0 0 auto}
+
+.insurance-intro{margin-bottom:26px}
+.insurance-trust{display:grid;grid-template-columns:minmax(300px,1.15fr) minmax(290px,.85fr);gap:36px;align-items:center;margin-bottom:52px;padding:36px;border:1px solid rgba(200,170,112,.3);border-radius:24px;background:radial-gradient(circle at 12% 0%,rgba(200,170,112,.18),transparent 42%),linear-gradient(135deg,#171b18,#0c0f0d);box-shadow:0 30px 80px rgba(0,0,0,.23)}
+.insurance-trust-copy h3{margin:7px 0 12px;font-size:clamp(27px,3vw,40px);line-height:1.2}
+.insurance-trust-copy>p:last-child{margin:0;color:#c0c4bd;line-height:1.9}
+.insurance-trust-points{display:grid;gap:10px}
+.insurance-trust-points span{position:relative;padding:14px 44px 14px 16px;border:1px solid rgba(255,255,255,.1);border-radius:13px;background:rgba(255,255,255,.035);color:#f0f1ed;font-size:13px;font-weight:750}
+.insurance-trust-points span::before{content:"✓";position:absolute;right:15px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:21px;height:21px;border-radius:50%;background:rgba(200,170,112,.17);color:var(--gold2);font-size:12px}
+html[dir="ltr"] .insurance-trust-points span{padding:14px 16px 14px 44px}
+html[dir="ltr"] .insurance-trust-points span::before{right:auto;left:15px}
+.insurance-section-heading{max-width:660px;margin:0 0 24px}
+.insurance-section-heading h2{margin:7px 0 0;font-size:clamp(28px,3.4vw,42px);line-height:1.2}
+
+.insurance-partners{margin-top:54px;padding:38px;border:1px solid var(--line);border-radius:26px;background:linear-gradient(145deg,rgba(24,28,25,.98),rgba(9,12,10,.98));box-shadow:0 28px 80px rgba(0,0,0,.2)}
+.insurance-partners-head{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;margin-bottom:28px}
+.insurance-partners-head>div{max-width:720px}
+.insurance-partners h2{margin:7px 0 8px;font-size:clamp(29px,3.4vw,44px);line-height:1.18}
+.insurance-partners p{margin:0;color:var(--muted);line-height:1.8}
+.partner-count{display:flex;align-items:baseline;gap:8px;flex:0 0 auto;padding:11px 15px;border:1px solid rgba(200,170,112,.28);border-radius:999px;background:rgba(200,170,112,.08);color:#c8cbc5;font-size:11px;font-weight:800}
+.partner-count strong{color:var(--gold2);font-size:22px}
+.insurance-logos-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.insurance-logo-card{min-width:0;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:17px;background:#101310;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.insurance-logo-card:hover{transform:translateY(-4px);border-color:rgba(200,170,112,.4);box-shadow:0 18px 42px rgba(0,0,0,.25)}
+.insurance-logo-stage{height:118px;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:#fff}
+.insurance-logo-stage img{display:block;width:100%;height:100%;object-fit:contain}
+.insurance-logo-card>span{display:block;padding:11px 3px 2px;color:#d9dcd6;font-size:12px;font-weight:750;text-align:center}
+.insurance-partner-cta{display:flex;align-items:center;justify-content:space-between;gap:26px;margin-top:28px;padding-top:26px;border-top:1px solid var(--line)}
+.insurance-partner-cta strong{display:block;margin-bottom:5px;color:#f4f3ee;font-size:18px}
+.insurance-partner-cta .btn{flex:0 0 auto}
+.insurance-disclaimer{margin-top:15px!important;color:#767c76!important;font-size:11px;line-height:1.7!important}
 
 @media(max-width:1000px){
   .warranty-feature-grid,.insurance-process{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .insurance-trust{grid-template-columns:1fr;gap:22px}
 }
 @media(max-width:700px){
-  .hero-sound-toggle{right:18px;left:auto;bottom:82px;width:44px;padding:0;justify-content:center}
+  .hero-sound-toggle{inset-inline-end:18px;inset-inline-start:auto;bottom:82px;width:44px;padding:0;justify-content:center}
   .hero-sound-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .hero-video-main,.hero-video-main.is-fallback{object-fit:cover}
   .warranty-intro{grid-template-columns:1fr;gap:14px}
   .warranty-feature-grid,.insurance-process{grid-template-columns:1fr}
   .warranty-feature,.insurance-process article{min-height:0}
-  .warranty-note,.insurance-partners{align-items:flex-start;flex-direction:column;padding:23px}
+  .warranty-note{align-items:flex-start;flex-direction:column;padding:23px}
+  .insurance-trust,.insurance-partners{padding:23px}
+  .insurance-partners-head,.insurance-partner-cta{align-items:flex-start;flex-direction:column}
+  .insurance-logos-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .insurance-logo-stage{height:102px}
+  .insurance-partner-cta .btn{width:100%;text-align:center}
 }
+@media(max-width:430px){.insurance-logos-grid{grid-template-columns:1fr}.insurance-logo-stage{height:116px}}
 
 /* Request source context */
 .lead-context{display:flex;align-items:flex-start;gap:14px;margin:0 0 18px;padding:16px 18px;border:1px solid rgba(200,170,112,.34);border-radius:16px;background:linear-gradient(135deg,rgba(200,170,112,.12),rgba(17,20,17,.78));box-shadow:0 14px 36px rgba(0,0,0,.16)}
