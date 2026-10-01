@@ -39,7 +39,7 @@ jobs:
           echo "$health" | grep -q '"database":true'
           echo "$health" | grep -q '"adminConfigured":true'
 
-          for path in / /booking /parts /services /range-rover-land-rover-service /jaguar-service /luxury-car-service /branches /offers /warranty-insurance /about /privacy /contact /admin; do
+          for path in / /booking /parts /services /range-rover-land-rover-service /jaguar-service /luxury-car-service /branches /branches/fifth-settlement /branches/third-settlement /branches/sheikh-zayed /offers /warranty-insurance /about /privacy /contact /admin; do
             code="$(curl -sS -o /dev/null -w "%{http_code}" --retry 6 --retry-delay 3 --retry-all-errors "$BASE$path")"
             echo "$path -> $code"
             test "$code" = "200"
