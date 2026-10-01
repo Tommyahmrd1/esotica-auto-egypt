@@ -383,3 +383,31 @@ html[dir="ltr"] .lead-context{text-align:left}
   .brand-chip{min-height:82px;padding:7px 10px}
   .strip .brand-chip img{height:62px;max-width:136px}
 }
+
+
+/* ===== SEO search visibility layer ===== */
+.brand-expertise{margin-top:64px;padding-top:48px;border-top:1px solid var(--line)}
+.seo-service-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.seo-service-card{display:flex;flex-direction:column;min-height:240px;padding:28px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,rgba(25,29,26,.98),rgba(10,13,11,.98));transition:.2s}
+.seo-service-card:hover{transform:translateY(-4px);border-color:rgba(200,170,112,.5);box-shadow:0 20px 52px rgba(0,0,0,.2)}
+.seo-service-card>span{color:var(--gold);font-size:9px;font-weight:900;letter-spacing:.16em}
+.seo-service-card h3{margin:18px 0 10px;font-size:24px;line-height:1.35}
+.seo-service-card p{margin:0;color:var(--muted);line-height:1.8}
+.seo-service-card strong{margin-top:auto;padding-top:24px;color:var(--gold2)}
+.seo-specialty-hero{background-image:linear-gradient(90deg,rgba(3,5,4,.95),rgba(3,5,4,.46)),url('/site/services-hero-authentic.webp')}
+.seo-specialty-intro{display:grid;grid-template-columns:minmax(260px,.9fr) minmax(320px,1.1fr);gap:46px;align-items:end;margin-bottom:34px}
+.seo-specialty-intro h2{font-size:clamp(30px,4vw,48px);line-height:1.18;margin:7px 0 0}
+.seo-specialty-intro>p{margin:0;color:var(--muted);font-size:16px;line-height:1.9}
+.seo-brand-list{margin-top:28px;padding:20px 22px;border:1px solid rgba(200,170,112,.28);border-radius:16px;background:rgba(200,170,112,.06)}
+.seo-brand-list strong{display:block;margin-bottom:7px;color:var(--gold2)}
+.seo-brand-list span{color:#c9cdc7;line-height:1.9}
+.seo-cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.seo-faq{padding-top:10px}
+.seo-faq-list{display:grid;gap:12px;max-width:900px}
+.seo-faq-item{border:1px solid var(--line);border-radius:14px;background:#101310;overflow:hidden}
+.seo-faq-item summary{cursor:pointer;padding:18px 20px;color:#fff;font-weight:800}
+.seo-faq-item p{margin:0;padding:0 20px 20px;color:var(--muted);line-height:1.85}
+input[type="date"]{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:1;padding:7px;border-radius:8px;background-color:var(--gold2);box-shadow:0 0 0 1px rgba(0,0,0,.18),0 5px 14px rgba(0,0,0,.2)}
+input[type="date"]:focus::-webkit-calendar-picker-indicator{background-color:#efd38a}
+@media(max-width:850px){.seo-service-grid{grid-template-columns:1fr}.seo-specialty-intro{grid-template-columns:1fr;gap:12px}}
