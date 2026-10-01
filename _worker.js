@@ -565,6 +565,13 @@ async function handleAPI(req,env,url){
 export default{
  async fetch(req,env){
    const url=new URL(req.url);
+   if(url.hostname==="www.esoticaegypt.com"||url.hostname==="esotica-auto-egypt.pages.dev"){
+     const primary=new URL(req.url);
+     primary.protocol="https:";
+     primary.hostname="esoticaegypt.com";
+     primary.port="";
+     return Response.redirect(primary.toString(),308);
+   }
    try{
      if(url.pathname.startsWith("/api/"))return await handleAPI(req,env,url);
      if(url.pathname==="/admin"||url.pathname==="/admin/")return env.ASSETS.fetch(new Request(new URL("/admin/",url),req));
