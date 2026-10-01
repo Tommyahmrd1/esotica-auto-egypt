@@ -464,6 +464,33 @@ Object.assign(EN,{
   "هل يمكن طلب قطع غيار للسيارات الفاخرة؟":"Can I request spare parts for luxury vehicles?",
   "يمكن إرسال طلب قطع الغيار من الموقع، ويقوم الفريق بمراجعة بيانات السيارة والقطعة المطلوبة ثم التواصل لتأكيد التوفر.":"You can submit a spare-parts request through the website. Our team will review the vehicle and requested part, then contact you to confirm availability."
 });
+Object.assign(EN,{
+  "تفاصيل الفرع ←":"Branch details →",
+  "فرع Esotica Auto التجمع الخامس":"Esotica Auto Fifth Settlement",
+  "فرع Esotica Auto التجمع الثالث":"Esotica Auto Third Settlement",
+  "فرع Esotica Auto الشيخ زايد":"Esotica Auto Sheikh Zayed",
+  "صيانة وتشخيص وقطع غيار وخدمات مختارة للسيارات الفاخرة في القاهرة الجديدة.":"Maintenance, diagnostics, spare parts and selected luxury-vehicle services in New Cairo.",
+  "خدمات صيانة وتشخيص وفحص وقطع غيار للسيارات الفاخرة في المنطقة الصناعية بالقاهرة الجديدة.":"Maintenance, diagnostics, inspection and spare-parts services for luxury vehicles in New Cairo's industrial area.",
+  "صيانة وتشخيص وفحص وقطع غيار وخدمات مختارة للسيارات الفاخرة في الشيخ زايد.":"Maintenance, diagnostics, inspection, spare parts and selected luxury-vehicle services in Sheikh Zayed.",
+  "كل تفاصيل الفرع في مكان واحد":"Everything about this location in one place",
+  "العنوان":"Address",
+  "مواعيد العمل":"Opening Hours",
+  "الخدمات":"Services",
+  "صيانة وتشخيص وفحص وسمكرة ودهان وقطع غيار وخدمات مختارة للسيارات الفاخرة.":"Maintenance, diagnostics, inspection, body & paint, spare parts and selected luxury-vehicle services.",
+  "فتح على Google Maps":"Open in Google Maps",
+  "خدمات Esotica Auto في هذا الفرع":"Esotica Auto Services at This Location",
+  "يتم تأكيد نطاق الخدمة والتوفر بعد مراجعة بيانات السيارة والحالة المطلوبة.":"Service scope and availability are confirmed after reviewing the vehicle details and requested work.",
+  "صيانة وتشخيص":"Maintenance & Diagnostics",
+  "فحص وصيانة الأعطال الميكانيكية والكهربائية وفق حالة السيارة.":"Mechanical and electrical inspection and maintenance based on the vehicle's condition.",
+  "فحص شامل":"Comprehensive Inspection",
+  "مراجعة حالة السيارة وتحديد الأولويات قبل بدء التنفيذ.":"We review the vehicle condition and identify priorities before work begins.",
+  "استعلام عن القطعة المناسبة باستخدام بيانات السيارة ورقم الشاسيه.":"Spare-parts enquiry using vehicle details and VIN to identify the correct part.",
+  "ماركات نخدمها":"Brands We Service",
+  "Range Rover وLand Rover وJaguar، بالإضافة إلى خدمات مختارة لسيارات BMW وMercedes-Benz وPorsche وBentley وMaserati وFerrari وLamborghini وAston Martin وRolls-Royce وCorvette.":"Range Rover, Land Rover and Jaguar, plus selected services for BMW, Mercedes-Benz, Porsche, Bentley, Maserati, Ferrari, Lamborghini, Aston Martin, Rolls-Royce and Corvette.",
+  "مجمع البنوك أمام مستشفى الجوي — شارع التسعين، التجمع الخامس، القاهرة الجديدة.":"Banks Complex, opposite Air Force Hospital — 90th Street, Fifth Settlement, New Cairo.",
+  "قطعة 100 — المنطقة الصناعية، التجمع الثالث، القاهرة الجديدة.":"Plot 100 — Industrial Area, Third Settlement, New Cairo.",
+  "جوميرا بلازا — وصلة دهشور — سيتي بارك، الشيخ زايد.":"Jumeirah Plaza — Waslet Dahshour — City Park, Sheikh Zayed."
+});
 const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
 const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه المكوّن من 17 خانة":"Enter the complete 17-character VIN"};
 function translatePage(lang){
