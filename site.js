@@ -462,7 +462,7 @@ function applyContactDetails(settings={}){
   const instagram=settings.instagram_url||ESOTICA_CONTACT_DEFAULTS.instagram;
   const email=settings.contact_email||ESOTICA_CONTACT_DEFAULTS.email;
   const whatsappPages={home:"الصفحة الرئيسية",services:"الخدمات",booking:"حجز الصيانة",parts:"قطع الغيار",branches:"الفروع",offers:"العروض والأحداث",contact:"تواصل معنا","warranty-insurance":"الضمان والتأمين",about:"من نحن"};
-  const whatsappText=`مرحبًا، أتواصل معكم من خلال موقع Esotica Auto بخصوص صفحة: ${whatsappPages[pageName]||pageName}. أرغب في الاستفسار عن: `;
+  const whatsappText=`مرحبًا فريق Esotica Auto،\nأرغب في الاستفسار عن خدماتكم.\n\nالاسم: \nالسيارة / الموديل: \nتفاصيل الاستفسار: \n\n—\nتم التواصل من خلال موقع Esotica Auto | ${whatsappPages[pageName]||pageName}`;
   const whatsappUrl=whatsapp?`https://wa.me/${whatsapp}?text=${encodeURIComponent(whatsappText)}`:"";
 
   const footer=document.querySelector(".site-footer");
@@ -519,6 +519,7 @@ function safeEventLink(value){
   return /^(\/|https?:\/\/)/i.test(link)?link:"/contact";
 }
 function publicEventImage(item={}){
+  if(item.image_media_id==="builtin:towing-service")return "/site/towing-service-event.webp?v=20261001-1";
   if(item.image_media_id)return `/api/media/${encodeURIComponent(item.image_media_id)}`;
   const title=`${item.title_ar||""} ${item.title_en||""}`.toLowerCase();
   return title.includes("mobile")||title.includes("موبايل")||title.includes("متنقلة")?"/site/mobile-service-event.jpeg?v=20260930-1":"";

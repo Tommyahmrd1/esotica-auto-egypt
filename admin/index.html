@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Esotica Admin</title><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20260930-4"><link rel="stylesheet" href="/admin.css?v=20261001-1">
+<title>Esotica Admin</title><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20260930-4"><link rel="stylesheet" href="/admin.css?v=20261001-2">
 </head>
 <body class="admin-body">
   <header class="admin-top"><a class="brand admin-brand" href="/"><span class="brand-logo"><img src="/site/logo.webp?v=20260930-1" alt="Esotica Auto"></span></a><span class="admin-top-label">CONTROL CENTER</span><button id="logoutBtn" class="btn btn-outline hidden">تسجيل خروج</button></header>
@@ -44,6 +44,14 @@
           <div class="visitor-table" id="visitorList"></div>
         </div>
         <p class="traffic-note" id="trafficNote">يبدأ التسجيل من أول زيارة بعد تفعيل العداد، ولا يتم احتساب تحديث الصفحة كزائر جديد.</p>
+      </section>
+      <section class="reset-panel" aria-labelledby="resetTitle">
+        <div class="reset-panel-head"><div><p class="eyebrow">TEST DATA CONTROLS</p><h2 id="resetTitle">إعادة ضبط بيانات التجربة</h2></div><span>كل إجراء منفصل</span></div>
+        <div class="reset-grid">
+          <article><div><strong>طلبات التجربة</strong><p>يمسح الحجوزات، طلبات قطع الغيار ورسائل التواصل، ثم يعيد رقم الطلب من 1.</p></div><button id="resetRequestsBtn" class="tool-btn danger" type="button">مسح الطلبات وإعادة الترقيم</button></article>
+          <article><div><strong>إحصاءات الزوار</strong><p>يمسح الإحصاءات اليومية والشهرية والإجمالية، بدون المساس بطلبات العملاء.</p></div><button id="resetTrafficBtn" class="tool-btn danger" type="button">تصفير عداد الزوار</button></article>
+        </div>
+        <p id="resetMsg" class="form-msg" aria-live="polite"></p>
       </section>
       <div class="stats" id="stats"></div>
       <div class="tabs"><button class="active" data-tab="bookings">الحجوزات</button><button data-tab="parts">قطع الغيار</button><button data-tab="contacts">الرسائل</button><button data-tab="trash">المحذوفات</button><button data-tab="site">إدارة الموقع</button></div>
@@ -250,5 +258,5 @@
 
     </section>
   </main>
-<script src="/admin.js?v=20261001-1" defer></script>
+<script src="/admin.js?v=20261001-2" defer></script>
 </body></html>

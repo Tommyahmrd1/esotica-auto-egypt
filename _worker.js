@@ -136,6 +136,8 @@ async function initDB(env){
  caption TEXT NOT NULL DEFAULT '',
  visible INTEGER NOT NULL DEFAULT 1,
  sort_order INTEGER NOT NULL DEFAULT 0)`,
+`CREATE UNIQUE INDEX IF NOT EXISTS idx_offers_builtin_media ON offers(image_media_id) WHERE image_media_id LIKE 'builtin:%'`,
+`CREATE UNIQUE INDEX IF NOT EXISTS idx_events_builtin_media ON service_events(image_media_id) WHERE image_media_id LIKE 'builtin:%'`,
 `CREATE TABLE IF NOT EXISTS site_visitors (
  visitor_id TEXT PRIMARY KEY,
  first_seen INTEGER NOT NULL,
@@ -165,13 +167,19 @@ async function initDB(env){
     }
   }
   await ensureColumns(env,"offers",[["title_en","TEXT NOT NULL DEFAULT ''"],["description_en","TEXT NOT NULL DEFAULT ''"],["button_text_en","TEXT NOT NULL DEFAULT 'Book Now'"]]);
-  await env.DB.prepare(`INSERT INTO offers(created_at,title,title_en,description,description_en,image_media_id,start_date,end_date,button_text,button_text_en,button_link,visible)
+  await env.DB.prepare(`INSERT OR IGNORE INTO offers(created_at,title,title_en,description,description_en,image_media_id,start_date,end_date,button_text,button_text_en,button_link,visible)
     SELECT ?,?,?,?,?,?,'','','احجز واستفد بالعرض','Book & Claim Offer','/booking',1
     WHERE NOT EXISTS (SELECT 1 FROM offers WHERE image_media_id='builtin:jlr-cashback-50')`).bind(
       Date.now(),'50% Cashback على مصنعية الصيانة','50% Labour Cashback',
       'لعملاء Range Rover وJaguar موديلات 2016–2026: احجز من خلال هذا العرض واحصل على رصيد Cashback بقيمة 50% من مصنعية الزيارة، يُستخدم في زيارتك التالية. يسري على الحجوزات الجديدة عبر الموقع، والرصيد على قيمة المصنعية فقط. تطبق الشروط والأحكام.',
       'For Range Rover and Jaguar vehicles from model years 2016–2026: book through this website offer and receive cashback credit equal to 50% of the labour charge from your visit, redeemable on your next visit. Valid for new website bookings; credit applies to labour charges only. Terms and conditions apply.',
       'builtin:jlr-cashback-50').run();
+  await env.DB.prepare(`INSERT OR IGNORE INTO service_events(created_at,title_ar,title_en,description_ar,description_en,location_ar,location_en,availability,image_media_id,start_date,end_date,button_text_ar,button_text_en,button_link,visible)
+    SELECT ?,?,?,?,?,'','','available','builtin:towing-service','','','اطلب الونش','Request Recovery','/contact',1
+    WHERE NOT EXISTS (SELECT 1 FROM service_events WHERE image_media_id='builtin:towing-service')`).bind(
+      Date.now(),'خدمة الونش والكساحة','Vehicle Recovery & Towing Service',
+      'خدمة نقل آمنة للسيارات الفاخرة عند الأعطال أو الحاجة إلى نقل السيارة، باستخدام كساحة مجهزة وربط محكم يحافظ على السيارة أثناء التحميل والنقل. تواصل معنا لتحديد موقع الاستلام والوجهة والتوفر.',
+      'Safe recovery and transportation for luxury vehicles in the event of a breakdown or whenever your vehicle needs to be moved. A properly equipped flatbed and secure loading process help protect the vehicle throughout transport. Contact us to confirm pickup, destination and availability.').run();
 }
 function clean(v,max=500){return String(v??"").trim().slice(0,max)}
 function leadSource(d){
@@ -336,6 +344,31 @@ async function handleAPI(req,env,url){
  if(p==="/api/admin/traffic"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    return json({traffic:await trafficSnapshot(env)});
+ }
+ if(p==="/api/admin/reset"&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
+   if(d.scope==="requests"&&d.confirm==="RESET_REQUESTS"){
+     await initDB(env);
+     await env.DB.batch([
+       env.DB.prepare("DELETE FROM admin_request_meta"),
+       env.DB.prepare("DELETE FROM bookings"),
+       env.DB.prepare("DELETE FROM parts_requests"),
+       env.DB.prepare("DELETE FROM contact_requests"),
+       env.DB.prepare("DELETE FROM sqlite_sequence WHERE name IN ('bookings','parts_requests','contact_requests')")
+     ]);
+     return json({ok:true,message:"تم مسح طلبات التجربة وإعادة الترقيم من 1."});
+   }
+   if(d.scope==="traffic"&&d.confirm==="RESET_TRAFFIC"){
+     await initAnalyticsDB(env);
+     await env.DB.batch([
+       env.DB.prepare("DELETE FROM site_visitor_days"),
+       env.DB.prepare("DELETE FROM site_visitor_months"),
+       env.DB.prepare("DELETE FROM site_visitors")
+     ]);
+     return json({ok:true,message:"تم تصفير إحصاءات الزوار."});
+   }
+   return bad("تأكيد إعادة الضبط غير صحيح.",400);
  }
 
  if(p==="/api/admin/dashboard"&&req.method==="GET"){

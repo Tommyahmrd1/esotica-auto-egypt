@@ -89,6 +89,24 @@ $("#loginForm").addEventListener("submit",async e=>{
 });
 $("#logoutBtn").addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});showLogin()});
 $("#refreshBtn").addEventListener("click",load);
+async function resetAdminData(scope){
+ const requests=scope==="requests";
+ const warning=requests
+  ?"سيتم مسح كل الحجوزات وطلبات قطع الغيار والرسائل نهائيًا، وسيبدأ ترقيم الطلبات من 1. هل أنت متأكد؟"
+  :"سيتم مسح كل إحصاءات الزوار اليومية والشهرية والإجمالية. هل أنت متأكد؟";
+ if(!confirm(warning))return;
+ const button=$(requests?"#resetRequestsBtn":"#resetTrafficBtn"),message=$("#resetMsg");
+ button.disabled=true;message.textContent="جاري إعادة الضبط...";message.className="form-msg";
+ try{
+  const response=await fetch("/api/admin/reset",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({scope,confirm:requests?"RESET_REQUESTS":"RESET_TRAFFIC"})});
+  const result=await response.json().catch(()=>({}));
+  message.textContent=response.ok?(result.message||"تمت إعادة الضبط."):(result.error||"تعذرت إعادة الضبط.");message.className=`form-msg ${response.ok?"ok":"err"}`;
+  if(response.ok)await load();
+ }catch{message.textContent="تعذر الاتصال بالخادم.";message.className="form-msg err"}
+ finally{button.disabled=false}
+}
+$("#resetRequestsBtn")?.addEventListener("click",()=>resetAdminData("requests"));
+$("#resetTrafficBtn")?.addEventListener("click",()=>resetAdminData("traffic"));
 async function refreshTraffic(){
  if($("#dashView").classList.contains("hidden"))return;
  try{
@@ -420,12 +438,14 @@ const EVENT_ADMIN_STATUS={
   coming:"قريبًا"
 };
 const MOBILE_SERVICE_IMAGE="/site/mobile-service-event.jpeg?v=20260930-1";
+const TOWING_SERVICE_IMAGE="/site/towing-service-event.webp?v=20261001-1";
 let eventPreviewObjectUrl="";
 function isMobileServiceEvent(item={}){
   const title=`${item.title_ar||item.titleAr||""} ${item.title_en||item.titleEn||""}`.toLowerCase();
   return title.includes("mobile")||title.includes("موبايل")||title.includes("متنقلة");
 }
 function eventAdminImage(item={}){
+  if(item.image_media_id==="builtin:towing-service")return TOWING_SERVICE_IMAGE;
   return item.image_media_id?`/api/media/${encodeURIComponent(item.image_media_id)}`:(isMobileServiceEvent(item)?MOBILE_SERVICE_IMAGE:"");
 }
 function activateEventImageFallbacks(container){
