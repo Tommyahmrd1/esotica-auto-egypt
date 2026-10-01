@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://esotica-auto-egypt.pages.dev/sitemap.xml
+Sitemap: https://esoticaegypt.com/sitemap.xml
