@@ -45,6 +45,14 @@ jobs:
             test "$code" = "200"
           done
 
+          echo "Checking sitemap and robots..."
+          sitemap_headers="$(curl -fsSI --retry 6 --retry-delay 3 --retry-all-errors "$BASE/sitemap.xml")"
+          echo "$sitemap_headers"
+          echo "$sitemap_headers" | grep -qi '^content-type: application/xml'
+          curl -fsS --retry 6 --retry-delay 3 --retry-all-errors "$BASE/sitemap.xml" | grep -q '<urlset'
+          curl -fsS --retry 6 --retry-delay 3 --retry-all-errors "$BASE/robots.txt" | grep -q 'Sitemap: https://esoticaegypt.com/sitemap.xml'
+          echo "Sitemap endpoint OK"
+
           for legacy in "https://www.esoticaegypt.com/" "https://esotica-auto-egypt.pages.dev/"; do
             code="$(curl -sS -o /dev/null -w "%{http_code}" "$legacy")"
             location="$(curl -sSI "$legacy" | awk 'BEGIN{IGNORECASE=1} /^location:/{gsub("\r",""); print $2; exit}')"
