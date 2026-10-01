@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Esotica Admin</title><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20260930-4"><link rel="stylesheet" href="/admin.css?v=20260930-3">
+<title>Esotica Admin</title><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20260930-4"><link rel="stylesheet" href="/admin.css?v=20261001-1">
 </head>
 <body class="admin-body">
   <header class="admin-top"><a class="brand admin-brand" href="/"><span class="brand-logo"><img src="/site/logo.webp?v=20260930-1" alt="Esotica Auto"></span></a><span class="admin-top-label">CONTROL CENTER</span><button id="logoutBtn" class="btn btn-outline hidden">تسجيل خروج</button></header>
@@ -30,6 +30,18 @@
           <div class="traffic-stat is-live"><span>متواجدون الآن</span><b>—</b><small>آخر 5 دقائق</small></div>
           <div class="traffic-stat"><span>زوار الشهر الحالي</span><b>—</b><small>زوار مميزون</small></div>
           <div class="traffic-stat"><span>إجمالي الزوار</span><b>—</b><small>منذ تشغيل العداد</small></div>
+        </div>
+        <div class="traffic-actions">
+          <button id="trafficToggleList" class="tool-btn" type="button">عرض قائمة الزوار</button>
+          <button id="trafficExport" class="tool-btn tool-primary" type="button">تحميل تقرير Excel / CSV</button>
+        </div>
+        <div class="traffic-history">
+          <div><h3>آخر 14 يوم</h3><div id="trafficDaily"></div></div>
+          <div><h3>الشهور</h3><div id="trafficMonthly"></div></div>
+        </div>
+        <div id="visitorListWrap" class="visitor-list-wrap hidden">
+          <div class="visitor-list-head"><h3>قائمة الزوار المجهولين</h3><input id="visitorSearch" type="search" placeholder="ابحث بالجهاز، المتصفح، الدولة أو الصفحة"></div>
+          <div class="visitor-table" id="visitorList"></div>
         </div>
         <p class="traffic-note" id="trafficNote">يبدأ التسجيل من أول زيارة بعد تفعيل العداد، ولا يتم احتساب تحديث الصفحة كزائر جديد.</p>
       </section>
@@ -144,12 +156,15 @@
             <form id="offerForm" class="cms-card form">
               <h2>إدارة العروض</h2>
               <input type="hidden" name="offerId">
-              <label>عنوان العرض<input name="title" required maxlength="160"></label>
-              <label>تفاصيل العرض<textarea name="description" rows="4" maxlength="1500"></textarea></label>
+              <label>عنوان العرض بالعربي<input name="title" required maxlength="160"></label>
+              <label>Offer title in English<input name="titleEn" maxlength="160" dir="ltr"></label>
+              <label>تفاصيل العرض بالعربي<textarea name="description" rows="4" maxlength="1500"></textarea></label>
+              <label>Offer details in English<textarea name="descriptionEn" rows="4" maxlength="1500" dir="ltr"></textarea></label>
               <div class="grid2">
                 <label>تاريخ البداية<input name="startDate" type="date"></label>
                 <label>تاريخ الانتهاء<input name="endDate" type="date"></label>
                 <label>اسم زر العرض<input name="buttonText" maxlength="60" value="احجز الآن"></label>
+                <label>Button in English<input name="buttonTextEn" maxlength="60" value="Book Now" dir="ltr"></label>
                 <label>رابط الزر<input name="buttonLink" maxlength="250" value="/booking" dir="ltr"></label>
               </div>
               <label>صورة العرض<input name="image" type="file" accept="image/*"></label>
@@ -235,5 +250,5 @@
 
     </section>
   </main>
-<script src="/admin.js?v=20260930-3" defer></script>
+<script src="/admin.js?v=20261001-1" defer></script>
 </body></html>

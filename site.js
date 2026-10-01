@@ -22,13 +22,13 @@ const ESOTICA_CONTACT_DEFAULTS={
 };
 
 const VISITOR_HEARTBEAT_MS=90000;
-async function sendVisitorHeartbeat(){
+async function sendVisitorHeartbeat(isPageView=false){
   if(document.hidden||location.pathname.startsWith("/admin"))return;
   try{
     const response=await fetch("/api/analytics/heartbeat",{
       method:"POST",
       headers:{"content-type":"application/json"},
-      body:JSON.stringify({page:location.pathname}),
+      body:JSON.stringify({page:location.pathname,event:isPageView?"pageview":"heartbeat",referrer:(()=>{try{return document.referrer?new URL(document.referrer).hostname:""}catch{return ""}})()}),
       credentials:"same-origin",
       cache:"no-store",
       keepalive:true
@@ -36,10 +36,9 @@ async function sendVisitorHeartbeat(){
     if(!response.ok)console.warn("Visitor analytics heartbeat unavailable",response.status);
   }catch{}
 }
-void sendVisitorHeartbeat();
-window.setInterval(()=>{void sendVisitorHeartbeat()},VISITOR_HEARTBEAT_MS);
+void sendVisitorHeartbeat(true);
+window.setInterval(()=>{void sendVisitorHeartbeat(false)},VISITOR_HEARTBEAT_MS);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)void sendVisitorHeartbeat()});
-window.addEventListener("pageshow",()=>{void sendVisitorHeartbeat()});
 const TRACKED_LEAD_PATHS=new Set(["/booking","/contact","/parts"]);
 const LEAD_SOURCE_TYPES=new Set(["offer","event","warranty","insurance","direct"]);
 function leadValue(value,max=160){return String(value||"").trim().slice(0,max)}
@@ -318,6 +317,7 @@ Object.assign(EN,{
   "الموقع الحالي لا يطلب إدخال بيانات بطاقات دفع أو بيانات مصرفية داخل نماذج الحجز والتواصل.":"The current website does not request payment-card or banking information in its booking and contact forms.",
   "الروابط الخارجية":"External Links",
   "قد يحتوي الموقع على روابط إلى خرائط Google وWhatsApp وFacebook وInstagram. عند فتح هذه الروابط تخضع لاستخدام وسياسات الخدمة الخارجية نفسها.":"The website may link to Google Maps, WhatsApp, Facebook and Instagram. When opening those links, the external service's own terms and policies apply.",
+  "يستخدم الموقع رمزًا عشوائيًا لحساب الزوار المميزين، ويسجل بيانات تقنية عامة مثل نوع الجهاز، المتصفح، نظام التشغيل، اللغة، الدولة التقريبية والصفحات المزارة. لا نخزن الاسم أو رقم الهاتف أو عنوان IP ضمن إحصاءات الزيارة.":"The site uses a random identifier to count unique visitors and records general technical data such as device type, browser, operating system, language, approximate country and visited pages. Visitor analytics do not store names, phone numbers or IP addresses.",
   "الاستفسار عن بياناتك":"Questions About Your Information",
   "يمكنك التواصل معنا من صفحة «تواصل معنا» إذا كان لديك استفسار بخصوص البيانات التي أرسلتها عبر الموقع.":"You can contact us through the Contact Us page if you have a question about information you submitted through the website.",
   "تحديث السياسة":"Policy Updates",
@@ -344,6 +344,19 @@ Object.assign(EN,{
   "إجراءات واضحة، توثيق دقيق، ومتابعة فنية متكاملة من لحظة الفحص وحتى اكتمال الإصلاح وتسليم السيارة.":"Clear procedures, precise documentation and complete technical follow-up from the initial inspection through repair and vehicle delivery.",
   "خدمة الضمان":"Warranty Service",
   "شركات التأمين":"Insurance Partners",
+  "ضمان يمنحك راحة أكبر بتكلفة مدروسة":"Greater Peace of Mind at a Considered Cost",
+  "عندما لا تكون برامج الضمان التقليدية هي الخيار الأنسب من حيث التكلفة، يقدم Esotica Warranty بديلًا عمليًا ومرنًا لحماية سيارتك، مع تغطية واضحة وتفاصيل كاملة قبل الاشتراك.":"When conventional warranty programmes are not the right fit for your budget, Esotica Warranty offers a practical, flexible way to protect your vehicle, with clear coverage and full details before you enrol.",
+  "تقييم أهلية السيارة":"Vehicle Eligibility Assessment",
+  "فحص حالة السيارة والموديل وتاريخ الصيانة لتحديد الخطة الأنسب.":"We review the vehicle's condition, model and service history to identify the most suitable plan.",
+  "خطط تغطية مدروسة":"Considered Coverage Plans",
+  "تغطية عملية بتكلفة مدروسة، مع توضيح الأعمال والأجزاء المشمولة.":"Practical coverage at a considered cost, with covered work and components clearly explained.",
+  "وثيقة وكتيب ضمان":"Warranty Document & Handbook",
+  "تستلم كتيبًا يوضح المدة، والتغطية، والاستثناءات، وآلية الاستفادة.":"You receive a handbook explaining the term, coverage, exclusions and how to use the warranty.",
+  "دعم ومتابعة":"Support & Follow-Up",
+  "فريقنا متاح لشرح التفاصيل ومتابعة أي طلب خلال مدة الضمان.":"Our team is available to explain the details and follow up on requests throughout the warranty term.",
+  "كل التفاصيل قبل القرار":"Full Details Before You Decide",
+  "توضح مدة الضمان ونطاق التغطية والاستثناءات في كتيب الضمان. تواصل معنا لمعرفة الخطة المتاحة لسيارتك.":"The warranty handbook explains the term, coverage and exclusions. Contact us to learn which plan is available for your vehicle.",
+  "اعرف تفاصيل برنامج الضمان":"Explore the Warranty Programme",
   "ضمان واضح على الخدمة":"Clear Warranty Coverage",
   "نوضح لك نطاق التغطية قبل بدء العمل، ونوثق الخدمة المنفذة حتى تكون المتابعة بعد التسليم سهلة وواضحة.":"We explain the coverage before work begins and document the completed service for clear, straightforward follow-up.",
   "فحص وتوثيق":"Inspection & Documentation",
@@ -448,6 +461,9 @@ function applyContactDetails(settings={}){
   const facebook=settings.facebook_url||ESOTICA_CONTACT_DEFAULTS.facebook;
   const instagram=settings.instagram_url||ESOTICA_CONTACT_DEFAULTS.instagram;
   const email=settings.contact_email||ESOTICA_CONTACT_DEFAULTS.email;
+  const whatsappPages={home:"الصفحة الرئيسية",services:"الخدمات",booking:"حجز الصيانة",parts:"قطع الغيار",branches:"الفروع",offers:"العروض والأحداث",contact:"تواصل معنا","warranty-insurance":"الضمان والتأمين",about:"من نحن"};
+  const whatsappText=`مرحبًا، أتواصل معكم من خلال موقع Esotica Auto بخصوص صفحة: ${whatsappPages[pageName]||pageName}. أرغب في الاستفسار عن: `;
+  const whatsappUrl=whatsapp?`https://wa.me/${whatsapp}?text=${encodeURIComponent(whatsappText)}`:"";
 
   const footer=document.querySelector(".site-footer");
   if(footer){
@@ -468,7 +484,7 @@ function applyContactDetails(settings={}){
       let links=contact.querySelector(".footer-live-links");
       if(!links){links=document.createElement("div");links.className="footer-live-links";const btn=contact.querySelector(".footer-contact-btn");contact.insertBefore(links,btn||null)}
       const socialLinks=[
-        whatsapp?`<a class="footer-social-icon whatsapp-icon" target="_blank" rel="noreferrer" href="https://wa.me/${whatsapp}" aria-label="WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.5 4.1 1.6 5.9L0 24l6.5-1.7c1.7.9 3.6 1.4 5.6 1.4 6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.4-8.4Z"/></svg></a>`:"",
+        whatsapp?`<a class="footer-social-icon whatsapp-icon" target="_blank" rel="noreferrer" href="${escHtml(whatsappUrl)}" aria-label="WhatsApp" title="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.5 4.1 1.6 5.9L0 24l6.5-1.7c1.7.9 3.6 1.4 5.6 1.4 6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.4-8.4Z"/></svg></a>`:"",
         instagram?`<a class="footer-social-icon instagram-icon" target="_blank" rel="noreferrer" href="${escHtml(instagram)}" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle class="social-dot" cx="17.4" cy="6.6" r="1"></circle></svg></a>`:"",
         facebook?`<a class="footer-social-icon facebook-icon" target="_blank" rel="noreferrer" href="${escHtml(facebook)}" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.2 8.2V6.5c0-.8.5-1 1-1h2.6V2.1L14.4 2C11 2 9.8 4 9.8 6.2v2H7v4h2.8V22h4.4v-9.8h3.3l.5-4h-3.8Z"/></svg></a>`:""
       ].join("");
@@ -482,7 +498,7 @@ function applyContactDetails(settings={}){
     let a=document.querySelector(".whatsapp-float");
     if(!a){a=document.createElement("a");a.className="whatsapp-float";a.target="_blank";a.rel="noreferrer";a.setAttribute("aria-label","WhatsApp");document.body.appendChild(a)}
     a.innerHTML='<span class="wa-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.5 4.1 1.6 5.9L0 24l6.5-1.7c1.7.9 3.6 1.4 5.6 1.4 6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.4-8.4Z"/></svg></span><span>WhatsApp</span>';
-    a.href="https://wa.me/"+whatsapp;
+    a.href=whatsappUrl;
   }
 }
 
@@ -590,16 +606,16 @@ async function loadOffers(){
   try{
     const r=await fetch("/api/offers",{cache:"no-store"}),j=await r.json();
     if(!r.ok||!Array.isArray(j.offers)||!j.offers.length)return;
-    grid.innerHTML=j.offers.map(x=>`<article class="offer-card">
-      ${x.image_media_id?`<div class="offer-image"><img src="/api/media/${encodeURIComponent(x.image_media_id)}" alt="${escHtml(x.title)}" loading="lazy"></div>`:""}
+    grid.innerHTML=j.offers.map(x=>{const ar=activeLang==="ar",title=ar?(x.title||x.title_en):(x.title_en||x.title),description=ar?(x.description||x.description_en):(x.description_en||x.description),button=ar?(x.button_text||"احجز الآن"):(x.button_text_en||"Book Now"),image=x.image_media_id==="builtin:jlr-cashback-50"?"/site/offer-cashback-jlr-v2.webp?v=20261001-1":(x.image_media_id?`/api/media/${encodeURIComponent(x.image_media_id)}`:"");return `<article class="offer-card">
+      ${image?`<div class="offer-image"><img src="${image}" alt="${escHtml(title)}" loading="lazy"></div>`:""}
       <div class="offer-content">
         <p class="eyebrow">ESOTICA OFFER</p>
-        <h2>${escHtml(x.title)}</h2>
-        <p>${escHtml(x.description||"")}</p>
-        ${x.end_date?`<div class="offer-dates">متاح حتى ${escHtml(x.end_date)}</div>`:""}
-        <a class="btn btn-gold" href="${escHtml(trackedInternalLink(x.button_link||"/booking","offer",x.title,x.id))}">${escHtml(x.button_text||"احجز الآن")}</a>
+        <h2>${escHtml(title)}</h2>
+        <p>${escHtml(description||"")}</p>
+        ${x.end_date?`<div class="offer-dates">${ar?"متاح حتى":"Available until"} ${escHtml(x.end_date)}</div>`:""}
+        <a class="btn btn-gold" href="${escHtml(trackedInternalLink(x.button_link||"/booking","offer",title,x.id))}">${escHtml(button)}</a>
       </div>
-    </article>`).join("");
+    </article>`}).join("");
   }catch(e){console.warn("Offers unavailable",e)}
 }
 

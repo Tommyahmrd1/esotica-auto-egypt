@@ -3,24 +3,43 @@ const json=(data,status=200,extra={})=>new Response(JSON.stringify(data),{status
 const bad=(message,status=400)=>json({error:message},status);
 
 let analyticsSchemaPromise=null;
+async function ensureColumns(env,table,columns){
+  const info=await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+  const existing=new Set((info.results||[]).map(row=>row.name));
+  for(const [name,definition] of columns){
+    if(!existing.has(name))await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`).run();
+  }
+}
 async function initAnalyticsDB(env){
   if(!env.DB)throw new Error("Missing D1 binding: DB");
   if(!analyticsSchemaPromise){
-    analyticsSchemaPromise=env.DB.batch([
+    analyticsSchemaPromise=(async()=>{await env.DB.batch([
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS site_visitors (
         visitor_id TEXT PRIMARY KEY,
         first_seen INTEGER NOT NULL,
         last_seen INTEGER NOT NULL,
-        last_page TEXT NOT NULL DEFAULT '')`),
+        last_page TEXT NOT NULL DEFAULT '',
+        device_type TEXT NOT NULL DEFAULT '', browser TEXT NOT NULL DEFAULT '', os TEXT NOT NULL DEFAULT '',
+        language TEXT NOT NULL DEFAULT '', country TEXT NOT NULL DEFAULT '', first_referrer TEXT NOT NULL DEFAULT '',
+        page_views INTEGER NOT NULL DEFAULT 0)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS site_visitor_months (
         visitor_id TEXT NOT NULL,
         month_key TEXT NOT NULL,
         first_seen INTEGER NOT NULL,
         last_seen INTEGER NOT NULL,
+        page_views INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY(visitor_id,month_key))`),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS site_visitor_days (
+        visitor_id TEXT NOT NULL, day_key TEXT NOT NULL, first_seen INTEGER NOT NULL,
+        last_seen INTEGER NOT NULL, page_views INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY(visitor_id,day_key))`),
       env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_site_visitors_last_seen ON site_visitors(last_seen)"),
-      env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_site_visitor_months_month ON site_visitor_months(month_key)")
-    ]).catch(error=>{analyticsSchemaPromise=null;throw error});
+      env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_site_visitor_months_month ON site_visitor_months(month_key)"),
+      env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_site_visitor_days_day ON site_visitor_days(day_key)")
+    ]);
+    await ensureColumns(env,"site_visitors",[["device_type","TEXT NOT NULL DEFAULT ''"],["browser","TEXT NOT NULL DEFAULT ''"],["os","TEXT NOT NULL DEFAULT ''"],["language","TEXT NOT NULL DEFAULT ''"],["country","TEXT NOT NULL DEFAULT ''"],["first_referrer","TEXT NOT NULL DEFAULT ''"],["page_views","INTEGER NOT NULL DEFAULT 0"]]);
+    await ensureColumns(env,"site_visitor_months",[["page_views","INTEGER NOT NULL DEFAULT 0"]]);
+    })().catch(error=>{analyticsSchemaPromise=null;throw error});
   }
   return analyticsSchemaPromise;
 }
@@ -83,11 +102,14 @@ async function initDB(env){
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  created_at INTEGER NOT NULL,
  title TEXT NOT NULL,
+ title_en TEXT NOT NULL DEFAULT '',
  description TEXT NOT NULL DEFAULT '',
+ description_en TEXT NOT NULL DEFAULT '',
  image_media_id TEXT NOT NULL DEFAULT '',
  start_date TEXT NOT NULL DEFAULT '',
  end_date TEXT NOT NULL DEFAULT '',
  button_text TEXT NOT NULL DEFAULT 'احجز الآن',
+ button_text_en TEXT NOT NULL DEFAULT 'Book Now',
  button_link TEXT NOT NULL DEFAULT '/booking',
  visible INTEGER NOT NULL DEFAULT 1)`,
 `CREATE TABLE IF NOT EXISTS service_events (
@@ -142,6 +164,14 @@ async function initDB(env){
       if(!existing.has(column)){try{await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run()}catch(error){if(!String(error?.message||error).toLowerCase().includes("duplicate column"))throw error}}
     }
   }
+  await ensureColumns(env,"offers",[["title_en","TEXT NOT NULL DEFAULT ''"],["description_en","TEXT NOT NULL DEFAULT ''"],["button_text_en","TEXT NOT NULL DEFAULT 'Book Now'"]]);
+  await env.DB.prepare(`INSERT INTO offers(created_at,title,title_en,description,description_en,image_media_id,start_date,end_date,button_text,button_text_en,button_link,visible)
+    SELECT ?,?,?,?,?,?,'','','احجز واستفد بالعرض','Book & Claim Offer','/booking',1
+    WHERE NOT EXISTS (SELECT 1 FROM offers WHERE image_media_id='builtin:jlr-cashback-50')`).bind(
+      Date.now(),'50% Cashback على مصنعية الصيانة','50% Labour Cashback',
+      'لعملاء Range Rover وJaguar موديلات 2016–2026: احجز من خلال هذا العرض واحصل على رصيد Cashback بقيمة 50% من مصنعية الزيارة، يُستخدم في زيارتك التالية. يسري على الحجوزات الجديدة عبر الموقع، والرصيد على قيمة المصنعية فقط. تطبق الشروط والأحكام.',
+      'For Range Rover and Jaguar vehicles from model years 2016–2026: book through this website offer and receive cashback credit equal to 50% of the labour charge from your visit, redeemable on your next visit. Valid for new website bookings; credit applies to labour charges only. Terms and conditions apply.',
+      'builtin:jlr-cashback-50').run();
 }
 function clean(v,max=500){return String(v??"").trim().slice(0,max)}
 function leadSource(d){
@@ -199,14 +229,27 @@ async function trafficSnapshot(env){
     (SELECT COUNT(*) FROM site_visitor_months WHERE month_key=?) AS month_unique,
     (SELECT COUNT(*) FROM site_visitors) AS all_time,
     (SELECT MIN(first_seen) FROM site_visitors) AS started_at`).bind(onlineSince,monthKey).first();
+  const [dailyRows,monthlyRows,visitorRows]=await env.DB.batch([
+    env.DB.prepare("SELECT day_key AS period,COUNT(*) AS unique_visitors,SUM(page_views) AS page_views FROM site_visitor_days GROUP BY day_key ORDER BY day_key DESC LIMIT 366"),
+    env.DB.prepare("SELECT month_key AS period,COUNT(*) AS unique_visitors,SUM(page_views) AS page_views FROM site_visitor_months GROUP BY month_key ORDER BY month_key DESC LIMIT 60"),
+    env.DB.prepare("SELECT visitor_id,first_seen,last_seen,last_page,device_type,browser,os,language,country,first_referrer,page_views FROM site_visitors ORDER BY last_seen DESC LIMIT 500")
+  ]);
   return {
     online:Number(row?.online_now||0),
     month:Number(row?.month_unique||0),
     total:Number(row?.all_time||0),
     startedAt:Number(row?.started_at||0),
     monthKey,
-    onlineWindowMinutes:5
+    onlineWindowMinutes:5,
+    daily:dailyRows.results||[],monthlyHistory:monthlyRows.results||[],visitors:visitorRows.results||[]
   };
+}
+function visitorTech(req){
+ const ua=req.headers.get("user-agent")||"";
+ const device=/bot|crawler|spider/i.test(ua)?"Bot":/ipad|tablet/i.test(ua)?"Tablet":/mobile|android|iphone/i.test(ua)?"Mobile":"Desktop";
+ const browser=/edg\//i.test(ua)?"Edge":/opr\//i.test(ua)?"Opera":/samsungbrowser/i.test(ua)?"Samsung Internet":/firefox|fxios/i.test(ua)?"Firefox":/chrome|crios/i.test(ua)?"Chrome":/safari/i.test(ua)?"Safari":"Other";
+ const os=/windows/i.test(ua)?"Windows":/android/i.test(ua)?"Android":/iphone|ipad|ipod/i.test(ua)?"iOS/iPadOS":/mac os|macintosh/i.test(ua)?"macOS":/linux/i.test(ua)?"Linux":"Other";
+ return {device,browser,os,language:clean((req.headers.get("accept-language")||"").split(",")[0],20),country:clean(req.cf?.country||req.headers.get("cf-ipcountry")||"",2).toUpperCase()};
 }
 async function handleAPI(req,env,url){
  const p=url.pathname;
@@ -217,15 +260,16 @@ async function handleAPI(req,env,url){
  }
  if(p==="/api/analytics/heartbeat"&&req.method==="POST"){
    await initAnalyticsDB(env);
-   const data=await readJSON(req)||{},now=Date.now(),monthKey=cairoDateParts().date.slice(0,7),cookies=cookieMap(req.headers.get("cookie"));
+   const data=await readJSON(req)||{},now=Date.now(),dayKey=cairoDateParts().date,monthKey=dayKey.slice(0,7),cookies=cookieMap(req.headers.get("cookie"));
    let visitorId=String(cookies.esotica_visitor||"").toLowerCase(),setVisitorCookie=false;
    if(!/^[a-f0-9]{32}$/.test(visitorId)){
      visitorId=crypto.randomUUID().replace(/-/g,"");setVisitorCookie=true;
    }
-   const page=clean(data.page,160).split("?")[0]||"/";
+   const page=clean(data.page,160).split("?")[0]||"/",referrer=clean(data.referrer,160),tech=visitorTech(req),pageViews=data.event==="pageview"?1:0;
    await env.DB.batch([
-     env.DB.prepare("INSERT INTO site_visitors(visitor_id,first_seen,last_seen,last_page) VALUES(?,?,?,?) ON CONFLICT(visitor_id) DO UPDATE SET last_seen=excluded.last_seen,last_page=excluded.last_page").bind(visitorId,now,now,page),
-     env.DB.prepare("INSERT INTO site_visitor_months(visitor_id,month_key,first_seen,last_seen) VALUES(?,?,?,?) ON CONFLICT(visitor_id,month_key) DO UPDATE SET last_seen=excluded.last_seen").bind(visitorId,monthKey,now,now)
+     env.DB.prepare("INSERT INTO site_visitors(visitor_id,first_seen,last_seen,last_page,device_type,browser,os,language,country,first_referrer,page_views) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(visitor_id) DO UPDATE SET last_seen=excluded.last_seen,last_page=excluded.last_page,device_type=excluded.device_type,browser=excluded.browser,os=excluded.os,language=excluded.language,country=excluded.country,page_views=site_visitors.page_views+excluded.page_views").bind(visitorId,now,now,page,tech.device,tech.browser,tech.os,tech.language,tech.country,referrer,pageViews),
+     env.DB.prepare("INSERT INTO site_visitor_months(visitor_id,month_key,first_seen,last_seen,page_views) VALUES(?,?,?,?,?) ON CONFLICT(visitor_id,month_key) DO UPDATE SET last_seen=excluded.last_seen,page_views=site_visitor_months.page_views+excluded.page_views").bind(visitorId,monthKey,now,now,pageViews),
+     env.DB.prepare("INSERT INTO site_visitor_days(visitor_id,day_key,first_seen,last_seen,page_views) VALUES(?,?,?,?,?) ON CONFLICT(visitor_id,day_key) DO UPDATE SET last_seen=excluded.last_seen,page_views=site_visitor_days.page_views+excluded.page_views").bind(visitorId,dayKey,now,now,pageViews)
    ]);
    return json({ok:true},200,setVisitorCookie?{"set-cookie":visitorCookie(visitorId)}:{});
  }
@@ -242,7 +286,7 @@ async function handleAPI(req,env,url){
  if(p==="/api/offers"&&req.method==="GET"){
    await initDB(env);
    const today=cairoDateParts().date;
-   const rows=await env.DB.prepare("SELECT id,title,description,image_media_id,start_date,end_date,button_text,button_link FROM offers WHERE visible=1 AND (start_date='' OR start_date<=?) AND (end_date='' OR end_date>=?) ORDER BY created_at DESC LIMIT 50").bind(today,today).all();
+   const rows=await env.DB.prepare("SELECT id,title,title_en,description,description_en,image_media_id,start_date,end_date,button_text,button_text_en,button_link FROM offers WHERE visible=1 AND (start_date='' OR start_date<=?) AND (end_date='' OR end_date>=?) ORDER BY created_at DESC LIMIT 50").bind(today,today).all();
    return json({offers:rows.results||[]});
  }
  if(p==="/api/events"&&req.method==="GET"){
@@ -399,9 +443,9 @@ async function handleAPI(req,env,url){
  if(p==="/api/admin/offers"&&req.method==="POST"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
-   const title=clean(d.title,160),description=clean(d.description,1500),imageMediaId=clean(d.imageMediaId,80),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonText=clean(d.buttonText||"احجز الآن",60),buttonLink=clean(d.buttonLink||"/booking",250);
+   const title=clean(d.title,160),titleEn=clean(d.titleEn,160),description=clean(d.description,1500),descriptionEn=clean(d.descriptionEn,1500),imageMediaId=clean(d.imageMediaId,80),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonText=clean(d.buttonText||"احجز الآن",60),buttonTextEn=clean(d.buttonTextEn||"Book Now",60),buttonLink=clean(d.buttonLink||"/booking",250);
    if(!title)return bad("اكتب عنوان العرض.");
-   await env.DB.prepare("INSERT INTO offers(created_at,title,description,image_media_id,start_date,end_date,button_text,button_link,visible) VALUES(?,?,?,?,?,?,?,?,1)").bind(Date.now(),title,description,imageMediaId,startDate,endDate,buttonText,buttonLink).run();
+   await env.DB.prepare("INSERT INTO offers(created_at,title,title_en,description,description_en,image_media_id,start_date,end_date,button_text,button_text_en,button_link,visible) VALUES(?,?,?,?,?,?,?,?,?,?,?,1)").bind(Date.now(),title,titleEn,description,descriptionEn,imageMediaId,startDate,endDate,buttonText,buttonTextEn,buttonLink).run();
    return json({ok:true});
  }
  const offerAction=p.match(/^\/api\/admin\/offers\/(\d+)$/);
@@ -412,11 +456,11 @@ async function handleAPI(req,env,url){
    if(action==="toggle")await env.DB.prepare("UPDATE offers SET visible=CASE visible WHEN 1 THEN 0 ELSE 1 END WHERE id=?").bind(id).run();
    else if(action==="delete")await env.DB.prepare("DELETE FROM offers WHERE id=?").bind(id).run();
    else if(action==="update"){
-     const title=clean(d.title,160),description=clean(d.description,1500),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonText=clean(d.buttonText||"احجز الآن",60),buttonLink=clean(d.buttonLink||"/booking",250);
+     const title=clean(d.title,160),titleEn=clean(d.titleEn,160),description=clean(d.description,1500),descriptionEn=clean(d.descriptionEn,1500),startDate=clean(d.startDate,20),endDate=clean(d.endDate,20),buttonText=clean(d.buttonText||"احجز الآن",60),buttonTextEn=clean(d.buttonTextEn||"Book Now",60),buttonLink=clean(d.buttonLink||"/booking",250);
      if(!title)return bad("اكتب عنوان العرض.");
      const imageMediaId=clean(d.imageMediaId,80);
-     if(imageMediaId)await env.DB.prepare("UPDATE offers SET title=?,description=?,start_date=?,end_date=?,button_text=?,button_link=?,image_media_id=? WHERE id=?").bind(title,description,startDate,endDate,buttonText,buttonLink,imageMediaId,id).run();
-     else await env.DB.prepare("UPDATE offers SET title=?,description=?,start_date=?,end_date=?,button_text=?,button_link=? WHERE id=?").bind(title,description,startDate,endDate,buttonText,buttonLink,id).run();
+     if(imageMediaId)await env.DB.prepare("UPDATE offers SET title=?,title_en=?,description=?,description_en=?,start_date=?,end_date=?,button_text=?,button_text_en=?,button_link=?,image_media_id=? WHERE id=?").bind(title,titleEn,description,descriptionEn,startDate,endDate,buttonText,buttonTextEn,buttonLink,imageMediaId,id).run();
+     else await env.DB.prepare("UPDATE offers SET title=?,title_en=?,description=?,description_en=?,start_date=?,end_date=?,button_text=?,button_text_en=?,button_link=? WHERE id=?").bind(title,titleEn,description,descriptionEn,startDate,endDate,buttonText,buttonTextEn,buttonLink,id).run();
    }else return bad("إجراء غير صحيح.");
    return json({ok:true});
  }

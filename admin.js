@@ -1,11 +1,12 @@
 const $=s=>document.querySelector(s);
-let state={tab:"bookings",data:null};
+let state={tab:"bookings",data:null,traffic:null};
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 function showLogin(){ $("#loginView").classList.remove("hidden");$("#dashView").classList.add("hidden");$("#logoutBtn").classList.add("hidden") }
 function showDash(){ $("#loginView").classList.add("hidden");$("#dashView").classList.remove("hidden");$("#logoutBtn").classList.remove("hidden") }
 function date(v){try{return new Date(v).toLocaleString("ar-EG")}catch{return v}}
 const adminNumber=new Intl.NumberFormat("ar-EG");
 function renderTraffic(traffic={}){
+ state.traffic=traffic;
  const el=$("#visitorStats");if(!el)return;
  const values=[
   {label:"متواجدون الآن",value:traffic.online,detail:`نشطون خلال آخر ${traffic.onlineWindowMinutes||5} دقائق`,live:true},
@@ -15,7 +16,28 @@ function renderTraffic(traffic={}){
  el.innerHTML=values.map(x=>`<div class="traffic-stat ${x.live?"is-live":""}"><span>${x.label}</span><b>${adminNumber.format(Number(x.value)||0)}</b><small>${x.detail}</small></div>`).join("");
  const note=$("#trafficNote");
  if(note)note.textContent=traffic.startedAt?`بدأ تسجيل الزيارات: ${date(traffic.startedAt)} — تحديث الصفحة لا يُحتسب كزائر جديد.`:"سيبدأ تسجيل الزيارات مع أول زائر بعد تفعيل العداد.";
+ renderTrafficHistory(traffic);renderVisitorList();
 }
+function miniTrafficTable(rows=[]){return rows.length?`<table><thead><tr><th>الفترة</th><th>الزوار</th><th>مشاهدات</th></tr></thead><tbody>${rows.map(x=>`<tr><td dir="ltr">${esc(x.period)}</td><td>${adminNumber.format(Number(x.unique_visitors)||0)}</td><td>${adminNumber.format(Number(x.page_views)||0)}</td></tr>`).join("")}</tbody></table>`:'<p class="traffic-empty">لا توجد بيانات بعد.</p>'}
+function renderTrafficHistory(traffic={}){
+ const daily=$("#trafficDaily"),monthly=$("#trafficMonthly");
+ if(daily)daily.innerHTML=miniTrafficTable((traffic.daily||[]).slice(0,14));
+ if(monthly)monthly.innerHTML=miniTrafficTable((traffic.monthlyHistory||[]).slice(0,12));
+}
+function renderVisitorList(){
+ const el=$("#visitorList");if(!el)return;const q=($("#visitorSearch")?.value||"").trim().toLowerCase();
+ const rows=(state.traffic?.visitors||[]).filter(x=>!q||Object.values(x).some(v=>String(v??"").toLowerCase().includes(q)));
+ el.innerHTML=rows.length?`<table><thead><tr><th>الزائر</th><th>الجهاز</th><th>المتصفح / النظام</th><th>الدولة / اللغة</th><th>آخر صفحة</th><th>أول زيارة</th><th>آخر نشاط</th><th>مشاهدات</th></tr></thead><tbody>${rows.map(x=>`<tr><td dir="ltr">${esc(String(x.visitor_id||"").slice(0,10))}…</td><td>${esc(x.device_type||"—")}</td><td>${esc(x.browser||"—")}<br><small>${esc(x.os||"—")}</small></td><td>${esc(x.country||"—")}<br><small>${esc(x.language||"—")}</small></td><td dir="ltr">${esc(x.last_page||"/")}</td><td>${date(x.first_seen)}</td><td>${date(x.last_seen)}</td><td>${adminNumber.format(Number(x.page_views)||0)}</td></tr>`).join("")}</tbody></table>`:'<p class="traffic-empty">لا توجد نتائج.</p>';
+}
+function csvCell(v){const s=String(v??"");return `"${s.replace(/"/g,'""')}"`}
+function exportTraffic(){
+ const t=state.traffic||{},header=["نوع السجل","الفترة","الزوار المميزون","مشاهدات الصفحات","معرف الزائر","أول زيارة","آخر زيارة","الجهاز","المتصفح","نظام التشغيل","الدولة","اللغة","آخر صفحة","مصدر الزيارة"];
+ const lines=[header,...(t.daily||[]).map(x=>["يومي",x.period,x.unique_visitors,x.page_views]),...(t.monthlyHistory||[]).map(x=>["شهري",x.period,x.unique_visitors,x.page_views]),...(t.visitors||[]).map(x=>["زائر مجهول","","",x.page_views,x.visitor_id,new Date(Number(x.first_seen)||0).toISOString(),new Date(Number(x.last_seen)||0).toISOString(),x.device_type,x.browser,x.os,x.country,x.language,x.last_page,x.first_referrer])];
+ const blob=new Blob(["\ufeff"+lines.map(row=>row.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`esotica-visitors-${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$("#trafficToggleList")?.addEventListener("click",()=>{const w=$("#visitorListWrap");w.classList.toggle("hidden");$("#trafficToggleList").textContent=w.classList.contains("hidden")?"عرض قائمة الزوار":"إخفاء قائمة الزوار"});
+$("#trafficExport")?.addEventListener("click",exportTraffic);
+$("#visitorSearch")?.addEventListener("input",renderVisitorList);
 function render(){
  const d=state.data;if(!d)return;
  const all=[...d.bookings,...d.parts,...d.contacts], fresh=all.filter(x=>x.status==="new").length;
@@ -350,7 +372,7 @@ function renderOffersAdmin(){
   const rows=cmsData.offers||[];
   if(!rows.length){el.innerHTML="<p>لا توجد عروض بعد.</p>";return}
   el.innerHTML=rows.map(x=>`<div class="content-admin-item">
-    ${x.image_media_id?`<img src="/api/media/${x.image_media_id}" alt="">`:""}
+    ${x.image_media_id?`<img src="${x.image_media_id==="builtin:jlr-cashback-50"?"/site/offer-cashback-jlr-v2.webp?v=20261001-1":`/api/media/${x.image_media_id}`}" alt="">`:""}
     <div class="content-admin-copy"><strong>${esc(x.title)}</strong><p>${esc(x.description||"")}</p><small>${x.visible?"ظاهر":"مخفي"} ${x.end_date?"• حتى "+esc(x.end_date):""}</small></div>
     <div class="review-actions"><button data-offer-edit="${x.id}">تعديل</button><button data-offer-toggle="${x.id}">${x.visible?"إخفاء":"إظهار"}</button><button data-offer-delete="${x.id}">حذف</button></div>
   </div>`).join("");
@@ -362,7 +384,8 @@ function renderOffersAdmin(){
 function editOffer(id){
   const x=(cmsData.offers||[]).find(o=>Number(o.id)===id),f=$("#offerForm");if(!x||!f)return;
   f.elements.offerId.value=x.id;f.elements.title.value=x.title||"";f.elements.description.value=x.description||"";
-  f.elements.startDate.value=x.start_date||"";f.elements.endDate.value=x.end_date||"";f.elements.buttonText.value=x.button_text||"احجز الآن";f.elements.buttonLink.value=x.button_link||"/booking";
+  f.elements.titleEn.value=x.title_en||"";f.elements.descriptionEn.value=x.description_en||"";
+  f.elements.startDate.value=x.start_date||"";f.elements.endDate.value=x.end_date||"";f.elements.buttonText.value=x.button_text||"احجز الآن";f.elements.buttonTextEn.value=x.button_text_en||"Book Now";f.elements.buttonLink.value=x.button_link||"/booking";
   $("#offerCancelEdit").classList.remove("hidden");f.scrollIntoView({behavior:"smooth",block:"center"});
 }
 $("#offerCancelEdit")?.addEventListener("click",()=>{const f=$("#offerForm");f.reset();f.elements.offerId.value="";$("#offerCancelEdit").classList.add("hidden")});
@@ -382,7 +405,7 @@ $("#offerForm")?.addEventListener("submit",async e=>{
     if(!mr.ok){m.textContent=mj.error||"تعذر رفع صورة العرض.";m.className="form-msg err";return}
     imageMediaId=mj.id;
   }
-  const payload={title:f.elements.title.value,description:f.elements.description.value,startDate:f.elements.startDate.value,endDate:f.elements.endDate.value,buttonText:f.elements.buttonText.value,buttonLink:f.elements.buttonLink.value,imageMediaId};
+  const payload={title:f.elements.title.value,titleEn:f.elements.titleEn.value,description:f.elements.description.value,descriptionEn:f.elements.descriptionEn.value,startDate:f.elements.startDate.value,endDate:f.elements.endDate.value,buttonText:f.elements.buttonText.value,buttonTextEn:f.elements.buttonTextEn.value,buttonLink:f.elements.buttonLink.value,imageMediaId};
   const id=f.elements.offerId.value;
   if(id)payload.action="update";
   const r=await fetch(id?`/api/admin/offers/${id}`:"/api/admin/offers",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
