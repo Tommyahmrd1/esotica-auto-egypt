@@ -606,7 +606,7 @@ async function loadOffers(){
   try{
     const r=await fetch("/api/offers",{cache:"no-store"}),j=await r.json();
     if(!r.ok||!Array.isArray(j.offers)||!j.offers.length)return;
-    grid.innerHTML=j.offers.map(x=>{const ar=activeLang==="ar",title=ar?(x.title||x.title_en):(x.title_en||x.title),description=ar?(x.description||x.description_en):(x.description_en||x.description),button=ar?(x.button_text||"احجز الآن"):(x.button_text_en||"Book Now"),image=x.image_media_id==="builtin:jlr-cashback-50"?"/site/offer-cashback-jlr-v2.webp?v=20261001-1":(x.image_media_id?`/api/media/${encodeURIComponent(x.image_media_id)}`:"");return `<article class="offer-card">
+    grid.innerHTML=j.offers.map(x=>{const ar=document.documentElement.lang==="ar",title=ar?(x.title||x.title_en):(x.title_en||x.title),description=ar?(x.description||x.description_en):(x.description_en||x.description),button=ar?(x.button_text||"احجز الآن"):(x.button_text_en||"Book Now"),image=x.image_media_id==="builtin:jlr-cashback-50"?"/site/offer-cashback-jlr-v2.webp?v=20261001-1":(x.image_media_id?`/api/media/${encodeURIComponent(x.image_media_id)}`:"");return `<article class="offer-card">
       ${image?`<div class="offer-image"><img src="${image}" alt="${escHtml(title)}" loading="lazy"></div>`:""}
       <div class="offer-content">
         <p class="eyebrow">ESOTICA OFFER</p>

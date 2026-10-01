@@ -7,7 +7,7 @@ async function ensureColumns(env,table,columns){
   const info=await env.DB.prepare(`PRAGMA table_info(${table})`).all();
   const existing=new Set((info.results||[]).map(row=>row.name));
   for(const [name,definition] of columns){
-    if(!existing.has(name))await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`).run();
+    if(!existing.has(name)){try{await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`).run()}catch(error){if(!String(error?.message||error).toLowerCase().includes("duplicate column"))throw error}}
   }
 }
 async function initAnalyticsDB(env){
