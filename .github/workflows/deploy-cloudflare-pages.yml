@@ -44,3 +44,11 @@ jobs:
             echo "$path -> $code"
             test "$code" = "200"
           done
+
+          for legacy in "https://www.esoticaegypt.com/" "https://esotica-auto-egypt.pages.dev/"; do
+            code="$(curl -sS -o /dev/null -w "%{http_code}" "$legacy")"
+            location="$(curl -sSI "$legacy" | awk 'BEGIN{IGNORECASE=1} /^location:/{gsub("\r",""); print $2; exit}')"
+            echo "$legacy -> $code -> $location"
+            case "$code" in 301|302|307|308) ;; *) exit 1 ;; esac
+            echo "$location" | grep -q '^https://esoticaegypt.com/'
+          done
