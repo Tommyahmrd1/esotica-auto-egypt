@@ -491,6 +491,25 @@ Object.assign(EN,{
   "قطعة 100 — المنطقة الصناعية، التجمع الثالث، القاهرة الجديدة.":"Plot 100 — Industrial Area, Third Settlement, New Cairo.",
   "جوميرا بلازا — وصلة دهشور — سيتي بارك، الشيخ زايد.":"Jumeirah Plaza — Waslet Dahshour — City Park, Sheikh Zayed."
 });
+
+Object.assign(EN,{
+  "مركز صيانة Range Rover وJaguar والسيارات الفاخرة":"Range Rover, Jaguar & Luxury Car Service Center",
+  "خبرة متخصصة في رينج روفر ولاند روفر وجاكوار، وخدمات صيانة وتشخيص وقطع غيار لمجموعة مختارة من السيارات الفاخرة في القاهرة الجديدة والشيخ زايد.":"Specialist Range Rover, Land Rover and Jaguar expertise, plus maintenance, diagnostics and spare-parts services for selected luxury vehicles in New Cairo and Sheikh Zayed.",
+  "صيانة Range Rover وLand Rover":"Range Rover & Land Rover Service",
+  "صيانة وتشخيص وفحص وقطع غيار لسيارات رينج روفر ولاند روفر.":"Maintenance, diagnostics, inspection and spare parts for Range Rover and Land Rover vehicles.",
+  "خدمات رينج روفر ولاند روفر ←":"Range Rover & Land Rover services →",
+  "صيانة Jaguar":"Jaguar Service",
+  "خدمات صيانة وتشخيص وقطع غيار لسيارات جاكوار في فروع Esotica Auto.":"Maintenance, diagnostics and spare-parts services for Jaguar vehicles at Esotica Auto locations.",
+  "خدمات جاكوار ←":"Jaguar services →",
+  "صيانة السيارات الفاخرة":"Luxury Car Service",
+  "خدمات مختارة لسيارات BMW وMercedes-Benz وPorsche وBentley وMaserati وFerrari وLamborghini وغيرها.":"Selected services for BMW, Mercedes-Benz, Porsche, Bentley, Maserati, Ferrari, Lamborghini and more.",
+  "خدمات السيارات الفاخرة ←":"Luxury car services →",
+  "مركز صيانة التجمع الخامس":"Fifth Settlement Service Center",
+  "مركز صيانة التجمع الثالث":"Third Settlement Service Center",
+  "مركز صيانة الشيخ زايد":"Sheikh Zayed Service Center",
+  "خدمات صيانة وتشخيص وفحص وقطع غيار لسيارات Range Rover وLand Rover (رينج روفر ولاند روفر)، مع مراجعة بيانات السيارة والحالة المطلوبة قبل تأكيد الخدمة.":"Maintenance, diagnostics, inspection and spare-parts services for Range Rover and Land Rover, with vehicle details reviewed before confirming the service.",
+  "خدمات صيانة وتشخيص وفحص وقطع غيار لسيارات Jaguar (جاكوار) مع متابعة الطلب من الحجز وحتى ما بعد الخدمة.":"Maintenance, diagnostics, inspection and spare-parts services for Jaguar vehicles, with follow-up from booking through after-service care."
+});
 const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
 const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه المكوّن من 17 خانة":"Enter the complete 17-character VIN"};
 function translatePage(lang){
