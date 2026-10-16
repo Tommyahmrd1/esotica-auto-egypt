@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>بوابة عملاء Esotica Auto — نسخة تجريبية</title>
+  <meta name="description" content="نسخة تجريبية خاصة لبوابة عملاء Esotica Auto.">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="icon" href="/favicon.svg?v=20260930-1">
+  <link rel="stylesheet" href="/customer-preview/portal.css?v=1">
+</head>
+<body>
+  <div class="demo-ribbon" role="status">
+    <span></span>
+    نسخة تجريبية منفصلة — لا تستخدم بيانات حقيقية ولا تؤثر على الموقع الحالي
+  </div>
+
+  <header class="portal-header">
+    <a class="portal-logo" href="/" aria-label="Esotica Auto">
+      <img src="/site/logo.webp?v=20260930-1" alt="Esotica Auto">
+    </a>
+    <div class="portal-header-copy">
+      <strong>بوابة العملاء</strong>
+      <small>CUSTOMER PORTAL PREVIEW</small>
+    </div>
+    <a class="back-link" href="/">العودة للموقع</a>
+  </header>
+
+  <main>
+    <section class="login-shell" id="loginView">
+      <div class="login-intro">
+        <p class="eyebrow">ESOTICA CUSTOMER CARE</p>
+        <h1>كل تفاصيل سيارتك<br>في مكان واحد.</h1>
+        <p>تابع حجوزاتك وعروضك ورصيد الكاش باك وسجل سياراتك من حسابك الخاص.</p>
+        <div class="feature-list" aria-label="مزايا بوابة العملاء">
+          <span><i>✓</i> سجل كامل للحجوزات والاستفسارات</span>
+          <span><i>✓</i> إدارة بيانات سياراتك</span>
+          <span><i>✓</i> عروض خاصة وكاش باك موثق</span>
+        </div>
+      </div>
+
+      <div class="login-card">
+        <div class="login-card-head">
+          <span class="lock-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2 2 0 0 1 2 2v7H6v-7a2 2 0 0 1 2-2Z"/></svg>
+          </span>
+          <div><small>SECURE ACCESS</small><h2>تسجيل الدخول</h2></div>
+        </div>
+        <p class="login-note">استخدم بيانات التجربة التالية لمعاينة الحساب.</p>
+        <div class="demo-credentials">
+          <div><span>البريد</span><b dir="ltr">demo@esotica.local</b></div>
+          <div><span>كلمة المرور</span><b dir="ltr">Demo2026</b></div>
+        </div>
+        <form id="loginForm" class="portal-form" novalidate>
+          <label>البريد الإلكتروني
+            <input name="email" type="email" dir="ltr" autocomplete="username" value="demo@esotica.local" required>
+          </label>
+          <label>كلمة المرور
+            <span class="password-field">
+              <input name="password" type="password" dir="ltr" autocomplete="current-password" value="Demo2026" required>
+              <button id="passwordToggle" type="button" aria-label="إظهار كلمة المرور">إظهار</button>
+            </span>
+          </label>
+          <button class="primary-btn" type="submit">دخول الحساب <span>←</span></button>
+          <p class="form-message" id="loginMessage" aria-live="polite"></p>
+        </form>
+        <button class="forgot-button" type="button" disabled>استعادة كلمة المرور <small>ستُفعّل في النسخة الحقيقية</small></button>
+      </div>
+    </section>
+
+    <section class="portal-app hidden" id="portalView" aria-label="حساب العميل">
+      <aside class="portal-sidebar">
+        <div class="customer-mini">
+          <div class="avatar">أم</div>
+          <div><strong>أحمد محمود</strong><small>عميل Esotica</small></div>
+        </div>
+        <nav class="portal-nav" aria-label="أقسام الحساب">
+          <button class="active" data-panel="overview"><span class="nav-icon">⌂</span> نظرة عامة</button>
+          <button data-panel="vehicles"><span class="nav-icon">◇</span> سياراتي <b>2</b></button>
+          <button data-panel="history"><span class="nav-icon">↻</span> سجل التعاملات</button>
+          <button data-panel="rewards"><span class="nav-icon">★</span> العروض والكاش باك</button>
+          <button data-panel="profile"><span class="nav-icon">○</span> بيانات الحساب</button>
+        </nav>
+        <div class="sidebar-help">
+          <small>تحتاج مساعدة؟</small>
+          <strong>فريقنا جاهز لمساعدتك</strong>
+          <a href="https://wa.me/201110444528" target="_blank" rel="noopener">تواصل عبر WhatsApp</a>
+        </div>
+        <button class="logout-button" id="logoutButton" type="button">تسجيل الخروج</button>
+      </aside>
+
+      <div class="portal-content">
+        <div class="mobile-account-bar">
+          <div><span class="avatar">أم</span><strong>أحمد محمود</strong></div>
+          <button id="mobileMenuButton" type="button" aria-label="فتح قائمة الحساب">☰</button>
+        </div>
+
+        <section class="portal-panel active" data-panel-view="overview">
+          <div class="page-heading">
+            <div><p class="eyebrow">مرحبًا بك من جديد</p><h2>أهلًا، أحمد</h2><p>دي آخر تحديثات حسابك وسياراتك مع Esotica Auto.</p></div>
+            <a class="outline-btn" href="/booking">حجز صيانة جديد</a>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-card cashback-stat">
+              <span>رصيد الكاش باك المتاح</span>
+              <strong><b>3,250</b> ج.م</strong>
+              <small>صالح للاستخدام في الزيارة القادمة</small>
+            </article>
+            <article class="stat-card"><span>السيارات المسجلة</span><strong>2</strong><small>Range Rover · Jaguar</small></article>
+            <article class="stat-card"><span>إجمالي الحجوزات</span><strong>7</strong><small>منذ إنشاء الحساب</small></article>
+            <article class="stat-card"><span>العروض المتاحة لك</span><strong>2</strong><small>عرض خاص وعرض عام</small></article>
+          </div>
+
+          <div class="content-grid">
+            <article class="panel-card next-booking-card">
+              <div class="card-heading"><div><small>NEXT APPOINTMENT</small><h3>موعدك القادم</h3></div><span class="status scheduled">مؤكد</span></div>
+              <div class="appointment-main">
+                <div class="date-box"><b>22</b><span>أكتوبر</span></div>
+                <div><strong>صيانة دورية وفحص شامل</strong><p>Range Rover Velar 2021</p><small>فرع التجمع الخامس · 12:30 ظهرًا</small></div>
+              </div>
+              <div class="card-actions"><button type="button" class="text-button" data-toast="سيتم تفعيل تعديل الموعد في النسخة الحقيقية">تعديل الموعد</button><a href="/branches/fifth-settlement">تفاصيل الفرع</a></div>
+            </article>
+
+            <article class="panel-card offer-highlight">
+              <div><small>عرض مخصص لك</small><span class="status exclusive">حصري</span></div>
+              <h3>فحص شامل مجاني</h3>
+              <p>متاح لسيارتك Range Rover Velar عند حجز الصيانة القادمة من حسابك.</p>
+              <button class="gold-link" id="activateOffer" type="button">تفعيل العرض ←</button>
+            </article>
+          </div>
+
+          <article class="panel-card recent-card">
+            <div class="card-heading"><div><small>RECENT ACTIVITY</small><h3>آخر التعاملات</h3></div><button class="text-button" data-open-panel="history" type="button">عرض السجل كاملًا</button></div>
+            <div class="activity-list compact" id="recentActivity"></div>
+          </article>
+        </section>
+
+        <section class="portal-panel" data-panel-view="vehicles">
+          <div class="page-heading">
+            <div><p class="eyebrow">MY GARAGE</p><h2>سياراتي</h2><p>بيانات السيارات المسجلة على حسابك.</p></div>
+            <button class="outline-btn" id="addVehicleButton" type="button">+ إضافة سيارة</button>
+          </div>
+          <div class="vehicle-grid" id="vehicleGrid"></div>
+        </section>
+
+        <section class="portal-panel" data-panel-view="history">
+          <div class="page-heading"><div><p class="eyebrow">SERVICE HISTORY</p><h2>سجل التعاملات</h2><p>الحجوزات والاستفسارات وطلبات قطع الغيار المرتبطة بحسابك.</p></div></div>
+          <div class="filter-row" role="group" aria-label="تصفية السجل">
+            <button class="active" data-history-filter="all" type="button">الكل</button>
+            <button data-history-filter="booking" type="button">الحجوزات</button>
+            <button data-history-filter="parts" type="button">قطع الغيار</button>
+            <button data-history-filter="inquiry" type="button">الاستفسارات</button>
+          </div>
+          <article class="panel-card"><div class="activity-list" id="fullActivity"></div></article>
+        </section>
+
+        <section class="portal-panel" data-panel-view="rewards">
+          <div class="page-heading"><div><p class="eyebrow">ESOTICA REWARDS</p><h2>العروض والكاش باك</h2><p>رصيد واضح وسجل كامل لكل إضافة أو استخدام.</p></div></div>
+          <div class="rewards-hero">
+            <div><small>رصيدك الحالي</small><strong>3,250 <span>ج.م</span></strong><p>تقدر تستخدم الرصيد في زيارتك القادمة وفقًا لشروط كل عرض.</p></div>
+            <div class="reward-ring"><span>آخر تحديث</span><b>16 أكتوبر</b><small>2026</small></div>
+          </div>
+          <div class="content-grid rewards-grid">
+            <article class="panel-card"><div class="card-heading"><div><small>AVAILABLE OFFERS</small><h3>العروض المتاحة</h3></div></div><div class="offer-list" id="offerList"></div></article>
+            <article class="panel-card"><div class="card-heading"><div><small>CASHBACK LEDGER</small><h3>حركات الرصيد</h3></div></div><div class="ledger-list"><div><span class="plus">+2,500 ج.م</span><p>كاش باك عرض صيانة Range Rover</p><small>28 سبتمبر 2026</small></div><div><span class="minus">−750 ج.م</span><p>استخدام جزء من الرصيد</p><small>10 سبتمبر 2026</small></div><div><span class="plus">+1,500 ج.م</span><p>مكافأة زيارة الصيانة</p><small>20 أغسطس 2026</small></div></div></article>
+          </div>
+        </section>
+
+        <section class="portal-panel" data-panel-view="profile">
+          <div class="page-heading"><div><p class="eyebrow">ACCOUNT DETAILS</p><h2>بيانات الحساب</h2><p>يمكنك مراجعة بيانات التواصل الخاصة بك.</p></div></div>
+          <form class="profile-form panel-card" id="profileForm">
+            <div class="profile-avatar"><span class="avatar large">أم</span><div><strong>أحمد محمود</strong><small>رقم العميل: ES-001024</small></div></div>
+            <div class="form-grid">
+              <label>الاسم بالكامل<input name="name" value="أحمد محمود" required></label>
+              <label>رقم الهاتف<input name="phone" value="011 0000 0000" dir="ltr" required></label>
+              <label>البريد الإلكتروني<input name="email" value="ahmed@example.com" type="email" dir="ltr" required></label>
+              <label>الفرع المفضل<select name="branch"><option>فرع التجمع الخامس</option><option>فرع التجمع الثالث</option><option>فرع الشيخ زايد</option></select></label>
+            </div>
+            <button class="primary-btn profile-save" type="submit">حفظ التعديلات</button>
+            <p class="form-message" id="profileMessage" aria-live="polite"></p>
+          </form>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="vehicleModal" role="dialog" aria-modal="true" aria-labelledby="vehicleModalTitle">
+    <div class="modal-card">
+      <div class="modal-head"><div><small>MY GARAGE</small><h2 id="vehicleModalTitle">إضافة سيارة</h2></div><button id="closeVehicleModal" type="button" aria-label="إغلاق">×</button></div>
+      <form class="portal-form" id="vehicleForm">
+        <div class="form-grid">
+          <label>الماركة<select name="brand" required><option value="">اختر الماركة</option><option>Range Rover</option><option>Land Rover</option><option>Jaguar</option><option>BMW</option><option>Mercedes-Benz</option><option>Porsche</option><option>Bentley</option><option>Maserati</option></select></label>
+          <label>الموديل<input name="model" placeholder="مثال: Velar" required maxlength="50"></label>
+          <label>سنة الصنع<input name="year" type="number" min="1990" max="2027" placeholder="2021" required></label>
+          <label>رقم اللوحة<input name="plate" placeholder="أ ب ج 123" maxlength="20"></label>
+          <label class="wide">رقم الشاسيه VIN<input name="vin" dir="ltr" maxlength="17" minlength="7" placeholder="17 characters recommended"></label>
+        </div>
+        <button class="primary-btn" type="submit">إضافة السيارة للتجربة</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/customer-preview/portal.js?v=1" defer></script>
+</body>
+</html>

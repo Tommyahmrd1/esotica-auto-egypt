@@ -6,3 +6,6 @@
   Cache-Control: public, max-age=86400
 /brands/*
   Cache-Control: public, max-age=86400
+/customer-preview/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cache-Control: no-store
