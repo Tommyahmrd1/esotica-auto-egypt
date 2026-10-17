@@ -22,11 +22,8 @@
         <label>البريد الإلكتروني
           <input id="email" type="email" autocomplete="username" required>
         </label>
-        <label>كلمة المرور
-          <input id="password" type="password" autocomplete="current-password" minlength="8" required>
-        </label>
-        <button class="btn primary" type="submit">تسجيل الدخول</button>
-        <button class="btn secondary" id="setupAdminBtn" type="button">إنشاء حساب المدير لأول مرة</button>
+        <button class="btn primary" type="submit">إرسال رابط الدخول</button>
+        <p class="login-note">هنبعتلك رابط آمن على البريد. مفيش كلمة مرور مطلوبة.</p>
       </form>
       <p class="form-status" id="authStatus"></p>
       <small>هذه الصفحة داخلية ومخصصة لموظفي Esotica Auto فقط.</small>
@@ -143,6 +140,6 @@
     </main>
   </div>
 
-  <script type="module" src="/crm/app.js?v=1"></script>
+  <script type="module" src="/crm/app.js?v=2"></script>
 </body>
 </html>
