@@ -1,0 +1,71 @@
+name: Deploy Esotica CRM
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crm/**"
+      - ".github/workflows/deploy-esotica-crm.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy-crm:
+    runs-on: ubuntu-latest
+    name: Deploy standalone CRM
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure CRM Pages project exists
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create esotica-crm --production-branch=main
+
+      - name: Deploy CRM
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy crm --project-name=esotica-crm --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attach custom CRM domain
+        shell: bash
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          response="$(curl -sS -X POST             "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT/pages/projects/esotica-crm/domains"             -H "Authorization: Bearer $CF_TOKEN"             -H "Content-Type: application/json"             --data '{"name":"crm.esoticaegypt.com"}')"
+          echo "$response"
+          echo "$response" | grep -q '"success":true' || echo "Domain may already be attached; continuing."
+
+      - name: Smoke test CRM
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://esotica-crm.pages.dev"
+          echo "Waiting for CRM deployment..."
+          sleep 8
+          code="$(curl -sS -o /tmp/crm.html -w "%{http_code}" --retry 6 --retry-delay 3 --retry-all-errors "$BASE/")"
+          echo "CRM Pages -> $code"
+          test "$code" = "200"
+          grep -q "Esotica CRM" /tmp/crm.html
+          curl -fsS "$BASE/robots.txt" | grep -q "Disallow: /"
+          echo "Standalone CRM deployment OK"
+
+      - name: Check custom domain status
+        shell: bash
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          curl -sS             "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT/pages/projects/esotica-crm/domains/crm.esoticaegypt.com"             -H "Authorization: Bearer $CF_TOKEN"             -H "Content-Type: application/json"
