@@ -1,7 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /crm
 Disallow: /api/
 
 Sitemap: https://esoticaegypt.com/sitemap.xml
