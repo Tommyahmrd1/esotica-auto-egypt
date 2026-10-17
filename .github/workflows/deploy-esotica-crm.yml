@@ -47,6 +47,30 @@ jobs:
           echo "$response"
           echo "$response" | grep -q '"success":true' || echo "Domain may already be attached; continuing."
 
+      - name: Ensure CRM DNS CNAME
+        continue-on-error: true
+        shell: bash
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          zone_json="$(curl -fsS "https://api.cloudflare.com/client/v4/zones?name=esoticaegypt.com&account.id=$CF_ACCOUNT" -H "Authorization: Bearer $CF_TOKEN")"
+          zone_id="$(echo "$zone_json" | jq -r '.result[0].id // empty')"
+          test -n "$zone_id"
+
+          records="$(curl -fsS "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records?type=CNAME&name=crm.esoticaegypt.com" -H "Authorization: Bearer $CF_TOKEN")"
+          record_id="$(echo "$records" | jq -r '.result[0].id // empty')"
+
+          payload='{"type":"CNAME","name":"crm","content":"esotica-crm.pages.dev","ttl":1,"proxied":true}'
+          if [ -n "$record_id" ]; then
+            curl -fsS -X PUT "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records/$record_id"               -H "Authorization: Bearer $CF_TOKEN" -H "Content-Type: application/json" --data "$payload" >/tmp/dns.json
+          else
+            curl -fsS -X POST "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records"               -H "Authorization: Bearer $CF_TOKEN" -H "Content-Type: application/json" --data "$payload" >/tmp/dns.json
+          fi
+          grep -q '"success":true' /tmp/dns.json
+          echo "CRM DNS CNAME configured"
+
       - name: Smoke test CRM
         shell: bash
         run: |
