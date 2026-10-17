@@ -42,7 +42,7 @@ $("#loginForm").addEventListener("submit",async e=>{
   status("جاري إرسال رابط الدخول...");
   const {error}=await sb.auth.signInWithOtp({
     email:addr,
-    options:{emailRedirectTo:location.origin+"/crm/"}
+    options:{emailRedirectTo:location.origin+"/"}
   });
   if(error)return status(error.message,"error");
   status("تم إرسال رابط الدخول على البريد. افتحه من نفس المتصفح.","ok");
