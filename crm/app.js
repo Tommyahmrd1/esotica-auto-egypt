@@ -62,8 +62,8 @@ async function loadDashboard(){
       count("call_details"),
       count("call_details",q=>q.eq("call_status","missed")),
       count("call_details",q=>q.eq("call_status","rejected")),
-      count("tickets",q=>q.not("status","in",["closed","cancelled"])),
-      count("department_tasks",q=>q.lt("sla_due_at",now).not("status","in",["done","cancelled"])),
+      count("tickets",q=>q.not("status","in","(closed,cancelled)")),
+      count("department_tasks",q=>q.lt("sla_due_at",now).not("status","in","(done,cancelled)")),
       count("followups",q=>q.lte("due_at",now).eq("status","pending")),
       sb.from("call_details").select("phone_normalized,call_status,started_at,duration_seconds,device_identifier").order("started_at",{ascending:false}).limit(7)
     ]);
