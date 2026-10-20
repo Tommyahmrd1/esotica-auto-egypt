@@ -295,7 +295,7 @@ Object.assign(EN,{
   "مركز متخصص في صيانة Range Rover وJaguar، مع خدمات مختارة للسيارات الفاخرة وتركيز على التشخيص الدقيق وجودة التنفيذ والمتابعة.":"A specialist Range Rover and Jaguar service center, with selected luxury vehicle services focused on accurate diagnostics, quality workmanship and follow-up.",
   "عناية تبدأ من التشخيص وتستمر بعد التسليم.":"Care that starts with diagnosis and continues after delivery.",
   "في Esotica Auto نركز على فهم حالة السيارة بدقة قبل بدء العمل، وتوضيح المطلوب للعميل، وتنفيذ الخدمة بعناية، ثم المتابعة بعد التسليم.":"At Esotica Auto, we focus on understanding the vehicle accurately before work begins, explaining what is needed, carrying out the service carefully, and following up after delivery.",
-  "نخدم عملاءنا من خلال فروع الجوي، المنطقة الصناعية، والشيخ زايد، مع إمكانية إرسال طلب الحجز أو استعلام قطع الغيار مباشرة من الموقع.":"We serve clients through our Air Force, Industrial Area and Sheikh Zayed locations, with online service booking and spare-parts enquiries available directly through the website.",
+  "نخدم عملاءنا من خلال فروع التجمع الخامس والتجمع الثالث والشيخ زايد، مع إمكانية إرسال طلب الحجز أو استعلام قطع الغيار مباشرة من الموقع.":"We serve clients through our Fifth Settlement, Third Settlement and Sheikh Zayed locations, with online service booking and spare-parts enquiries available directly through the website.",
   "ما نهتم به":"What Matters to Us",
   "تشخيص واضح":"Clear Diagnostics",
   "فهم المشكلة وتحديد الأولويات قبل بدء التنفيذ.":"Understanding the issue and setting priorities before work begins.",
@@ -510,12 +510,25 @@ Object.assign(EN,{
   "خدمات صيانة وتشخيص وفحص وقطع غيار لسيارات Range Rover وLand Rover (رينج روفر ولاند روفر)، مع مراجعة بيانات السيارة والحالة المطلوبة قبل تأكيد الخدمة.":"Maintenance, diagnostics, inspection and spare-parts services for Range Rover and Land Rover, with vehicle details reviewed before confirming the service.",
   "خدمات صيانة وتشخيص وفحص وقطع غيار لسيارات Jaguar (جاكوار) مع متابعة الطلب من الحجز وحتى ما بعد الخدمة.":"Maintenance, diagnostics, inspection and spare-parts services for Jaguar vehicles, with follow-up from booking through after-service care."
 });
+Object.assign(EN,{
+  "اختر ماركة سيارتك":"Choose Your Vehicle Brand",
+  "كل صفحة تجمع معلومات الخدمة والموديلات المرتبطة وروابط الحجز وقطع الغيار.":"Each page brings together service information, related models, booking and spare-parts links.",
+  "وجود اسم الماركة هنا لا يعني توفر كل الخدمات لكل موديل؛ يراجع الفريق بيانات السيارة والحالة المطلوبة قبل التأكيد.":"A listed brand does not mean every service is available for every model. Our team reviews the vehicle and requested work before confirmation.",
+  "كل ماركات السيارات الفاخرة":"All Luxury Car Brands",
+  "جميع خدمات المركز":"All Center Services",
+  "مركز صيانة Range Rover وLand Rover":"Range Rover & Land Rover Service Center",
+  "مركز صيانة Jaguar في القاهرة":"Jaguar Service Center in Cairo",
+  "BMW وMercedes-Benz وPorsche وBentley وMaserati وFerrari وLamborghini وAston Martin وMcLaren وRolls-Royce وCorvette.":"BMW, Mercedes-Benz, Porsche, Bentley, Maserati, Ferrari, Lamborghini, Aston Martin, McLaren, Rolls-Royce and Corvette."
+});
 const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
 const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه المكوّن من 17 خانة":"Enter the complete 17-character VIN"};
 function translatePage(lang){
   const dict=lang==="en"?EN:AR;
   document.documentElement.lang=lang;
   document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+  document.querySelectorAll("[data-ar][data-en]").forEach(el=>{
+    el.textContent=lang==="ar"?el.dataset.ar:el.dataset.en;
+  });
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let n; while(n=walker.nextNode()){
     if(["SCRIPT","STYLE"].includes(n.parentElement?.tagName))continue;
@@ -558,7 +571,7 @@ function applyContactDetails(settings={}){
   const facebook=settings.facebook_url||ESOTICA_CONTACT_DEFAULTS.facebook;
   const instagram=settings.instagram_url||ESOTICA_CONTACT_DEFAULTS.instagram;
   const email=settings.contact_email||ESOTICA_CONTACT_DEFAULTS.email;
-  const whatsappPages={home:"الصفحة الرئيسية",services:"الخدمات",booking:"حجز الصيانة",parts:"قطع الغيار",branches:"الفروع",offers:"العروض والأحداث",contact:"تواصل معنا","warranty-insurance":"الضمان والتأمين",about:"من نحن"};
+  const whatsappPages={home:"الصفحة الرئيسية",services:"الخدمات",booking:"حجز الصيانة",parts:"قطع الغيار",branches:"الفروع",offers:"العروض والأحداث",contact:"تواصل معنا","warranty-insurance":"الضمان والتأمين",about:"من نحن","range-rover-land-rover-service":"صيانة رينج روفر ولاند روفر","jaguar-service":"صيانة جاكوار","luxury-car-service":"صيانة السيارات الفاخرة","bmw-service":"صيانة بي إم دبليو","mercedes-service":"صيانة مرسيدس","porsche-service":"صيانة بورشه","bentley-service":"صيانة بنتلي","ferrari-service":"صيانة فيراري","lamborghini-service":"صيانة لامبورجيني","aston-martin-service":"صيانة أستون مارتن","maserati-service":"صيانة مازيراتي","mclaren-service":"صيانة مكلارين","rolls-royce-service":"صيانة رولز رويس","corvette-service":"صيانة كورفيت"};
   const whatsappText=`مرحبًا فريق Esotica Auto،\nأرغب في الاستفسار عن خدماتكم.\n\nالاسم: \nالسيارة / الموديل: \nتفاصيل الاستفسار: \n\n—\nتم التواصل من خلال موقع Esotica Auto | ${whatsappPages[pageName]||pageName}`;
   const whatsappUrl=whatsapp?`https://wa.me/${whatsapp}?text=${encodeURIComponent(whatsappText)}`:"";
 

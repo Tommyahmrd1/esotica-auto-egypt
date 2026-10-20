@@ -413,10 +413,19 @@ html[dir="ltr"] .lead-context{text-align:left}
 .seo-faq-item{border:1px solid var(--line);border-radius:14px;background:#101310;overflow:hidden}
 .seo-faq-item summary{cursor:pointer;padding:18px 20px;color:#fff;font-weight:800}
 .seo-faq-item p{margin:0;padding:0 20px 20px;color:var(--muted);line-height:1.85}
+.brand-link-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:28px}
+.brand-link-card{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:74px;padding:15px 17px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025);color:#f2f4f0;font-weight:800;transition:.2s}
+.brand-link-card::after{content:"\2192";color:var(--gold);font-size:18px;transition:.2s}
+html[dir="rtl"] .brand-link-card::after{content:"\2190"}
+.brand-link-card:hover{transform:translateY(-2px);border-color:rgba(200,170,112,.52);background:rgba(200,170,112,.07)}
+.brand-link-card:hover::after{transform:translateX(3px)}
+html[dir="rtl"] .brand-link-card:hover::after{transform:translateX(-3px)}
+.brand-service-note{max-width:900px;margin:28px 0 0;color:var(--muted);font-size:14px;line-height:1.9}
 input[type="date"]{color-scheme:dark}
 input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:1;padding:7px;border-radius:8px;background-color:var(--gold2);box-shadow:0 0 0 1px rgba(0,0,0,.18),0 5px 14px rgba(0,0,0,.2)}
 input[type="date"]:focus::-webkit-calendar-picker-indicator{background-color:#efd38a}
-@media(max-width:850px){.seo-service-grid{grid-template-columns:1fr}.seo-specialty-intro{grid-template-columns:1fr;gap:12px}}
+@media(max-width:850px){.seo-service-grid{grid-template-columns:1fr}.seo-specialty-intro{grid-template-columns:1fr;gap:12px}.brand-link-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.brand-link-grid{grid-template-columns:1fr}}
 
 
 /* ===== Local branch SEO pages ===== */
