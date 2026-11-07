@@ -600,7 +600,11 @@ function translatePage(lang){
   if(typeof applyContactDetails==="function")applyContactDetails(activeContactSettings);
   if(typeof updateHeroSoundButton==="function")updateHeroSoundButton();
   if(typeof renderLeadContext==="function")renderLeadContext();
-  localStorage.setItem("esotica-language",lang);
+  document.documentElement.classList.remove("language-pending");
+  try{localStorage.setItem("esotica-language",lang)}catch{}
+}
+function preferredLanguage(){
+  try{return localStorage.getItem("esotica-language")||"en"}catch{return "en"}
 }
 function initLanguage(){
   const main=document.querySelector("main");
@@ -613,7 +617,7 @@ function initLanguage(){
     document.querySelector(".nav")?.insertBefore(button,document.querySelector(".nav-cta"));
     button.addEventListener("click",()=>translatePage(document.documentElement.lang==="en"?"ar":"en"));
   }
-  translatePage(localStorage.getItem("esotica-language")||"en");
+  translatePage(preferredLanguage());
 }
 function formatPublicPhone(value){
   const digits=String(value||"").replace(/\D/g,"");
@@ -859,8 +863,7 @@ applyContactDetails({});
 initLeadAttribution();
 initOffersTabs();
 initWarrantyTabs();
-loadSiteContent().finally(()=>{
-  initLanguage();
-  void loadOffers();
-  void loadEvents();
-});
+initLanguage();
+void loadSiteContent().finally(()=>translatePage(document.documentElement.lang==="ar"?"ar":"en"));
+void loadOffers();
+void loadEvents();
