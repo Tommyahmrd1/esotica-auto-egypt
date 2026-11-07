@@ -17,6 +17,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check site.js
+          node --input-type=module --check < _worker.js
+          node scripts/validate-site.mjs
+
       - name: Deploy
         uses: cloudflare/wrangler-action@v4
         with:
@@ -39,7 +47,7 @@ jobs:
           echo "$health" | grep -q '"database":true'
           echo "$health" | grep -q '"adminConfigured":true'
 
-          for path in / /booking /parts /services /range-rover-land-rover-service /jaguar-service /luxury-car-service /branches /branches/fifth-settlement /branches/third-settlement /branches/sheikh-zayed /offers /warranty-insurance /about /privacy /contact /admin; do
+          for path in / /booking /parts /services /range-rover-land-rover-service /jaguar-service /luxury-car-service /bmw-service /mercedes-service /porsche-service /bentley-service /maserati-service /ferrari-service /lamborghini-service /aston-martin-service /mclaren-service /rolls-royce-service /corvette-service /branches /branches/fifth-settlement /branches/third-settlement /branches/sheikh-zayed /offers /warranty-insurance /about /privacy /contact /admin; do
             code="$(curl -sS -o /dev/null -w "%{http_code}" --retry 6 --retry-delay 3 --retry-all-errors "$BASE$path")"
             echo "$path -> $code"
             test "$code" = "200"

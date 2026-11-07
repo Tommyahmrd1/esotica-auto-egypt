@@ -8,7 +8,7 @@
   <link rel="canonical" href="https://esoticaegypt.com/booking">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="icon" href="/favicon.svg?v=20260930-1">
-  <link rel="stylesheet" href="/styles.css?v=20261001-seo1">
+  <link rel="stylesheet" href="/styles.css?v=20261107-1">
 </head>
 <body>
 
@@ -40,16 +40,17 @@
       </div>
       <form class="form glass" id="bookingForm">
         <div class="grid2">
-          <label>الاسم<input name="name" required maxlength="80"></label>
-          <label>رقم الهاتف<input name="phone" required maxlength="20" inputmode="tel"></label>
-          <label>السيارة / الموديل<input name="carModel" required maxlength="80" placeholder="Range Rover Sport"></label>
-          <label>سنة الصنع<input name="year" required maxlength="4" inputmode="numeric" placeholder="2022"></label>
+          <label>الاسم<input name="name" required maxlength="80" autocomplete="name"></label>
+          <label>رقم الهاتف<input name="phone" type="tel" required maxlength="20" inputmode="tel" autocomplete="tel"></label>
+          <label>السيارة / الموديل<input name="carModel" required maxlength="80" autocomplete="off" placeholder="Range Rover Sport"></label>
+          <label>سنة الصنع<input name="year" required maxlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" placeholder="2022"></label>
           <label>الفرع<select name="branch" required><option value="">اختر الفرع</option><option>فرع التجمع الخامس</option><option>فرع التجمع الثالث</option><option>الشيخ زايد</option></select></label>
           <label>التاريخ المفضل<input type="date" name="preferredDate" required></label>
         </div>
         <label>تفاصيل الخدمة<textarea name="details" rows="5" maxlength="700" placeholder="اكتب الخدمة أو المشكلة باختصار"></textarea></label>
+        <p class="form-privacy">باستخدام هذا النموذج، توافق على استخدام بياناتك للتواصل معك بخصوص طلبك وفق <a href="/privacy">سياسة الخصوصية</a>.</p>
         <button class="btn btn-gold full" type="submit">إرسال طلب الحجز</button>
-        <p class="form-msg" id="bookingMsg"></p>
+        <p class="form-msg" id="bookingMsg" aria-live="polite"></p>
       </form>
     </div>
   </section>
@@ -85,5 +86,5 @@
     <a class="admin-link" href="/admin">إدارة الموقع</a>
   </div>
 </footer>
-<script src="/site.js?v=20261020-seo2" defer></script>
+<script src="/site.js?v=20261107-1" defer></script>
 </body></html>

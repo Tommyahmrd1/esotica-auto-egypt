@@ -321,7 +321,7 @@ async function handleAPI(req,env,url){
  if(p==="/api/parts"&&req.method==="POST"){
    await initDB(env); const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
    const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),vin=clean(d.vin,17).toUpperCase(),partCode=clean(d.partCode,60),details=clean(d.details,700),quantity=Math.min(20,Math.max(1,Number(d.quantity)||1)),source=leadSource(d);
-   if(!name||!validPhone(phone)||!carModel||!validYear(year)||!(/^([A-HJ-NPR-Z0-9]{7}|[A-HJ-NPR-Z0-9]{17})$/.test(vin))||!details)return bad("راجع البيانات. رقم الشاسيه يجب أن يكون 7 أو 17 خانة صحيحة.");
+   if(!name||!validPhone(phone)||!carModel||!validYear(year)||!(/^[A-HJ-NPR-Z0-9]{7,17}$/.test(vin))||!details)return bad("راجع البيانات. رقم الشاسيه يجب أن يكون من 7 إلى 17 خانة صحيحة.");
    await env.DB.prepare("INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new").run();
    return json({message:"تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر."});
  }

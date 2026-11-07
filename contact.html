@@ -8,7 +8,7 @@
   <link rel="canonical" href="https://esoticaegypt.com/contact">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="icon" href="/favicon.svg?v=20260930-1">
-  <link rel="stylesheet" href="/styles.css?v=20260930-4">
+  <link rel="stylesheet" href="/styles.css?v=20261107-1">
 </head>
 <body>
 
@@ -32,11 +32,12 @@
   <section class="section contact-wrap">
     <div class="copy"><p class="eyebrow">GET IN TOUCH</p><h2>كيف يمكننا مساعدتك؟</h2><p>شاركنا بيانات التواصل وتفاصيل استفسارك، وسيتولى الفريق المختص المتابعة معك.</p></div>
     <form class="form glass" id="contactForm">
-      <div class="grid2"><label>الاسم<input name="name" required maxlength="80"></label><label>رقم الهاتف<input name="phone" required maxlength="20"></label></div>
+      <div class="grid2"><label>الاسم<input name="name" required maxlength="80" autocomplete="name"></label><label>رقم الهاتف<input name="phone" type="tel" required maxlength="20" inputmode="tel" autocomplete="tel"></label></div>
       <label>الموضوع<input name="subject" required maxlength="120"></label>
       <label>الرسالة<textarea name="message" required rows="6" maxlength="900"></textarea></label>
+      <p class="form-privacy">باستخدام هذا النموذج، توافق على استخدام بياناتك للتواصل معك بخصوص طلبك وفق <a href="/privacy">سياسة الخصوصية</a>.</p>
       <button class="btn btn-gold full" type="submit">إرسال الرسالة</button>
-      <p class="form-msg" id="contactMsg"></p>
+      <p class="form-msg" id="contactMsg" aria-live="polite"></p>
     </form>
   </section>
 </main>
@@ -71,5 +72,5 @@
     <a class="admin-link" href="/admin">إدارة الموقع</a>
   </div>
 </footer>
-<script src="/site.js?v=20261020-seo2" defer></script>
+<script src="/site.js?v=20261107-1" defer></script>
 </body></html>

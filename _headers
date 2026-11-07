@@ -1,11 +1,22 @@
 /*
   X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'
 /site/*
   Cache-Control: public, max-age=86400
 /brands/*
   Cache-Control: public, max-age=86400
+/styles.css
+  Cache-Control: public, max-age=86400
+/site.js
+  Cache-Control: public, max-age=86400
+/admin*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cache-Control: no-store
 /customer-preview/*
   X-Robots-Tag: noindex, nofollow, noarchive
   Cache-Control: no-store

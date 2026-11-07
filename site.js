@@ -11,7 +11,15 @@ if(bookingDateInput){
 }
 
 const $=s=>document.querySelector(s);
-const msg=(el,text,ok=true)=>{el.textContent=text;el.className="form-msg "+(ok?"ok":"err")};
+const isArabic=()=>document.documentElement.lang==="ar";
+const uiText=(ar,en)=>isArabic()?ar:en;
+const msg=(el,text,ok=true)=>{
+  if(!el)return;
+  el.textContent=text;
+  el.className="form-msg "+(ok?"ok":"err");
+  el.setAttribute("role",ok?"status":"alert");
+  el.setAttribute("aria-live",ok?"polite":"assertive");
+};
 const pageName=(location.pathname.split("/").filter(Boolean)[0]||"home").replace(/\.html$/,'');
 const ESOTICA_CONTACT_DEFAULTS={
   phone:"+20 111 044 4528",
@@ -171,30 +179,48 @@ heroSoundToggle?.addEventListener("click",()=>{
   heroVideo.play().then(()=>{heroAutoplayMuted=false;updateHeroSoundButton()}).catch(()=>{heroVideo.muted=true;heroAutoplayMuted=true;updateHeroSoundButton()});
   updateHeroSoundButton();
 });
-$("#menuBtn")?.addEventListener("click",()=>$("#navLinks").classList.toggle("open"));
-document.querySelectorAll("#navLinks a").forEach(a=>a.addEventListener("click",()=>$("#navLinks").classList.remove("open")));
+const menuBtn=$("#menuBtn"),navLinks=$("#navLinks");
+function setMenuOpen(open){
+  if(!menuBtn||!navLinks)return;
+  navLinks.classList.toggle("open",open);
+  menuBtn.setAttribute("aria-expanded",String(open));
+}
+if(menuBtn&&navLinks){
+  menuBtn.setAttribute("aria-controls","navLinks");
+  menuBtn.setAttribute("aria-expanded","false");
+  menuBtn.addEventListener("click",()=>setMenuOpen(!navLinks.classList.contains("open")));
+  navLinks.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>setMenuOpen(false)));
+  document.addEventListener("keydown",event=>{if(event.key==="Escape")setMenuOpen(false)});
+}
+
+const FORM_SUCCESS={
+  "/api/booking":["تم استلام طلب الحجز. سيتواصل معك فريق Esotica لتأكيد الموعد.","Your booking request has been received. The Esotica team will contact you to confirm the appointment."],
+  "/api/parts":["تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر.","Your spare-parts enquiry has been received. Our team will contact you to confirm availability and price."],
+  "/api/contact":["تم استلام رسالتك. سيتواصل معك فريق Esotica.","Your message has been received. The Esotica team will contact you shortly."]
+};
 
 async function sendForm(form,url,msgEl){
   const btn=form.querySelector("button[type=submit]");
   btn.classList.add("loading"); btn.disabled=true;
-  msg(msgEl,"جاري الإرسال...",true);
+  msg(msgEl,uiText("جاري الإرسال...","Sending..."),true);
   try{
     const data=Object.fromEntries(new FormData(form).entries());
     Object.assign(data,{sourceType:currentLeadAttribution.type,sourceLabel:currentLeadAttribution.label,sourceId:currentLeadAttribution.id,sourcePage:currentLeadAttribution.page||location.pathname});
     if(data.quantity) data.quantity=Number(data.quantity);
     const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data)});
     const j=await r.json().catch(()=>({}));
-    if(!r.ok) throw new Error(j.error||"تعذر إرسال الطلب.");
-    msg(msgEl,j.message||"تم استلام طلبك بنجاح.",true);
+    if(!r.ok)throw new Error(isArabic()?(j.error||"تعذر إرسال الطلب."):"Please review the entered details and try again.");
+    const success=FORM_SUCCESS[url]||["تم استلام طلبك بنجاح.","Your request has been received successfully."];
+    msg(msgEl,isArabic()?success[0]:success[1],true);
     form.reset();
-  }catch(e){msg(msgEl,e.message||"تعذر إرسال الطلب.",false)}
+  }catch(e){msg(msgEl,e.message||uiText("تعذر إرسال الطلب.","We could not send your request. Please try again."),false)}
   finally{btn.classList.remove("loading");btn.disabled=false}
 }
 $("#bookingForm")?.addEventListener("submit",e=>{
   e.preventDefault();
   const form=e.currentTarget, chosen=form.elements.preferredDate.value, now=cairoNow();
-  if(chosen<now.date){msg($("#bookingMsg"),"لا يمكن اختيار تاريخ قديم. اختار تاريخ من اليوم أو بعده.",false);return}
-  if(chosen===now.date && now.hour>=17){msg($("#bookingMsg"),"انتهى وقت حجز نفس اليوم. اختار موعدًا من بكرة أو بعده.",false);return}
+  if(chosen<now.date){msg($("#bookingMsg"),uiText("لا يمكن اختيار تاريخ قديم. اختار تاريخ من اليوم أو بعده.","Please choose today or a future date."),false);return}
+  if(chosen===now.date && now.hour>=17){msg($("#bookingMsg"),uiText("انتهى وقت حجز نفس اليوم. اختار موعدًا من بكرة أو بعده.","Same-day booking is closed after 5:00 PM Cairo time. Please choose tomorrow or a later date."),false);return}
   sendForm(form,"/api/booking",$("#bookingMsg"));
 });
 $("#partsForm")?.addEventListener("submit",e=>{e.preventDefault();sendForm(e.currentTarget,"/api/parts",$("#partsMsg"))});
@@ -520,8 +546,33 @@ Object.assign(EN,{
   "مركز صيانة Jaguar في القاهرة":"Jaguar Service Center in Cairo",
   "BMW وMercedes-Benz وPorsche وBentley وMaserati وFerrari وLamborghini وAston Martin وMcLaren وRolls-Royce وCorvette.":"BMW, Mercedes-Benz, Porsche, Bentley, Maserati, Ferrari, Lamborghini, Aston Martin, McLaren, Rolls-Royce and Corvette."
 });
+Object.assign(EN,{
+  "انتقل إلى المحتوى الرئيسي":"Skip to main content",
+  "Esotica Auto — مركز صيانة Range Rover وJaguar والسيارات الفاخرة":"Esotica Auto — Range Rover, Jaguar & Luxury Car Service Center",
+  "لأفضل دقة، أدخل رقم الشاسيه الكامل المكوّن من 17 خانة. ويمكنك أيضًا إرسال آخر 7 خانات على الأقل لبدء الاستعلام.":"For the best accuracy, enter the complete 17-character VIN. You may also submit at least the last 7 characters to start the enquiry.",
+  "رقم الشاسيه (من 7 إلى 17 خانة)":"VIN (7 to 17 characters)",
+  "باستخدام هذا النموذج، توافق على استخدام بياناتك للتواصل معك بخصوص طلبك وفق":"By using this form, you agree that we may use your information to contact you about your request under our",
+  "مجمع البنوك أمام مستشفى الجوي — شارع التسعين، التجمع الخامس.":"Banks Complex, opposite Air Force Hospital — 90th Street, Fifth Settlement.",
+  "مراسلات خدمة العملاء على منصات التواصل":"Customer Service Messages on Social Platforms",
+  "عند التواصل مع حسابات Esotica Auto على WhatsApp أو Facebook Messenger أو Instagram، قد يستقبل نظام خدمة العملاء الاسم أو معرّف الحساب ورقم الهاتف المتاح على القناة، ونص الرسائل والمرفقات وتوقيتات التواصل وحالة تسليم الرسائل. يستخدم فريق خدمة العملاء هذه البيانات للرد على طلبك ومتابعته وربط المحادثة بسجل العميل أو طلب الخدمة عند الحاجة. يقتصر استخدام لوحة خدمة العملاء على الموظفين المصرّح لهم وفق صلاحيات حساباتهم.":"When you contact Esotica Auto through WhatsApp, Facebook Messenger or Instagram, our customer-service system may receive your name or account identifier, the phone number available on that channel, message text, attachments, timestamps and delivery status. We use this information to respond, follow up and, when needed, connect the conversation to your customer or service record. Access is limited to authorised team members according to their account permissions.",
+  "طلب مراجعة بياناتك أو تصحيحها أو حذفها":"Request Access, Correction or Deletion",
+  "يمكنك إرسال طلب بخصوص بياناتك ورسائلك المحفوظة في نظام Esotica Auto من خلال":"You can submit a request about information or messages stored in the Esotica Auto system through the",
+  "صفحة تواصل معنا":"Contact Us page",
+  "، مع ذكر اسم الحساب وقناة التواصل أو رقم الهاتف المرتبط بالطلب، وتوضيح البيانات التي تريد مراجعتها أو تصحيحها أو حذفها. قد يطلب الفريق معلومات مناسبة للتحقق من أن الطلب يخص صاحب البيانات قبل تنفيذه. لا ترسل كلمات مرور حساباتك أو رموز تسجيل الدخول ضمن الطلب.":", including the account name, communication channel or phone number connected to the request, and what you want to access, correct or delete. We may request appropriate information to verify that the request belongs to the data owner. Do not include account passwords or sign-in codes.",
+  "BMW — بي إم دبليو":"BMW",
+  "Mercedes-Benz — مرسيدس":"Mercedes-Benz",
+  "Porsche — بورشه":"Porsche",
+  "Bentley — بنتلي":"Bentley",
+  "Maserati — مازيراتي":"Maserati",
+  "Ferrari — فيراري":"Ferrari",
+  "Lamborghini — لامبورجيني":"Lamborghini",
+  "Aston Martin — أستون مارتن":"Aston Martin",
+  "McLaren — مكلارين":"McLaren",
+  "Rolls-Royce — رولز رويس":"Rolls-Royce",
+  "Corvette — كورفيت":"Corvette"
+});
 const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
-const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه المكوّن من 17 خانة":"Enter the complete 17-character VIN"};
+const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه (من 7 إلى 17 خانة)":"Enter 7 to 17 VIN characters"};
 function translatePage(lang){
   const dict=lang==="en"?EN:AR;
   document.documentElement.lang=lang;
@@ -545,11 +596,18 @@ function translatePage(lang){
   const toggle=document.querySelector("#langToggle");
   if(toggle){toggle.textContent=lang==="en"?"AR":"EN";toggle.setAttribute("aria-label",lang==="en"?"عرض الموقع بالعربية":"View site in English");}
   if(typeof renderEvents==="function")renderEvents(publicEvents,lang);
+  if(typeof renderOffers==="function")renderOffers(publicOffers,lang);
+  if(typeof applyContactDetails==="function")applyContactDetails(activeContactSettings);
   if(typeof updateHeroSoundButton==="function")updateHeroSoundButton();
   if(typeof renderLeadContext==="function")renderLeadContext();
   localStorage.setItem("esotica-language",lang);
 }
 function initLanguage(){
+  const main=document.querySelector("main");
+  if(main&&!main.id)main.id="main-content";
+  if(main&&!document.querySelector(".skip-link")){
+    const skip=document.createElement("a");skip.className="skip-link";skip.href="#"+main.id;skip.textContent="انتقل إلى المحتوى الرئيسي";document.body.prepend(skip);
+  }
   if(!document.querySelector("#langToggle")){
     const button=document.createElement("button");button.id="langToggle";button.className="lang-toggle";button.type="button";
     document.querySelector(".nav")?.insertBefore(button,document.querySelector(".nav-cta"));
@@ -564,15 +622,21 @@ function formatPublicPhone(value){
   const display=/^01\d{9}$/.test(localDigits)?`${localDigits.slice(0,3)} ${localDigits.slice(3,7)} ${localDigits.slice(7)}`:String(value||"").trim();
   return {dial:dialDigits?`+${dialDigits}`:"",display};
 }
+let activeContactSettings={};
 function applyContactDetails(settings={}){
+  activeContactSettings={...activeContactSettings,...settings};
+  settings=activeContactSettings;
   const phone=formatPublicPhone(settings.contact_phone||ESOTICA_CONTACT_DEFAULTS.phone);
   const whatsappRaw=String(settings.whatsapp_number||ESOTICA_CONTACT_DEFAULTS.whatsapp).replace(/\D/g,"");
   const whatsapp=whatsappRaw.startsWith("0")?`20${whatsappRaw.slice(1)}`:whatsappRaw;
   const facebook=settings.facebook_url||ESOTICA_CONTACT_DEFAULTS.facebook;
   const instagram=settings.instagram_url||ESOTICA_CONTACT_DEFAULTS.instagram;
   const email=settings.contact_email||ESOTICA_CONTACT_DEFAULTS.email;
-  const whatsappPages={home:"الصفحة الرئيسية",services:"الخدمات",booking:"حجز الصيانة",parts:"قطع الغيار",branches:"الفروع",offers:"العروض والأحداث",contact:"تواصل معنا","warranty-insurance":"الضمان والتأمين",about:"من نحن","range-rover-land-rover-service":"صيانة رينج روفر ولاند روفر","jaguar-service":"صيانة جاكوار","luxury-car-service":"صيانة السيارات الفاخرة","bmw-service":"صيانة بي إم دبليو","mercedes-service":"صيانة مرسيدس","porsche-service":"صيانة بورشه","bentley-service":"صيانة بنتلي","ferrari-service":"صيانة فيراري","lamborghini-service":"صيانة لامبورجيني","aston-martin-service":"صيانة أستون مارتن","maserati-service":"صيانة مازيراتي","mclaren-service":"صيانة مكلارين","rolls-royce-service":"صيانة رولز رويس","corvette-service":"صيانة كورفيت"};
-  const whatsappText=`مرحبًا فريق Esotica Auto،\nأرغب في الاستفسار عن خدماتكم.\n\nالاسم: \nالسيارة / الموديل: \nتفاصيل الاستفسار: \n\n—\nتم التواصل من خلال موقع Esotica Auto | ${whatsappPages[pageName]||pageName}`;
+  const whatsappPagesAr={home:"الصفحة الرئيسية",services:"الخدمات",booking:"حجز الصيانة",parts:"قطع الغيار",branches:"الفروع",offers:"العروض والأحداث",contact:"تواصل معنا","warranty-insurance":"الضمان والتأمين",about:"من نحن","range-rover-land-rover-service":"صيانة رينج روفر ولاند روفر","jaguar-service":"صيانة جاكوار","luxury-car-service":"صيانة السيارات الفاخرة","bmw-service":"صيانة بي إم دبليو","mercedes-service":"صيانة مرسيدس","porsche-service":"صيانة بورشه","bentley-service":"صيانة بنتلي","ferrari-service":"صيانة فيراري","lamborghini-service":"صيانة لامبورجيني","aston-martin-service":"صيانة أستون مارتن","maserati-service":"صيانة مازيراتي","mclaren-service":"صيانة مكلارين","rolls-royce-service":"صيانة رولز رويس","corvette-service":"صيانة كورفيت"};
+  const whatsappPagesEn={home:"Home",services:"Services",booking:"Service Booking",parts:"Spare Parts",branches:"Locations",offers:"Offers & Events",contact:"Contact Us","warranty-insurance":"Warranty & Insurance",about:"About Us","range-rover-land-rover-service":"Range Rover & Land Rover Service","jaguar-service":"Jaguar Service","luxury-car-service":"Luxury Car Service","bmw-service":"BMW Service","mercedes-service":"Mercedes-Benz Service","porsche-service":"Porsche Service","bentley-service":"Bentley Service","ferrari-service":"Ferrari Service","lamborghini-service":"Lamborghini Service","aston-martin-service":"Aston Martin Service","maserati-service":"Maserati Service","mclaren-service":"McLaren Service","rolls-royce-service":"Rolls-Royce Service","corvette-service":"Corvette Service"};
+  const whatsappText=isArabic()
+    ?`مرحبًا فريق Esotica Auto،\nأرغب في الاستفسار عن خدماتكم.\n\nالاسم: \nالسيارة / الموديل: \nتفاصيل الاستفسار: \n\n—\nتم التواصل من خلال موقع Esotica Auto | ${whatsappPagesAr[pageName]||pageName}`
+    :`Hello Esotica Auto team,\nI would like to enquire about your services.\n\nName: \nVehicle / model: \nEnquiry details: \n\n—\nSent from the Esotica Auto website | ${whatsappPagesEn[pageName]||pageName}`;
   const whatsappUrl=whatsapp?`https://wa.me/${whatsapp}?text=${encodeURIComponent(whatsappText)}`:"";
 
   const footer=document.querySelector(".site-footer");
@@ -613,6 +677,7 @@ function applyContactDetails(settings={}){
 }
 
 let publicEvents=[];
+let publicOffers=[];
 const EVENT_STATUS_LABELS={
   available:{ar:"متاح الآن",en:"Available Now"},
   unavailable:{ar:"غير متاح حاليًا",en:"Currently Unavailable"},
@@ -624,9 +689,17 @@ function eventDate(value,lang){
   if(Number.isNaN(date.getTime()))return escHtml(value);
   return date.toLocaleDateString(lang==="ar"?"ar-EG":"en-GB",{day:"numeric",month:"long",year:"numeric"});
 }
+function safePublicLink(value,fallback="/contact"){
+  const link=String(value||fallback).trim();
+  try{
+    const url=new URL(link,location.origin);
+    if(url.origin===location.origin)return `${url.pathname}${url.search}${url.hash}`;
+    if(url.protocol==="https:")return url.href;
+  }catch{}
+  return fallback;
+}
 function safeEventLink(value){
-  const link=String(value||"/contact").trim();
-  return /^(\/|https?:\/\/)/i.test(link)?link:"/contact";
+  return safePublicLink(value,"/contact");
 }
 function publicEventImage(item={}){
   if(item.image_media_id==="builtin:towing-service")return "/site/towing-service-event.webp?v=20261001-1";
@@ -689,6 +762,19 @@ async function loadEvents(){
     renderEvents(publicEvents,document.documentElement.lang||"en");
   }catch(error){console.warn("Events unavailable",error)}
 }
+function enableTabKeyboard(tabs,activate,nameFor){
+  tabs.forEach((tab,index)=>tab.addEventListener("keydown",event=>{
+    if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
+    event.preventDefault();
+    const rtl=document.documentElement.dir==="rtl";
+    let nextIndex=index;
+    if(event.key==="Home")nextIndex=0;
+    else if(event.key==="End")nextIndex=tabs.length-1;
+    else if(event.key==="ArrowRight")nextIndex=(index+(rtl?-1:1)+tabs.length)%tabs.length;
+    else nextIndex=(index+(rtl?1:-1)+tabs.length)%tabs.length;
+    const next=tabs[nextIndex];activate(nameFor(next));next.focus();
+  }));
+}
 function initOffersTabs(){
   const tabs=[...document.querySelectorAll("[data-offers-tab]")];
   const panels=[...document.querySelectorAll("[data-offers-panel]")];
@@ -708,7 +794,12 @@ function initOffersTabs(){
     if(name==="events")history.replaceState(null,"","#events");
     else if(location.hash==="#events")history.replaceState(null,"",location.pathname+location.search);
   };
-  tabs.forEach(tab=>tab.addEventListener("click",()=>activate(tab.dataset.offersTab)));
+  tabs.forEach((tab,index)=>{
+    tab.id=tab.id||`offersTab${index+1}`;
+    document.querySelector(`[data-offers-panel="${tab.dataset.offersTab}"]`)?.setAttribute("aria-labelledby",tab.id);
+    tab.addEventListener("click",()=>activate(tab.dataset.offersTab));
+  });
+  enableTabKeyboard(tabs,activate,tab=>tab.dataset.offersTab);
   activate(location.hash==="#events"?"events":"offers");
 }
 
@@ -716,18 +807,24 @@ async function loadOffers(){
   const grid=document.querySelector("#offersGrid");if(!grid)return;
   try{
     const r=await fetch("/api/offers",{cache:"no-store"}),j=await r.json();
-    if(!r.ok||!Array.isArray(j.offers)||!j.offers.length)return;
-    grid.innerHTML=j.offers.map(x=>{const ar=document.documentElement.lang==="ar",title=ar?(x.title||x.title_en):(x.title_en||x.title),description=ar?(x.description||x.description_en):(x.description_en||x.description),button=ar?(x.button_text||"احجز الآن"):(x.button_text_en||"Book Now"),image=x.image_media_id==="builtin:jlr-cashback-50"?"/site/offer-cashback-jlr-v2.webp?v=20261001-1":(x.image_media_id?`/api/media/${encodeURIComponent(x.image_media_id)}`:"");return `<article class="offer-card">
+    if(!r.ok||!Array.isArray(j.offers))return;
+    publicOffers=j.offers;
+    renderOffers(publicOffers,document.documentElement.lang||"en");
+  }catch(e){console.warn("Offers unavailable",e)}
+}
+function renderOffers(items,lang){
+  const grid=document.querySelector("#offersGrid");if(!grid||!Array.isArray(items)||!items.length)return;
+  const ar=lang==="ar";
+  grid.innerHTML=items.map(x=>{const title=ar?(x.title||x.title_en):(x.title_en||x.title),description=ar?(x.description||x.description_en):(x.description_en||x.description),button=ar?(x.button_text||"احجز الآن"):(x.button_text_en||"Book Now"),image=x.image_media_id==="builtin:jlr-cashback-50"?"/site/offer-cashback-jlr-v2.webp?v=20261001-1":(x.image_media_id?`/api/media/${encodeURIComponent(x.image_media_id)}`:"");return `<article class="offer-card">
       ${image?`<div class="offer-image"><img src="${image}" alt="${escHtml(title)}" loading="lazy"></div>`:""}
       <div class="offer-content">
         <p class="eyebrow">ESOTICA OFFER</p>
         <h2>${escHtml(title)}</h2>
         <p>${escHtml(description||"")}</p>
         ${x.end_date?`<div class="offer-dates">${ar?"متاح حتى":"Available until"} ${escHtml(x.end_date)}</div>`:""}
-        <a class="btn btn-gold" href="${escHtml(trackedInternalLink(x.button_link||"/booking","offer",title,x.id))}">${escHtml(button)}</a>
+        <a class="btn btn-gold" href="${escHtml(trackedInternalLink(safePublicLink(x.button_link,"/booking"),"offer",title,x.id))}">${escHtml(button)}</a>
       </div>
     </article>`}).join("");
-  }catch(e){console.warn("Offers unavailable",e)}
 }
 
 function initWarrantyTabs(){
@@ -749,7 +846,12 @@ function initWarrantyTabs(){
     if(name==="insurance")history.replaceState(null,"","#insurance");
     else if(location.hash==="#insurance")history.replaceState(null,"",location.pathname+location.search);
   };
-  tabs.forEach(tab=>tab.addEventListener("click",()=>activate(tab.dataset.warrantyTab)));
+  tabs.forEach((tab,index)=>{
+    tab.id=tab.id||`warrantyTab${index+1}`;
+    document.querySelector(`[data-warranty-panel="${tab.dataset.warrantyTab}"]`)?.setAttribute("aria-labelledby",tab.id);
+    tab.addEventListener("click",()=>activate(tab.dataset.warrantyTab));
+  });
+  enableTabKeyboard(tabs,activate,tab=>tab.dataset.warrantyTab);
   activate(location.hash==="#insurance"?"insurance":"warranty");
 }
 
@@ -757,6 +859,8 @@ applyContactDetails({});
 initLeadAttribution();
 initOffersTabs();
 initWarrantyTabs();
-loadSiteContent().finally(initLanguage);
-loadOffers();
-loadEvents();
+loadSiteContent().finally(()=>{
+  initLanguage();
+  void loadOffers();
+  void loadEvents();
+});
