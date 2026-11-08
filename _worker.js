@@ -2,6 +2,63 @@ const JSON_HEADERS={"content-type":"application/json; charset=utf-8","cache-cont
 const json=(data,status=200,extra={})=>new Response(JSON.stringify(data),{status,headers:{...JSON_HEADERS,...extra}});
 const bad=(message,status=400)=>json({error:message},status);
 
+const ENGLISH_PAGE_META={
+ "/":["Esotica Auto | Range Rover, Jaguar & Luxury Car Service","Specialist Range Rover, Land Rover and Jaguar maintenance, diagnostics, spare parts and luxury car care in New Cairo and Sheikh Zayed."],
+ "/services":["Luxury Car Maintenance Services | Esotica Auto","Maintenance, diagnostics, inspection, body and paint, spare parts and selected services for Range Rover, Jaguar and luxury vehicles."],
+ "/booking":["Book a Car Service Appointment | Esotica Auto","Request a preferred service appointment, branch, date and time. The Esotica Auto team will contact you to confirm."],
+ "/parts":["Luxury Car Spare Parts Enquiry | Esotica Auto","Send your vehicle details and VIN to enquire about the correct spare part, availability and price."],
+ "/branches":["Esotica Auto Service Center Locations","Find Esotica Auto service centers in New Cairo and Sheikh Zayed, with directions and working hours."],
+ "/branches/fifth-settlement":["Fifth Settlement Service Center | Esotica Auto","Range Rover, Jaguar and luxury car service at Esotica Auto Fifth Settlement."],
+ "/branches/third-settlement":["Third Settlement Service Center | Esotica Auto","Range Rover, Jaguar and luxury car service at Esotica Auto Third Settlement industrial area."],
+ "/branches/sheikh-zayed":["Sheikh Zayed Service Center | Esotica Auto","Range Rover, Jaguar and luxury car service at Esotica Auto Sheikh Zayed."],
+ "/offers":["Car Service Offers & Events | Esotica Auto","Explore current maintenance offers, mobile services and seasonal Esotica Auto events."],
+ "/warranty-insurance":["Car Warranty & Insurance Support | Esotica Auto","Explore Esotica Warranty and insurance repair support, from inspection and documentation to repair and delivery."],
+ "/about":["About Esotica Auto | Luxury Car Specialists","Learn about Esotica Auto's specialist Range Rover and Jaguar expertise and selected luxury car services."],
+ "/contact":["Contact Esotica Auto | Luxury Car Service","Contact Esotica Auto for maintenance, booking, warranty, insurance or spare-parts enquiries."],
+ "/privacy":["Privacy Policy | Esotica Auto","Learn how Esotica Auto uses and protects information submitted through the website and customer-service channels."],
+ "/range-rover-land-rover-service":["Range Rover & Land Rover Service | Esotica Auto","Specialist Range Rover and Land Rover maintenance, diagnostics, inspection and spare-parts services."],
+ "/jaguar-service":["Jaguar Service Center | Esotica Auto","Jaguar maintenance, diagnostics, inspection and spare-parts services in Cairo."],
+ "/luxury-car-service":["Luxury Car Service Center | Esotica Auto","Selected maintenance, diagnostics, inspection and spare-parts services for luxury and performance vehicles."],
+ "/bmw-service":["BMW Service Center | Esotica Auto","Selected BMW maintenance, diagnostics, inspection and spare-parts services."],
+ "/mercedes-service":["Mercedes-Benz Service Center | Esotica Auto","Selected Mercedes-Benz maintenance, diagnostics, inspection and spare-parts services."],
+ "/porsche-service":["Porsche Service Center | Esotica Auto","Selected Porsche maintenance, diagnostics, inspection and spare-parts services."],
+ "/bentley-service":["Bentley Service Center | Esotica Auto","Selected Bentley maintenance, diagnostics, inspection and spare-parts services."],
+ "/maserati-service":["Maserati Service Center | Esotica Auto","Selected Maserati maintenance, diagnostics, inspection and spare-parts services."],
+ "/ferrari-service":["Ferrari Service Center | Esotica Auto","Selected Ferrari maintenance, diagnostics, inspection and spare-parts services."],
+ "/lamborghini-service":["Lamborghini Service Center | Esotica Auto","Selected Lamborghini maintenance, diagnostics, inspection and spare-parts services."],
+ "/aston-martin-service":["Aston Martin Service Center | Esotica Auto","Selected Aston Martin maintenance, diagnostics, inspection and spare-parts services."],
+ "/mclaren-service":["McLaren Service Center | Esotica Auto","Selected McLaren maintenance, diagnostics, inspection and spare-parts services."],
+ "/rolls-royce-service":["Rolls-Royce Service Center | Esotica Auto","Selected Rolls-Royce maintenance, diagnostics, inspection and spare-parts services."],
+ "/corvette-service":["Corvette Service Center | Esotica Auto","Selected Corvette maintenance, diagnostics, inspection and spare-parts services."]
+};
+function englishPage(url){
+ if(url.pathname!=="/en"&&!url.pathname.startsWith("/en/"))return null;
+ const basePath=(url.pathname.slice(3).replace(/\/$/,"")||"/").replace(/\.html$/,"");
+ const metadata=ENGLISH_PAGE_META[basePath];
+ return metadata?{basePath,metadata}:null;
+}
+async function serveEnglishPage(req,env,url,page){
+ const assetUrl=new URL(page.basePath,url);assetUrl.search="";assetUrl.hash="";
+ const response=await env.ASSETS.fetch(new Request(assetUrl,req));
+ if(req.method==="HEAD"||!response.ok||!(response.headers.get("content-type")||"").includes("text/html"))return response;
+ const englishPath=page.basePath==="/"?"/en":`/en${page.basePath}`;
+ const canonical=`https://esoticaegypt.com${englishPath}`;
+ const [title,description]=page.metadata;
+ return new HTMLRewriter()
+   .on("html",{element(element){element.setAttribute("lang","en");element.setAttribute("dir","ltr")}})
+   .on("title",{element(element){element.setInnerContent(title)}})
+   .on('meta[name="description"]',{element(element){element.setAttribute("content",description)}})
+   .on('meta[property="og:title"]',{element(element){element.setAttribute("content",title)}})
+   .on('meta[property="og:description"]',{element(element){element.setAttribute("content",description)}})
+   .on('meta[property="og:url"]',{element(element){element.setAttribute("content",canonical)}})
+   .on('meta[property="og:locale"]',{element(element){element.setAttribute("content","en_US")}})
+   .on('meta[property="og:locale:alternate"]',{element(element){element.setAttribute("content","ar_EG")}})
+   .on('meta[name="twitter:title"]',{element(element){element.setAttribute("content",title)}})
+   .on('meta[name="twitter:description"]',{element(element){element.setAttribute("content",description)}})
+   .on('link[rel="canonical"]',{element(element){element.setAttribute("href",canonical)}})
+   .transform(response);
+}
+
 let analyticsSchemaPromise=null;
 async function ensureColumns(env,table,columns){
   const info=await env.DB.prepare(`PRAGMA table_info(${table})`).all();
@@ -51,7 +108,8 @@ async function initDB(env){
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  created_at INTEGER NOT NULL,
  name TEXT NOT NULL, phone TEXT NOT NULL, car_model TEXT NOT NULL, year TEXT NOT NULL,
- branch TEXT NOT NULL, preferred_date TEXT NOT NULL, details TEXT NOT NULL DEFAULT '',
+ branch TEXT NOT NULL, service_type TEXT NOT NULL DEFAULT '', preferred_date TEXT NOT NULL,
+ preferred_time TEXT NOT NULL DEFAULT '', details TEXT NOT NULL DEFAULT '',
  source_type TEXT NOT NULL DEFAULT '', source_label TEXT NOT NULL DEFAULT '',
  source_id TEXT NOT NULL DEFAULT '', source_page TEXT NOT NULL DEFAULT '',
  status TEXT NOT NULL DEFAULT 'new')`,
@@ -71,6 +129,14 @@ async function initDB(env){
  source_type TEXT NOT NULL DEFAULT '', source_label TEXT NOT NULL DEFAULT '',
  source_id TEXT NOT NULL DEFAULT '', source_page TEXT NOT NULL DEFAULT '',
  status TEXT NOT NULL DEFAULT 'new')`,
+`CREATE TABLE IF NOT EXISTS form_rate_limits (
+ rate_key TEXT PRIMARY KEY,
+ window_started INTEGER NOT NULL,
+ hits INTEGER NOT NULL DEFAULT 0)`,
+`CREATE TABLE IF NOT EXISTS form_submission_fingerprints (
+ fingerprint TEXT PRIMARY KEY,
+ created_at INTEGER NOT NULL)`,
+`CREATE INDEX IF NOT EXISTS idx_form_submission_created ON form_submission_fingerprints(created_at)`,
 `CREATE TABLE IF NOT EXISTS site_settings (
  key TEXT PRIMARY KEY,
  value TEXT NOT NULL,
@@ -166,6 +232,7 @@ async function initDB(env){
       if(!existing.has(column)){try{await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run()}catch(error){if(!String(error?.message||error).toLowerCase().includes("duplicate column"))throw error}}
     }
   }
+  await ensureColumns(env,"bookings",[["service_type","TEXT NOT NULL DEFAULT ''"],["preferred_time","TEXT NOT NULL DEFAULT ''"]]);
   await ensureColumns(env,"offers",[["title_en","TEXT NOT NULL DEFAULT ''"],["description_en","TEXT NOT NULL DEFAULT ''"],["button_text_en","TEXT NOT NULL DEFAULT 'Book Now'"]]);
   await env.DB.prepare(`INSERT OR IGNORE INTO offers(created_at,title,title_en,description,description_en,image_media_id,start_date,end_date,button_text,button_text_en,button_link,visible)
     SELECT ?,?,?,?,?,?,'','','احجز واستفد بالعرض','Book & Claim Offer','/booking',1
@@ -190,6 +257,33 @@ function leadSource(d){
 }
 function validPhone(v){return /^[0-9+\s()-]{8,20}$/.test(v)}
 function validYear(v){return /^\d{4}$/.test(v)&&Number(v)>=1980&&Number(v)<=2100}
+function validTime(v){return /^([01]\d|2[0-3]):[0-5]\d$/.test(v)}
+const BOOKING_SERVICE_TYPES=new Set(["maintenance","diagnostics","inspection","body-paint","spare-parts","warranty-insurance","mobile-service","other"]);
+async function sha256(value){
+ const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(value)));
+ return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,"0")).join("");
+}
+async function guardPublicForm(req,env,type,data,signature){
+ if(clean(data?.website,200))return {silent:true};
+ const now=Date.now(),windowMs=30*60*1000,limit=8;
+ const rawClient=req.headers.get("cf-connecting-ip")||`${req.headers.get("user-agent")||"unknown"}|${cookieMap(req.headers.get("cookie")).esotica_visitor||""}`;
+ const rateKey=`${type}:${await sha256(rawClient)}`;
+ const current=await env.DB.prepare("SELECT window_started,hits FROM form_rate_limits WHERE rate_key=?").bind(rateKey).first();
+ if(current&&now-Number(current.window_started)<windowMs&&Number(current.hits)>=limit)return {limited:true};
+ if(!current||now-Number(current.window_started)>=windowMs){
+   await env.DB.prepare("INSERT INTO form_rate_limits(rate_key,window_started,hits) VALUES(?,?,1) ON CONFLICT(rate_key) DO UPDATE SET window_started=excluded.window_started,hits=1").bind(rateKey,now).run();
+ }else{
+   await env.DB.prepare("UPDATE form_rate_limits SET hits=hits+1 WHERE rate_key=?").bind(rateKey).run();
+ }
+ const fingerprint=await sha256(`${type}|${signature}`),duplicate=await env.DB.prepare("SELECT created_at FROM form_submission_fingerprints WHERE fingerprint=?").bind(fingerprint).first();
+ if(duplicate&&now-Number(duplicate.created_at)<2*60*1000)return {duplicate:true};
+ await env.DB.batch([
+   env.DB.prepare("INSERT INTO form_submission_fingerprints(fingerprint,created_at) VALUES(?,?) ON CONFLICT(fingerprint) DO UPDATE SET created_at=excluded.created_at").bind(fingerprint,now),
+   env.DB.prepare("DELETE FROM form_submission_fingerprints WHERE created_at<?").bind(now-24*60*60*1000),
+   env.DB.prepare("DELETE FROM form_rate_limits WHERE window_started<?").bind(now-24*60*60*1000)
+ ]);
+ return {};
+}
 function cairoDateParts(){
  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
  const get=t=>parts.find(p=>p.type===t)?.value||"";
@@ -226,8 +320,9 @@ function logoutCookie(){return `esotica_admin_session=; Path=/; HttpOnly; Secure
 function visitorCookie(value){return `esotica_visitor=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`}
 async function readJSON(req){try{return await req.json()}catch{return null}}
 function sameOrigin(req){
- const o=req.headers.get("origin"); if(!o)return true;
- try{return new URL(o).origin===new URL(req.url).origin}catch{return false}
+ const source=req.headers.get("origin")||req.headers.get("referer");
+ if(!source)return false;
+ try{return new URL(source).origin===new URL(req.url).origin}catch{return false}
 }
 async function trafficSnapshot(env){
   await initAnalyticsDB(env);
@@ -264,7 +359,7 @@ async function handleAPI(req,env,url){
  if(req.method==="POST"&&!sameOrigin(req)) return bad("طلب غير مسموح.",403);
 
  if(p==="/api/health"){
-   return json({ok:true,database:!!env.DB,adminConfigured:!!env.ADMIN_PASSWORD});
+   return json({ok:true,database:!!env.DB,adminConfigured:!!env.ADMIN_PASSWORD,formProtection:true});
  }
  if(p==="/api/analytics/heartbeat"&&req.method==="POST"){
    await initAnalyticsDB(env);
@@ -312,24 +407,30 @@ async function handleAPI(req,env,url){
 
  if(p==="/api/booking"&&req.method==="POST"){
    await initDB(env); const d=await readJSON(req); if(!d)return bad("بيانات غير صحيحة.");
-   const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),branch=clean(d.branch,100),preferredDate=clean(d.preferredDate,20),details=clean(d.details,700),source=leadSource(d);
-   if(!name||!validPhone(phone)||!carModel||!validYear(year)||!branch||!preferredDate)return bad("راجع البيانات المطلوبة ورقم الهاتف وسنة الصنع.");
+   const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),branch=clean(d.branch,100),serviceType=clean(d.serviceType,40),preferredDate=clean(d.preferredDate,20),preferredTime=clean(d.preferredTime,10),details=clean(d.details,700),source=leadSource(d);
+   if(!name||!validPhone(phone)||!carModel||!validYear(year)||!branch||!BOOKING_SERVICE_TYPES.has(serviceType)||!preferredDate||!validTime(preferredTime))return bad("راجع البيانات المطلوبة ونوع الخدمة والموعد ورقم الهاتف وسنة الصنع.");
    const dateError=validateBookingDate(preferredDate);if(dateError)return bad(dateError);
-   await env.DB.prepare("INSERT INTO bookings(created_at,name,phone,car_model,year,branch,preferred_date,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,carModel,year,branch,preferredDate,details,source.type,source.label,source.id,source.page,"new").run();
+   const guard=await guardPublicForm(req,env,"booking",d,`${phone}|${carModel}|${branch}|${serviceType}|${preferredDate}|${preferredTime}`);
+   if(guard.limited)return bad("تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة.",429);
+   if(!guard.silent&&!guard.duplicate)await env.DB.prepare("INSERT INTO bookings(created_at,name,phone,car_model,year,branch,service_type,preferred_date,preferred_time,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,carModel,year,branch,serviceType,preferredDate,preferredTime,details,source.type,source.label,source.id,source.page,"new").run();
    return json({message:"تم استلام طلب الحجز. سيتواصل معك فريق Esotica لتأكيد الموعد."});
  }
  if(p==="/api/parts"&&req.method==="POST"){
    await initDB(env); const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
    const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),vin=clean(d.vin,17).toUpperCase(),partCode=clean(d.partCode,60),details=clean(d.details,700),quantity=Math.min(20,Math.max(1,Number(d.quantity)||1)),source=leadSource(d);
    if(!name||!validPhone(phone)||!carModel||!validYear(year)||!(/^[A-HJ-NPR-Z0-9]{7,17}$/.test(vin))||!details)return bad("راجع البيانات. رقم الشاسيه يجب أن يكون من 7 إلى 17 خانة صحيحة.");
-   await env.DB.prepare("INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new").run();
+   const guard=await guardPublicForm(req,env,"parts",d,`${phone}|${vin}|${partCode}|${details}`);
+   if(guard.limited)return bad("تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة.",429);
+   if(!guard.silent&&!guard.duplicate)await env.DB.prepare("INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new").run();
    return json({message:"تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر."});
  }
  if(p==="/api/contact"&&req.method==="POST"){
    await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
    const name=clean(d.name,80),phone=clean(d.phone,20),subject=clean(d.subject,120),message=clean(d.message,900),source=leadSource(d);
    if(!name||!validPhone(phone)||!subject||!message)return bad("راجع البيانات المطلوبة.");
-   await env.DB.prepare("INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new").run();
+   const guard=await guardPublicForm(req,env,"contact",d,`${phone}|${subject}|${message}`);
+   if(guard.limited)return bad("تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة.",429);
+   if(!guard.silent&&!guard.duplicate)await env.DB.prepare("INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new").run();
    return json({message:"تم استلام رسالتك. سيتواصل معك فريق Esotica."});
  }
 
@@ -345,30 +446,16 @@ async function handleAPI(req,env,url){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    return json({traffic:await trafficSnapshot(env)});
  }
- if(p==="/api/admin/reset"&&req.method==="POST"){
+ if(p==="/api/admin/lead-alerts"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
-   const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
-   if(d.scope==="requests"&&d.confirm==="RESET_REQUESTS"){
-     await initDB(env);
-     await env.DB.batch([
-       env.DB.prepare("DELETE FROM admin_request_meta"),
-       env.DB.prepare("DELETE FROM bookings"),
-       env.DB.prepare("DELETE FROM parts_requests"),
-       env.DB.prepare("DELETE FROM contact_requests"),
-       env.DB.prepare("DELETE FROM sqlite_sequence WHERE name IN ('bookings','parts_requests','contact_requests')")
-     ]);
-     return json({ok:true,message:"تم مسح طلبات التجربة وإعادة الترقيم من 1."});
-   }
-   if(d.scope==="traffic"&&d.confirm==="RESET_TRAFFIC"){
-     await initAnalyticsDB(env);
-     await env.DB.batch([
-       env.DB.prepare("DELETE FROM site_visitor_days"),
-       env.DB.prepare("DELETE FROM site_visitor_months"),
-       env.DB.prepare("DELETE FROM site_visitors")
-     ]);
-     return json({ok:true,message:"تم تصفير إحصاءات الزوار."});
-   }
-   return bad("تأكيد إعادة الضبط غير صحيح.",400);
+   await initDB(env);
+   const pollNow=Date.now(),after=Math.max(0,Math.min(pollNow,Number(url.searchParams.get("after"))||0));
+   const rows=await env.DB.prepare(`SELECT request_type,id,name,created_at FROM (
+     SELECT 'bookings' AS request_type,id,name,created_at FROM bookings WHERE created_at>? AND created_at<=?
+     UNION ALL SELECT 'parts' AS request_type,id,name,created_at FROM parts_requests WHERE created_at>? AND created_at<=?
+     UNION ALL SELECT 'contacts' AS request_type,id,name,created_at FROM contact_requests WHERE created_at>? AND created_at<=?
+   ) ORDER BY created_at ASC LIMIT 30`).bind(after,pollNow,after,pollNow,after,pollNow).all();
+   return json({now:pollNow,alerts:rows.results||[]});
  }
 
  if(p==="/api/admin/dashboard"&&req.method==="GET"){
@@ -399,7 +486,7 @@ async function handleAPI(req,env,url){
  if(p==="/api/admin/site-settings"&&req.method==="POST"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);const d=await readJSON(req);if(!d||typeof d!=="object")return bad("بيانات غير صحيحة.");
-   const allowed=["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","logo_media_id","hero_media_id","accent_color","section_order","show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url"];
+   const allowed=["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","section_order","show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url","services_page_title","services_page_title_en","services_page_intro","services_page_intro_en","about_page_title","about_page_title_en","about_page_intro","about_page_intro_en","warranty_page_title","warranty_page_title_en","warranty_page_intro","warranty_page_intro_en","contact_page_title","contact_page_title_en","contact_page_intro","contact_page_intro_en"];
    const stmts=[];
    for(const key of allowed){
      if(Object.prototype.hasOwnProperty.call(d,key)){
@@ -465,6 +552,7 @@ async function handleAPI(req,env,url){
    }else if(action==="restore"){
      await env.DB.prepare("UPDATE admin_request_meta SET deleted_at=0,updated_at=? WHERE request_type=? AND request_id=?").bind(now,type,id).run();
    }else if(action==="permanent"){
+     if(clean(d.confirm,80)!==`DELETE ${id}`)return bad("تأكيد الحذف النهائي غير صحيح.",400);
      const table=type==="parts"?"parts_requests":type==="contacts"?"contact_requests":"bookings";
      await env.DB.batch([
        env.DB.prepare(`DELETE FROM ${table} WHERE id=?`).bind(id),
@@ -572,6 +660,8 @@ export default{
      primary.port="";
      return Response.redirect(primary.toString(),308);
    }
+   const english=englishPage(url);
+   if(english&&(req.method==="GET"||req.method==="HEAD"))return serveEnglishPage(req,env,url,english);
    if(url.pathname==="/sitemap.xml"){
      return env.ASSETS.fetch(new Request(new URL("/sitemap.xml",url),req));
    }

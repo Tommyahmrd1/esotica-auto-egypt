@@ -1,15 +1,30 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <script>(function(){var l="en";try{l=localStorage.getItem("esotica-language")||"en"}catch(e){}if(l==="en"){var d=document.documentElement;d.lang="en";d.dir="ltr";d.classList.add("language-pending");setTimeout(function(){d.classList.remove("language-pending")},2500)}})();</script>
+  <script>(function(){var p=location.pathname,l="en";try{l=(p==="/en"||p.indexOf("/en/")===0)?"en":(localStorage.getItem("esotica-language")||"en")}catch(e){}if(l==="en"){var d=document.documentElement;d.lang="en";d.dir="ltr";d.classList.add("language-pending");setTimeout(function(){d.classList.remove("language-pending")},2500)}})();</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>حجز صيانة سيارات فاخرة في القاهرة | Esotica Auto</title>
   <meta name="description" content="احجز موعد صيانة Range Rover أو Jaguar أو سيارتك الفاخرة في فروع Esotica Auto بالتجمع الخامس والتجمع الثالث والشيخ زايد.">
   <link rel="canonical" href="https://esoticaegypt.com/booking">
+  <link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/booking">
+  <link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/booking">
+  <link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/booking">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Esotica Auto">
+  <meta property="og:title" content="حجز صيانة سيارات فاخرة في القاهرة | Esotica Auto">
+  <meta property="og:description" content="احجز موعد صيانة Range Rover أو Jaguar أو سيارتك الفاخرة في فروع Esotica Auto بالتجمع الخامس والتجمع الثالث والشيخ زايد.">
+  <meta property="og:url" content="https://esoticaegypt.com/booking">
+  <meta property="og:image" content="https://esoticaegypt.com/site/hero-video-poster.jpg">
+  <meta property="og:locale" content="ar_EG">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="حجز صيانة سيارات فاخرة في القاهرة | Esotica Auto">
+  <meta name="twitter:description" content="احجز موعد صيانة Range Rover أو Jaguar أو سيارتك الفاخرة في فروع Esotica Auto بالتجمع الخامس والتجمع الثالث والشيخ زايد.">
+  <meta name="twitter:image" content="https://esoticaegypt.com/site/hero-video-poster.jpg">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="icon" href="/favicon.svg?v=20260930-1">
-  <link rel="stylesheet" href="/styles.css?v=20261107-2">
+  <link rel="stylesheet" href="/styles.css?v=20261108-1">
 </head>
 <body>
 
@@ -37,16 +52,19 @@
       <div class="copy">
         <p class="eyebrow">SERVICE BOOKING</p><h2>احجز موعدك</h2>
         <p>بعد إرسال الطلب، يراجع الفريق المختص بيانات السيارة والخدمة المطلوبة قبل تأكيد الموعد.</p>
-        <ul class="ticks"><li>اختيار الفرع</li><li>اختيار التاريخ المفضل</li><li>تأكيد الموعد من الفريق</li></ul>
+        <ul class="ticks"><li>اختيار الفرع والخدمة</li><li>اختيار التاريخ والوقت المفضل</li><li>تأكيد الموعد من الفريق</li></ul>
       </div>
       <form class="form glass" id="bookingForm">
+        <div class="form-trap" aria-hidden="true"><label>اترك هذا الحقل فارغًا<input name="website" tabindex="-1" autocomplete="off"></label></div>
         <div class="grid2">
           <label>الاسم<input name="name" required maxlength="80" autocomplete="name"></label>
           <label>رقم الهاتف<input name="phone" type="tel" required maxlength="20" inputmode="tel" autocomplete="tel"></label>
           <label>السيارة / الموديل<input name="carModel" required maxlength="80" autocomplete="off" placeholder="Range Rover Sport"></label>
           <label>سنة الصنع<input name="year" required maxlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" placeholder="2022"></label>
           <label>الفرع<select name="branch" required><option value="">اختر الفرع</option><option>فرع التجمع الخامس</option><option>فرع التجمع الثالث</option><option>الشيخ زايد</option></select></label>
+          <label>نوع الخدمة<select name="serviceType" required><option value="">اختر نوع الخدمة</option><option value="maintenance">صيانة دورية</option><option value="diagnostics">فحص وتشخيص أعطال</option><option value="inspection">فحص شامل</option><option value="body-paint">سمكرة ودهان</option><option value="spare-parts">قطع غيار</option><option value="warranty-insurance">ضمان أو تأمين</option><option value="mobile-service">خدمة متنقلة</option><option value="other">خدمة أخرى</option></select></label>
           <label>التاريخ المفضل<input type="date" name="preferredDate" required></label>
+          <label>الوقت المفضل<input type="time" name="preferredTime" min="10:00" max="18:00" step="1800" required></label>
         </div>
         <label>تفاصيل الخدمة<textarea name="details" rows="5" maxlength="700" placeholder="اكتب الخدمة أو المشكلة باختصار"></textarea></label>
         <p class="form-privacy">باستخدام هذا النموذج، توافق على استخدام بياناتك للتواصل معك بخصوص طلبك وفق <a href="/privacy">سياسة الخصوصية</a>.</p>
@@ -87,5 +105,5 @@
     <a class="admin-link" href="/admin">إدارة الموقع</a>
   </div>
 </footer>
-<script src="/site.js?v=20261107-2" defer></script>
+<script src="/site.js?v=20261108-1" defer></script>
 </body></html>

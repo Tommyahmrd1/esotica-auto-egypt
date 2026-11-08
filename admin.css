@@ -61,3 +61,11 @@
 .lead-source-badge.is-legacy{opacity:.68}
 .request-source-panel{display:grid;gap:5px;margin:0 0 18px;padding:16px 18px;border:1px solid rgba(200,170,112,.35);border-radius:14px;background:linear-gradient(135deg,rgba(200,170,112,.14),rgba(17,20,17,.55))}
 .request-source-panel small{color:#aeb2ac;font-size:10px}.request-source-panel strong{color:#ead39e;font-size:17px}.request-source-panel span{color:#8e938d;font-size:11px;direction:ltr;text-align:right}
+
+/* Live lead alerts and protected identity controls */
+.lead-alert-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 24px;padding:16px 18px;border:1px solid rgba(199,168,106,.32);border-radius:14px;background:linear-gradient(135deg,rgba(199,168,106,.12),rgba(255,255,255,.025))}
+.lead-alert-copy{display:flex;align-items:center;gap:12px}.lead-alert-dot{width:10px;height:10px;border-radius:50%;background:#7f8b83;box-shadow:0 0 0 6px rgba(127,139,131,.1)}
+.lead-alert-bar.has-new .lead-alert-dot{background:#f3c875;box-shadow:0 0 0 6px rgba(243,200,117,.13);animation:leadPulse 1.8s infinite}.lead-alert-copy strong{display:block}.lead-alert-copy small{display:block;color:#aeb5af;margin-top:3px}
+.identity-lock{border-color:rgba(199,168,106,.28);background:rgba(199,168,106,.055)}.identity-lock strong{display:block;color:#e5c985;margin-bottom:8px}.identity-lock p{margin:0;color:#b9c0ba;line-height:1.7}
+@keyframes leadPulse{50%{box-shadow:0 0 0 10px rgba(243,200,117,0)}}
+@media(max-width:720px){.lead-alert-bar{align-items:flex-start;flex-direction:column}.lead-alert-bar .tool-btn{width:100%}}

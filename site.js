@@ -20,7 +20,65 @@ const msg=(el,text,ok=true)=>{
   el.setAttribute("role",ok?"status":"alert");
   el.setAttribute("aria-live",ok?"polite":"assertive");
 };
-const pageName=(location.pathname.split("/").filter(Boolean)[0]||"home").replace(/\.html$/,'');
+const rawRoutePath=(location.pathname.replace(/\.html$/,'').replace(/\/$/,"")||"/");
+const isEnglishRoute=rawRoutePath==="/en"||rawRoutePath.startsWith("/en/");
+const normalizedPath=(isEnglishRoute?(rawRoutePath.slice(3)||"/"):rawRoutePath);
+const pageName=(normalizedPath.split("/").filter(Boolean)[0]||"home");
+const originalMetadata={
+  title:document.title,
+  description:document.querySelector('meta[name="description"]')?.content||""
+};
+const PAGE_EN_META={
+  "/": ["Esotica Auto | Range Rover, Jaguar & Luxury Car Service","Specialist Range Rover, Land Rover and Jaguar maintenance, diagnostics, spare parts and luxury car care in New Cairo and Sheikh Zayed."],
+  "/services": ["Luxury Car Maintenance Services | Esotica Auto","Maintenance, diagnostics, inspection, body and paint, spare parts and selected services for Range Rover, Jaguar and luxury vehicles."],
+  "/booking": ["Book a Car Service Appointment | Esotica Auto","Request a preferred service appointment, branch, date and time. The Esotica Auto team will contact you to confirm."],
+  "/parts": ["Luxury Car Spare Parts Enquiry | Esotica Auto","Send your vehicle details and VIN to enquire about the correct spare part, availability and price."],
+  "/branches": ["Esotica Auto Service Center Locations","Find Esotica Auto service centers in New Cairo and Sheikh Zayed, with directions and working hours."],
+  "/branches/fifth-settlement": ["Fifth Settlement Service Center | Esotica Auto","Range Rover, Jaguar and luxury car service at Esotica Auto Fifth Settlement."],
+  "/branches/third-settlement": ["Third Settlement Service Center | Esotica Auto","Range Rover, Jaguar and luxury car service at Esotica Auto Third Settlement industrial area."],
+  "/branches/sheikh-zayed": ["Sheikh Zayed Service Center | Esotica Auto","Range Rover, Jaguar and luxury car service at Esotica Auto Sheikh Zayed."],
+  "/offers": ["Car Service Offers & Events | Esotica Auto","Explore current maintenance offers, mobile services and seasonal Esotica Auto events."],
+  "/warranty-insurance": ["Car Warranty & Insurance Support | Esotica Auto","Explore Esotica Warranty and insurance repair support, from inspection and documentation to repair and delivery."],
+  "/about": ["About Esotica Auto | Luxury Car Specialists","Learn about Esotica Auto's specialist Range Rover and Jaguar expertise and selected luxury car services."],
+  "/contact": ["Contact Esotica Auto | Luxury Car Service","Contact Esotica Auto for maintenance, booking, warranty, insurance or spare-parts enquiries."],
+  "/privacy": ["Privacy Policy | Esotica Auto","Learn how Esotica Auto uses and protects information submitted through the website and customer-service channels."],
+  "/range-rover-land-rover-service": ["Range Rover & Land Rover Service | Esotica Auto","Specialist Range Rover and Land Rover maintenance, diagnostics, inspection and spare-parts services."],
+  "/jaguar-service": ["Jaguar Service Center | Esotica Auto","Jaguar maintenance, diagnostics, inspection and spare-parts services in Cairo."],
+  "/luxury-car-service": ["Luxury Car Service Center | Esotica Auto","Selected maintenance, diagnostics, inspection and spare-parts services for luxury and performance vehicles."],
+  "/bmw-service": ["BMW Service Center | Esotica Auto","Selected BMW maintenance, diagnostics, inspection and spare-parts services."],
+  "/mercedes-service": ["Mercedes-Benz Service Center | Esotica Auto","Selected Mercedes-Benz maintenance, diagnostics, inspection and spare-parts services."],
+  "/porsche-service": ["Porsche Service Center | Esotica Auto","Selected Porsche maintenance, diagnostics, inspection and spare-parts services."],
+  "/bentley-service": ["Bentley Service Center | Esotica Auto","Selected Bentley maintenance, diagnostics, inspection and spare-parts services."],
+  "/maserati-service": ["Maserati Service Center | Esotica Auto","Selected Maserati maintenance, diagnostics, inspection and spare-parts services."],
+  "/ferrari-service": ["Ferrari Service Center | Esotica Auto","Selected Ferrari maintenance, diagnostics, inspection and spare-parts services."],
+  "/lamborghini-service": ["Lamborghini Service Center | Esotica Auto","Selected Lamborghini maintenance, diagnostics, inspection and spare-parts services."],
+  "/aston-martin-service": ["Aston Martin Service Center | Esotica Auto","Selected Aston Martin maintenance, diagnostics, inspection and spare-parts services."],
+  "/mclaren-service": ["McLaren Service Center | Esotica Auto","Selected McLaren maintenance, diagnostics, inspection and spare-parts services."],
+  "/rolls-royce-service": ["Rolls-Royce Service Center | Esotica Auto","Selected Rolls-Royce maintenance, diagnostics, inspection and spare-parts services."],
+  "/corvette-service": ["Corvette Service Center | Esotica Auto","Selected Corvette maintenance, diagnostics, inspection and spare-parts services."]
+};
+function setMeta(selector,attribute,value){const element=document.querySelector(selector);if(element&&value)element.setAttribute(attribute,value)}
+function applyPageMetadata(lang){
+  const english=PAGE_EN_META[normalizedPath]||PAGE_EN_META["/"];
+  const title=lang==="en"?english[0]:originalMetadata.title,description=lang==="en"?english[1]:originalMetadata.description;
+  document.title=title;
+  setMeta('meta[name="description"]',"content",description);
+  setMeta('meta[property="og:title"]',"content",title);
+  setMeta('meta[property="og:description"]',"content",description);
+  setMeta('meta[name="twitter:title"]',"content",title);
+  setMeta('meta[name="twitter:description"]',"content",description);
+}
+function localizeInternalLinks(lang){
+  document.querySelectorAll('a[href^="/"]').forEach(anchor=>{
+    const current=anchor.getAttribute("href");if(!current||current.startsWith("//"))return;
+    let url;try{url=new URL(current,location.origin)}catch{return}
+    if(url.origin!==location.origin||/^\/(?:api|admin|site|insurance|brands)(?:\/|$)/.test(url.pathname))return;
+    let basePath=url.pathname.replace(/^\/en(?=\/|$)/,"")||"/";
+    if(lang==="en")url.pathname=basePath==="/"?"/en":`/en${basePath}`;
+    else url.pathname=basePath;
+    anchor.setAttribute("href",`${url.pathname}${url.search}${url.hash}`);
+  });
+}
 const ESOTICA_CONTACT_DEFAULTS={
   phone:"+20 111 044 4528",
   whatsapp:"201110444528",
@@ -226,6 +284,13 @@ $("#bookingForm")?.addEventListener("submit",e=>{
 $("#partsForm")?.addEventListener("submit",e=>{e.preventDefault();sendForm(e.currentTarget,"/api/parts",$("#partsMsg"))});
 $("#contactForm")?.addEventListener("submit",e=>{e.preventDefault();sendForm(e.currentTarget,"/api/contact",$("#contactMsg"))});
 
+let activeCMSSettings={};
+function applyManagedPageContent(settings,lang){
+  document.querySelectorAll("[data-cms-setting]").forEach(element=>{
+    const key=lang==="en"?(element.dataset.cmsSettingEn||""):element.dataset.cmsSetting;
+    const value=key?settings[key]:"";if(value)element.textContent=value;
+  });
+}
 async function loadSiteContent(){
   try{
     const r=await fetch("/api/site-content",{cache:"no-store"});if(!r.ok)return;
@@ -235,6 +300,8 @@ async function loadSiteContent(){
       const el=document.querySelector("#heroTitle"); if(el) el.textContent=settings.hero_title;
     }
     setText("#heroSubtitle",settings.hero_subtitle);
+    activeCMSSettings=settings;
+    applyManagedPageContent(settings,document.documentElement.lang||"en");
     const p=document.querySelector("#heroPrimary");if(p){
       if(settings.hero_primary_text)p.textContent=settings.hero_primary_text;
       if(settings.hero_primary_link)p.href=settings.hero_primary_link;
@@ -571,6 +638,29 @@ Object.assign(EN,{
   "Rolls-Royce — رولز رويس":"Rolls-Royce",
   "Corvette — كورفيت":"Corvette"
 });
+Object.assign(EN,{
+  "اختيار الفرع والخدمة":"Choose branch and service",
+  "اختيار التاريخ والوقت المفضل":"Choose preferred date and time",
+  "نوع الخدمة":"Service type",
+  "اختر نوع الخدمة":"Choose service type",
+  "صيانة دورية":"Scheduled maintenance",
+  "فحص وتشخيص أعطال":"Diagnostics and fault inspection",
+  "فحص شامل":"Comprehensive inspection",
+  "سمكرة ودهان":"Body and paint",
+  "قطع غيار":"Spare parts",
+  "ضمان أو تأمين":"Warranty or insurance",
+  "خدمة متنقلة":"Mobile service",
+  "خدمة أخرى":"Other service",
+  "الوقت المفضل":"Preferred time",
+  "اترك هذا الحقل فارغًا":"Leave this field empty",
+  "ماركات السيارات التي نخدمها":"Vehicle Brands We Service",
+  "صور من داخل مركز Esotica":"Photos from inside Esotica Auto",
+  "القائمة":"Menu"
+});
+Object.assign(EN,{
+  "الحماية من إساءة الاستخدام":"Protection Against Abuse",
+  "لحماية النماذج من الرسائل الآلية والتكرار، يعالج الموقع بيانات الطلب التقنية ويحتفظ مؤقتًا ببصمة أحادية الاتجاه غير قابلة للعكس لمدة لا تتجاوز 24 ساعة. لا يُخزن عنوان IP الخام ضمن نظام الحماية.":"To protect forms against automated messages and duplicate submissions, the website processes technical request data and temporarily keeps a non-reversible one-way fingerprint for no longer than 24 hours. The raw IP address is not stored by this protection system."
+});
 const AR=Object.fromEntries(Object.entries(EN).map(([ar,en])=>[en,ar]));
 const AR_PLACEHOLDERS={"اكتب الخدمة أو المشكلة باختصار":"Briefly describe the service or issue","7 أو 17 خانة":"7 or 17 characters","أدخل رقم الشاسيه (من 7 إلى 17 خانة)":"Enter 7 to 17 VIN characters"};
 function translatePage(lang){
@@ -593,6 +683,11 @@ function translatePage(lang){
       const found=Object.entries(AR_PLACEHOLDERS).find(([,en])=>en===current);if(found)el.placeholder=found[0];
     }
   });
+  document.querySelectorAll("[aria-label],[title]").forEach(element=>{
+    for(const attribute of ["aria-label","title"]){
+      const current=element.getAttribute(attribute),translated=current&&dict[current];if(translated)element.setAttribute(attribute,translated);
+    }
+  });
   const toggle=document.querySelector("#langToggle");
   if(toggle){toggle.textContent=lang==="en"?"AR":"EN";toggle.setAttribute("aria-label",lang==="en"?"عرض الموقع بالعربية":"View site in English");}
   if(typeof renderEvents==="function")renderEvents(publicEvents,lang);
@@ -600,10 +695,14 @@ function translatePage(lang){
   if(typeof applyContactDetails==="function")applyContactDetails(activeContactSettings);
   if(typeof updateHeroSoundButton==="function")updateHeroSoundButton();
   if(typeof renderLeadContext==="function")renderLeadContext();
+  applyManagedPageContent(activeCMSSettings,lang);
+  applyPageMetadata(lang);
+  localizeInternalLinks(lang);
   document.documentElement.classList.remove("language-pending");
   try{localStorage.setItem("esotica-language",lang)}catch{}
 }
 function preferredLanguage(){
+  if(isEnglishRoute)return "en";
   try{return localStorage.getItem("esotica-language")||"en"}catch{return "en"}
 }
 function initLanguage(){
@@ -615,7 +714,13 @@ function initLanguage(){
   if(!document.querySelector("#langToggle")){
     const button=document.createElement("button");button.id="langToggle";button.className="lang-toggle";button.type="button";
     document.querySelector(".nav")?.insertBefore(button,document.querySelector(".nav-cta"));
-    button.addEventListener("click",()=>translatePage(document.documentElement.lang==="en"?"ar":"en"));
+    button.addEventListener("click",()=>{
+      const target=document.documentElement.lang==="en"?"ar":"en";
+      try{localStorage.setItem("esotica-language",target)}catch{}
+      if(target==="en"&&!isEnglishRoute){location.assign(`${normalizedPath==="/"?"/en":`/en${normalizedPath}`}${location.search}${location.hash}`);return}
+      if(target==="ar"&&isEnglishRoute){location.assign(`${normalizedPath}${location.search}${location.hash}`);return}
+      translatePage(target);
+    });
   }
   translatePage(preferredLanguage());
 }
@@ -649,7 +754,8 @@ function applyContactDetails(settings={}){
     if(quick){
       const quickLinks=[["/warranty-insurance","الضمان والتأمين"],["/branches","فروعنا"],["/about","من نحن"],["/privacy","سياسة الخصوصية"]];
       for(const [href,label] of quickLinks){
-        if(!quick.querySelector(`a[href="${href}"]`))quick.insertAdjacentHTML("beforeend",`<a href="${href}">${label}</a>`);
+        const exists=[...quick.querySelectorAll("a[href]")].some(anchor=>{try{return (new URL(anchor.href,location.origin).pathname.replace(/^\/en(?=\/|$)/,"")||"/")===href}catch{return false}});
+        if(!exists)quick.insertAdjacentHTML("beforeend",`<a href="${href}">${isArabic()?label:(EN[label]||label)}</a>`);
       }
     }
     const initialCols=[...footer.querySelectorAll(".footer-col")];
@@ -728,6 +834,7 @@ function renderEvents(items,lang){
   const activeLang=lang||document.documentElement.lang||"en";
   if(!Array.isArray(items)||!items.length){
     grid.innerHTML=`<div class="empty-offers"><p class="eyebrow">ESOTICA EVENTS</p><h2>${activeLang==="ar"?"لا توجد أحداث منشورة حاليًا":"No events are currently published"}</h2><p>${activeLang==="ar"?"ستظهر هنا الخدمات المتنقلة والأحداث الموسمية فور الإعلان عنها.":"Mobile services and seasonal events will appear here as soon as they are announced."}</p><a class="btn btn-outline" href="/contact">${activeLang==="ar"?"تواصل معنا":"Contact Us"}</a></div>`;
+    localizeInternalLinks(activeLang);
     return;
   }
   grid.innerHTML=items.map(x=>{
@@ -755,6 +862,7 @@ function renderEvents(items,lang){
     </article>`;
   }).join("");
   activatePublicEventImageFallbacks(grid);
+  localizeInternalLinks(activeLang);
 }
 async function loadEvents(){
   const grid=document.querySelector("#eventsGrid");if(!grid)return;
@@ -829,6 +937,7 @@ function renderOffers(items,lang){
         <a class="btn btn-gold" href="${escHtml(trackedInternalLink(safePublicLink(x.button_link,"/booking"),"offer",title,x.id))}">${escHtml(button)}</a>
       </div>
     </article>`}).join("");
+  localizeInternalLinks(lang);
 }
 
 function initWarrantyTabs(){

@@ -1,15 +1,30 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <script>(function(){var l="en";try{l=localStorage.getItem("esotica-language")||"en"}catch(e){}if(l==="en"){var d=document.documentElement;d.lang="en";d.dir="ltr";d.classList.add("language-pending");setTimeout(function(){d.classList.remove("language-pending")},2500)}})();</script>
+  <script>(function(){var p=location.pathname,l="en";try{l=(p==="/en"||p.indexOf("/en/")===0)?"en":(localStorage.getItem("esotica-language")||"en")}catch(e){}if(l==="en"){var d=document.documentElement;d.lang="en";d.dir="ltr";d.classList.add("language-pending");setTimeout(function(){d.classList.remove("language-pending")},2500)}})();</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>تواصل مع Esotica Auto | مركز صيانة سيارات فاخرة</title>
   <meta name="description" content="تواصل مع Esotica Auto للاستفسار عن صيانة Range Rover وJaguar والسيارات الفاخرة أو الحجز أو قطع الغيار.">
   <link rel="canonical" href="https://esoticaegypt.com/contact">
+  <link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/contact">
+  <link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/contact">
+  <link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/contact">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Esotica Auto">
+  <meta property="og:title" content="تواصل مع Esotica Auto | مركز صيانة سيارات فاخرة">
+  <meta property="og:description" content="تواصل مع Esotica Auto للاستفسار عن صيانة Range Rover وJaguar والسيارات الفاخرة أو الحجز أو قطع الغيار.">
+  <meta property="og:url" content="https://esoticaegypt.com/contact">
+  <meta property="og:image" content="https://esoticaegypt.com/site/hero-video-poster.jpg">
+  <meta property="og:locale" content="ar_EG">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="تواصل مع Esotica Auto | مركز صيانة سيارات فاخرة">
+  <meta name="twitter:description" content="تواصل مع Esotica Auto للاستفسار عن صيانة Range Rover وJaguar والسيارات الفاخرة أو الحجز أو قطع الغيار.">
+  <meta name="twitter:image" content="https://esoticaegypt.com/site/hero-video-poster.jpg">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="icon" href="/favicon.svg?v=20260930-1">
-  <link rel="stylesheet" href="/styles.css?v=20261107-2">
+  <link rel="stylesheet" href="/styles.css?v=20261108-1">
 </head>
 <body>
 
@@ -29,10 +44,11 @@
   <a class="btn btn-gold nav-cta" href="/booking">احجز الآن</a>
 </header>
 <main>
-  <section class="inner-hero"><div class="inner-hero-content"><p class="eyebrow">CONTACT</p><h1>نحن هنا لخدمتك</h1><p>أرسل استفسارك، وسيقوم فريق خدمة العملاء بالتواصل معك في أقرب وقت.</p></div></section>
+  <section class="inner-hero"><div class="inner-hero-content"><p class="eyebrow">CONTACT</p><h1 data-cms-setting="contact_page_title" data-cms-setting-en="contact_page_title_en">نحن هنا لخدمتك</h1><p data-cms-setting="contact_page_intro" data-cms-setting-en="contact_page_intro_en">أرسل استفسارك، وسيقوم فريق خدمة العملاء بالتواصل معك في أقرب وقت.</p></div></section>
   <section class="section contact-wrap">
     <div class="copy"><p class="eyebrow">GET IN TOUCH</p><h2>كيف يمكننا مساعدتك؟</h2><p>شاركنا بيانات التواصل وتفاصيل استفسارك، وسيتولى الفريق المختص المتابعة معك.</p></div>
     <form class="form glass" id="contactForm">
+      <div class="form-trap" aria-hidden="true"><label>اترك هذا الحقل فارغًا<input name="website" tabindex="-1" autocomplete="off"></label></div>
       <div class="grid2"><label>الاسم<input name="name" required maxlength="80" autocomplete="name"></label><label>رقم الهاتف<input name="phone" type="tel" required maxlength="20" inputmode="tel" autocomplete="tel"></label></div>
       <label>الموضوع<input name="subject" required maxlength="120"></label>
       <label>الرسالة<textarea name="message" required rows="6" maxlength="900"></textarea></label>
@@ -73,5 +89,5 @@
     <a class="admin-link" href="/admin">إدارة الموقع</a>
   </div>
 </footer>
-<script src="/site.js?v=20261107-2" defer></script>
+<script src="/site.js?v=20261108-1" defer></script>
 </body></html>

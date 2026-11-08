@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Esotica Admin</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20261107-1"><link rel="stylesheet" href="/admin.css?v=20261016-1">
+<title>Esotica Admin</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20261108-1"><link rel="stylesheet" href="/admin.css?v=20261108-1">
 </head>
 <body class="admin-body">
   <header class="admin-top"><a class="brand admin-brand" href="/"><span class="brand-logo"><img src="/site/logo.webp?v=20260930-1" alt="Esotica Auto"></span></a><span class="admin-top-label">CONTROL CENTER</span><button id="logoutBtn" class="btn btn-outline hidden">تسجيل خروج</button></header>
@@ -21,6 +21,10 @@
 
     <section id="dashView" class="hidden">
       <div class="dash-head"><div><p class="eyebrow">DASHBOARD</p><h1>لوحة إدارة Esotica</h1><p id="summaryText"></p></div><button id="refreshBtn" class="btn btn-outline">تحديث</button></div>
+      <div id="leadAlertBar" class="lead-alert-bar" role="status" aria-live="polite">
+        <div class="lead-alert-copy"><span class="lead-alert-dot" aria-hidden="true"></span><div><strong id="leadAlertTitle">متابعة الطلبات الجديدة</strong><small id="leadAlertText">سيظهر هنا أي طلب جديد فور وصوله أثناء فتح لوحة الإدارة.</small></div></div>
+        <button id="enableBrowserAlerts" class="tool-btn" type="button">تفعيل تنبيهات المتصفح</button>
+      </div>
       <section class="traffic-panel" aria-labelledby="trafficTitle">
         <div class="traffic-head">
           <div><p class="eyebrow">LIVE WEBSITE TRAFFIC</p><h2 id="trafficTitle">زوار الموقع</h2></div>
@@ -44,14 +48,6 @@
           <div class="visitor-table" id="visitorList"></div>
         </div>
         <p class="traffic-note" id="trafficNote">يبدأ التسجيل من أول زيارة بعد تفعيل العداد، ولا يتم احتساب تحديث الصفحة كزائر جديد.</p>
-      </section>
-      <section class="reset-panel" aria-labelledby="resetTitle">
-        <div class="reset-panel-head"><div><p class="eyebrow">TEST DATA CONTROLS</p><h2 id="resetTitle">إعادة ضبط بيانات التجربة</h2></div><span>كل إجراء منفصل</span></div>
-        <div class="reset-grid">
-          <article><div><strong>طلبات التجربة</strong><p>يمسح الحجوزات، طلبات قطع الغيار ورسائل التواصل، ثم يعيد رقم الطلب من 1.</p></div><button id="resetRequestsBtn" class="tool-btn danger" type="button">مسح الطلبات وإعادة الترقيم</button></article>
-          <article><div><strong>إحصاءات الزوار</strong><p>يمسح الإحصاءات اليومية والشهرية والإجمالية، بدون المساس بطلبات العملاء.</p></div><button id="resetTrafficBtn" class="tool-btn danger" type="button">تصفير عداد الزوار</button></article>
-        </div>
-        <p id="resetMsg" class="form-msg" aria-live="polite"></p>
       </section>
       <div class="stats" id="stats"></div>
       <div class="tabs"><button class="active" data-tab="bookings">الحجوزات</button><button data-tab="parts">قطع الغيار</button><button data-tab="contacts">الرسائل</button><button data-tab="trash">المحذوفات</button><button data-tab="site">إدارة الموقع</button></div>
@@ -120,28 +116,35 @@
                 <div draggable="true" data-id="contact">☰ التواصل</div>
               </div>
             </div>
+            <div class="mini-panel">
+              <h3>محتوى الصفحات الأساسية</h3>
+              <p class="hint">هذه النصوص فقط قابلة للتعديل. بيانات الفروع والعناوين والمواعيد وروابط الخرائط محمية ولا تتغير من هنا.</p>
+              <label>عنوان صفحة الخدمات<input name="services_page_title" maxlength="160"></label>
+              <label>Services page title in English<input name="services_page_title_en" maxlength="160" dir="ltr"></label>
+              <label>مقدمة صفحة الخدمات<textarea name="services_page_intro" rows="3" maxlength="600"></textarea></label>
+              <label>Services page intro in English<textarea name="services_page_intro_en" rows="3" maxlength="600" dir="ltr"></textarea></label>
+              <label>عنوان صفحة من نحن<input name="about_page_title" maxlength="160"></label>
+              <label>About page title in English<input name="about_page_title_en" maxlength="160" dir="ltr"></label>
+              <label>مقدمة صفحة من نحن<textarea name="about_page_intro" rows="3" maxlength="600"></textarea></label>
+              <label>About page intro in English<textarea name="about_page_intro_en" rows="3" maxlength="600" dir="ltr"></textarea></label>
+              <label>عنوان صفحة الضمان والتأمين<input name="warranty_page_title" maxlength="160"></label>
+              <label>Warranty page title in English<input name="warranty_page_title_en" maxlength="160" dir="ltr"></label>
+              <label>مقدمة صفحة الضمان والتأمين<textarea name="warranty_page_intro" rows="3" maxlength="600"></textarea></label>
+              <label>Warranty page intro in English<textarea name="warranty_page_intro_en" rows="3" maxlength="600" dir="ltr"></textarea></label>
+              <label>عنوان صفحة التواصل<input name="contact_page_title" maxlength="160"></label>
+              <label>Contact page title in English<input name="contact_page_title_en" maxlength="160" dir="ltr"></label>
+              <label>مقدمة صفحة التواصل<textarea name="contact_page_intro" rows="3" maxlength="600"></textarea></label>
+              <label>Contact page intro in English<textarea name="contact_page_intro_en" rows="3" maxlength="600" dir="ltr"></textarea></label>
+            </div>
             <button class="btn btn-gold full" type="submit">حفظ تغييرات الموقع</button>
             <p id="siteMsg" class="form-msg"></p>
           </form>
 
           <div class="cms-stack">
-            <form id="logoUploadForm" class="cms-card form">
-              <h2>اللوجو</h2>
-              <p>ارفع لوجو جديد وسيتم استخدامه في الموقع.</p>
-              <input type="hidden" name="kind" value="logo">
-              <input type="file" name="file" accept="image/*" required>
-              <button class="btn btn-outline full" type="submit">رفع اللوجو</button>
-              <p class="form-msg" id="logoMsg"></p>
-            </form>
-
-            <form id="heroUploadForm" class="cms-card form">
-              <h2>صورة الخلفية الرئيسية</h2>
-              <p>يفضل صورة أفقية عالية الجودة، بحد أقصى 5MB.</p>
-              <input type="hidden" name="kind" value="hero">
-              <input type="file" name="file" accept="image/*" required>
-              <button class="btn btn-outline full" type="submit">رفع الخلفية</button>
-              <p class="form-msg" id="heroMsg"></p>
-            </form>
+            <div class="cms-card identity-lock">
+              <strong>الهوية البصرية محمية</strong>
+              <p>اللوجو وفيديو الصفحة الرئيسية مثبتان في النسخة المعتمدة ولا يمكن استبدالهما بالخطأ من لوحة الإدارة.</p>
+            </div>
 
             <form id="reviewForm" class="cms-card form">
               <h2>إضافة Review</h2>
@@ -258,5 +261,5 @@
 
     </section>
   </main>
-<script src="/admin.js?v=20261001-2" defer></script>
+<script src="/admin.js?v=20261108-1" defer></script>
 </body></html>

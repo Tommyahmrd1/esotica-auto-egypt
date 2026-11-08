@@ -1,5 +1,6 @@
 const $=s=>document.querySelector(s);
 let state={tab:"bookings",data:null,traffic:null};
+let leadAlertAfter=Date.now()-1000;
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 function showLogin(){ $("#loginView").classList.remove("hidden");$("#dashView").classList.add("hidden");$("#logoutBtn").classList.add("hidden") }
 function showDash(){ $("#loginView").classList.add("hidden");$("#dashView").classList.remove("hidden");$("#logoutBtn").classList.remove("hidden") }
@@ -46,20 +47,35 @@ function render(){
   ["إجمالي الطلبات",all.length],["جديدة",fresh],["حجوزات",d.bookings.length],["قطع غيار",d.parts.length]
  ].map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join("");
  renderTraffic(d.traffic||{});
+ renderLeadSummary();
  renderTable();
+}
+function newLeadCount(){
+ const d=state.data||{};
+ return [...(d.bookings||[]),...(d.parts||[]),...(d.contacts||[])].filter(item=>item.status==="new").length;
+}
+function renderLeadSummary(latest=[]){
+ const count=newLeadCount(),bar=$("#leadAlertBar"),title=$("#leadAlertTitle"),text=$("#leadAlertText");
+ if(!bar||!title||!text)return;
+ bar.classList.toggle("has-new",count>0);
+ title.textContent=count?`${adminNumber.format(count)} طلب جديد يحتاج متابعة`:"لا توجد طلبات جديدة حاليًا";
+ text.textContent=latest.length?`وصل الآن: ${latest.map(item=>item.name).join("، ")}`:"يتم فحص الحجوزات وقطع الغيار والرسائل تلقائيًا كل 30 ثانية.";
+ document.title=count?`(${count}) Esotica Admin`:"Esotica Admin";
 }
 function statusSelect(type,id,value){
  return `<select class="status" data-type="${type}" data-id="${id}">
  ${["new","contacted","confirmed","completed","cancelled"].map(x=>`<option value="${x}" ${x===value?"selected":""}>${({new:"جديد",contacted:"تم التواصل",confirmed:"مؤكد",completed:"مكتمل",cancelled:"ملغي"})[x]}</option>`).join("")}
  </select>`;
 }
+const BOOKING_SERVICE_NAMES={maintenance:"صيانة دورية",diagnostics:"فحص وتشخيص أعطال",inspection:"فحص شامل","body-paint":"سمكرة ودهان","spare-parts":"قطع غيار","warranty-insurance":"ضمان أو تأمين","mobile-service":"خدمة متنقلة",other:"خدمة أخرى"};
+function bookingServiceName(value){return BOOKING_SERVICE_NAMES[value]||value||"طلب قديم — غير محدد"}
 function renderTable(){
  const t=state.tab, rows=state.data?.[t]||[];
  if(!rows.length){$("#tableWrap").innerHTML='<div class="empty">لا توجد بيانات حتى الآن.</div>';return}
  let head="", body="";
  if(t==="bookings"){
-  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>الفرع</th><th>الموعد</th><th>التفاصيل</th><th>الحالة</th>";
-  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td>${esc(x.branch)}</td><td>${esc(x.preferred_date)}</td><td>${esc(x.details)}</td><td>${statusSelect("bookings",x.id,x.status)}</td></tr>`).join("");
+  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>الفرع</th><th>الخدمة</th><th>الموعد</th><th>التفاصيل</th><th>الحالة</th>";
+  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td>${esc(x.branch)}</td><td>${esc(bookingServiceName(x.service_type))}</td><td>${esc(x.preferred_date)}<br><small dir="ltr">${esc(x.preferred_time||"—")}</small></td><td>${esc(x.details)}</td><td>${statusSelect("bookings",x.id,x.status)}</td></tr>`).join("");
  }else if(t==="parts"){
   head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>VIN</th><th>القطعة</th><th>الحالة</th>";
   body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td dir="ltr">${esc(x.vin)}</td><td>${esc(x.details)}<br><small>${esc(x.part_code||"")}</small></td><td>${statusSelect("parts",x.id,x.status)}</td></tr>`).join("");
@@ -89,24 +105,28 @@ $("#loginForm").addEventListener("submit",async e=>{
 });
 $("#logoutBtn").addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});showLogin()});
 $("#refreshBtn").addEventListener("click",load);
-async function resetAdminData(scope){
- const requests=scope==="requests";
- const warning=requests
-  ?"سيتم مسح كل الحجوزات وطلبات قطع الغيار والرسائل نهائيًا، وسيبدأ ترقيم الطلبات من 1. هل أنت متأكد؟"
-  :"سيتم مسح كل إحصاءات الزوار اليومية والشهرية والإجمالية. هل أنت متأكد؟";
- if(!confirm(warning))return;
- const button=$(requests?"#resetRequestsBtn":"#resetTrafficBtn"),message=$("#resetMsg");
- button.disabled=true;message.textContent="جاري إعادة الضبط...";message.className="form-msg";
+async function pollLeadAlerts(){
+ if($("#dashView").classList.contains("hidden"))return;
  try{
-  const response=await fetch("/api/admin/reset",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({scope,confirm:requests?"RESET_REQUESTS":"RESET_TRAFFIC"})});
-  const result=await response.json().catch(()=>({}));
-  message.textContent=response.ok?(result.message||"تمت إعادة الضبط."):(result.error||"تعذرت إعادة الضبط.");message.className=`form-msg ${response.ok?"ok":"err"}`;
-  if(response.ok)await load();
- }catch{message.textContent="تعذر الاتصال بالخادم.";message.className="form-msg err"}
- finally{button.disabled=false}
+  const response=await fetch(`/api/admin/lead-alerts?after=${leadAlertAfter}`,{cache:"no-store"});if(!response.ok)return;
+  const result=await response.json();leadAlertAfter=Number(result.now)||Date.now();
+  const alerts=result.alerts||[];if(!alerts.length)return;
+  if("Notification" in window&&Notification.permission==="granted"){
+   const names=alerts.slice(0,3).map(item=>item.name).join("، ");
+   new Notification("طلب جديد من موقع Esotica",{body:names||"افتح لوحة الإدارة لمراجعة الطلب."});
+  }
+  await load();renderLeadSummary(alerts);
+ }catch{}
 }
-$("#resetRequestsBtn")?.addEventListener("click",()=>resetAdminData("requests"));
-$("#resetTrafficBtn")?.addEventListener("click",()=>resetAdminData("traffic"));
+$("#enableBrowserAlerts")?.addEventListener("click",async()=>{
+ const button=$("#enableBrowserAlerts");
+ if(!("Notification" in window)){button.textContent="المتصفح لا يدعم التنبيهات";button.disabled=true;return}
+ const permission=await Notification.requestPermission();
+ button.textContent=permission==="granted"?"التنبيهات مفعلة":"لم يتم السماح بالتنبيهات";
+ button.disabled=permission==="granted";
+});
+if("Notification" in window&&Notification.permission==="granted"){$("#enableBrowserAlerts").textContent="التنبيهات مفعلة";$("#enableBrowserAlerts").disabled=true}
+window.setInterval(pollLeadAlerts,30000);
 async function refreshTraffic(){
  if($("#dashView").classList.contains("hidden"))return;
  try{
@@ -124,6 +144,7 @@ document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",
 load();
 
 let cmsData={settings:{},reviews:[]};
+const CMS_TEXT_FIELDS=["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url","services_page_title","services_page_title_en","services_page_intro","services_page_intro_en","about_page_title","about_page_title_en","about_page_intro","about_page_intro_en","warranty_page_title","warranty_page_title_en","warranty_page_intro","warranty_page_intro_en","contact_page_title","contact_page_title_en","contact_page_intro","contact_page_intro_en"];
 
 async function loadCMS(){
   const r=await fetch("/api/admin/site-settings",{cache:"no-store"});
@@ -131,7 +152,7 @@ async function loadCMS(){
   cmsData=await r.json();
   const f=$("#siteSettingsForm"),s=cmsData.settings||{};
   if(f){
-    for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url"]){
+    for(const name of CMS_TEXT_FIELDS){
       if(f.elements[name] && s[name]!=null)f.elements[name].value=s[name];
     }
     for(const name of ["show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text"]){
@@ -168,22 +189,12 @@ async function reviewAction(id,action){
 $("#siteSettingsForm")?.addEventListener("submit",async e=>{
   e.preventDefault();const f=e.currentTarget;
   const payload={};
-  for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url"])payload[name]=f.elements[name].value;
+  for(const name of CMS_TEXT_FIELDS)payload[name]=f.elements[name].value;
   for(const name of ["show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text"])payload[name]=String(f.elements[name].checked);
   payload.section_order=[...$("#sectionSorter").children].map(x=>x.dataset.id).join(",");
   const r=await fetch("/api/admin/site-settings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
   const m=$("#siteMsg");m.textContent=r.ok?"تم حفظ تغييرات الموقع.":"تعذر الحفظ.";m.className="form-msg "+(r.ok?"ok":"err");
 });
-async function uploadMedia(form,msgEl,settingKey){
-  const r=await fetch("/api/admin/media",{method:"POST",body:new FormData(form)});
-  const j=await r.json().catch(()=>({}));
-  if(!r.ok){msgEl.textContent=j.error||"تعذر رفع الصورة.";msgEl.className="form-msg err";return}
-  const rr=await fetch("/api/admin/site-settings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({[settingKey]:j.id})});
-  msgEl.textContent=rr.ok?"تم رفع الصورة وتطبيقها على الموقع.":"تم الرفع لكن تعذر تطبيق الصورة.";msgEl.className="form-msg "+(rr.ok?"ok":"err");
-  if(rr.ok)await loadCMS();
-}
-$("#logoUploadForm")?.addEventListener("submit",e=>{e.preventDefault();uploadMedia(e.currentTarget,$("#logoMsg"),"logo_media_id")});
-$("#heroUploadForm")?.addEventListener("submit",e=>{e.preventDefault();uploadMedia(e.currentTarget,$("#heroMsg"),"hero_media_id")});
 $("#reviewForm")?.addEventListener("submit",async e=>{
   e.preventDefault();const f=e.currentTarget,d=Object.fromEntries(new FormData(f).entries());
   const r=await fetch("/api/admin/reviews",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(d)});
@@ -243,8 +254,8 @@ function renderTable(){
  if(!rows.length){$("#tableWrap").innerHTML='<div class="empty">لا توجد نتائج مطابقة.</div>';return}
  let head="", body="";
  if(t==="bookings"){
-  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>الفرع</th><th>الموعد</th><th>التفاصيل</th><th>مصدر الطلب</th><th>الحالة</th><th></th>";
-  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td>${esc(x.branch)}</td><td>${esc(x.preferred_date)}</td><td>${esc(x.details)}</td><td>${adminLeadSourceBadge(x)}</td><td>${statusSelect("bookings",x.id,x.status)}</td><td>${adminDetailsButton("bookings",x.id)}</td></tr>`).join("");
+  head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>الفرع</th><th>الخدمة</th><th>الموعد</th><th>التفاصيل</th><th>مصدر الطلب</th><th>الحالة</th><th></th>";
+  body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td>${esc(x.branch)}</td><td>${esc(bookingServiceName(x.service_type))}</td><td>${esc(x.preferred_date)}<br><small dir="ltr">${esc(x.preferred_time||"—")}</small></td><td>${esc(x.details)}</td><td>${adminLeadSourceBadge(x)}</td><td>${statusSelect("bookings",x.id,x.status)}</td><td>${adminDetailsButton("bookings",x.id)}</td></tr>`).join("");
  }else if(t==="parts"){
   head="<th>#</th><th>العميل</th><th>الهاتف</th><th>السيارة</th><th>VIN</th><th>القطعة</th><th>مصدر الطلب</th><th>الحالة</th><th></th>";
   body=rows.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}<br><small>${date(x.created_at)}</small></td><td dir="ltr">${esc(x.phone)}</td><td>${esc(x.car_model)} / ${esc(x.year)}</td><td dir="ltr">${esc(x.vin)}</td><td>${esc(x.details)}<br><small>${esc(x.part_code||"")}</small></td><td>${adminLeadSourceBadge(x)}</td><td>${statusSelect("parts",x.id,x.status)}</td><td>${adminDetailsButton("parts",x.id)}</td></tr>`).join("");
@@ -262,20 +273,20 @@ function renderTable(){
 
 function openAdminDetails(type,id){
   const row=(state.data?.[type]||[]).find(x=>Number(x.id)===Number(id));if(!row)return;
-  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة / الموديل",year:"السنة",branch:"الفرع",preferred_date:"الموعد المفضل",details:"التفاصيل",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",status:"الحالة"};
+  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة / الموديل",year:"السنة",branch:"الفرع",service_type:"نوع الخدمة",preferred_date:"التاريخ المفضل",preferred_time:"الوقت المفضل",details:"التفاصيل",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",status:"الحالة"};
   const body=$("#adminModalBody");
-  body.innerHTML=Object.entries(row).filter(([k])=>labels[k]).map(([k,v])=>`<div class="detail-row"><span>${labels[k]}</span><strong ${["phone","vin"].includes(k)?'dir="ltr"':""}>${esc(k==="created_at"?date(v):v)}</strong></div>`).join("");
+  body.innerHTML=Object.entries(row).filter(([k])=>labels[k]).map(([k,v])=>`<div class="detail-row"><span>${labels[k]}</span><strong ${["phone","vin"].includes(k)?'dir="ltr"':""}>${esc(k==="created_at"?date(v):k==="service_type"?bookingServiceName(v):v)}</strong></div>`).join("");
   $("#adminModal").classList.remove("hidden");
 }
 
 function exportFilteredCSV(){
   const rows=filteredAdminRows();if(!rows.length){alert("لا توجد بيانات للتصدير.");return}
-  const keys=state.tab==="bookings"?["id","created_at","name","phone","car_model","year","branch","preferred_date","details","source_summary","source_id","source_page","status"]:
+  const keys=state.tab==="bookings"?["id","created_at","name","phone","car_model","year","branch","service_type","preferred_date","preferred_time","details","source_summary","source_id","source_page","status"]:
     state.tab==="parts"?["id","created_at","name","phone","car_model","year","vin","part_code","quantity","details","source_summary","source_id","source_page","status"]:
     ["id","created_at","name","phone","subject","message","source_summary","source_id","source_page","status"];
-  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة",year:"السنة",branch:"الفرع",preferred_date:"الموعد",details:"التفاصيل",status:"الحالة",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",source_summary:"مصدر الطلب",source_id:"رقم العرض / الحدث",source_page:"الصفحة الأصلية"};
+  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة",year:"السنة",branch:"الفرع",service_type:"نوع الخدمة",preferred_date:"التاريخ",preferred_time:"الوقت",details:"التفاصيل",status:"الحالة",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",source_summary:"مصدر الطلب",source_id:"رقم العرض / الحدث",source_page:"الصفحة الأصلية"};
   const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
-  const csv=[keys.map(k=>q(labels[k]||k)).join(","),...rows.map(r=>keys.map(k=>q(k==="created_at"?date(r[k]):k==="source_summary"?adminLeadSourceText(r):r[k])).join(","))].join("\r\n");
+  const csv=[keys.map(k=>q(labels[k]||k)).join(","),...rows.map(r=>keys.map(k=>q(k==="created_at"?date(r[k]):k==="source_summary"?adminLeadSourceText(r):k==="service_type"?bookingServiceName(r[k]):r[k])).join(","))].join("\r\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`esotica-${state.tab}-${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
@@ -322,7 +333,11 @@ renderTable=function(){
     </tr>`).join("")
   }</tbody></table>`;
   document.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>trashAction(b.dataset.restore,"restore"));
-  document.querySelectorAll("[data-permanent]").forEach(b=>b.onclick=()=>{if(confirm("حذف نهائي؟ لن يمكن استرجاع الطلب بعد ذلك."))trashAction(b.dataset.permanent,"permanent")});
+  document.querySelectorAll("[data-permanent]").forEach(button=>button.onclick=()=>{
+    const [,id]=button.dataset.permanent.split(":"),phrase=`DELETE ${id}`;
+    const typed=prompt(`الحذف النهائي لا يمكن استرجاعه. للتأكيد اكتب: ${phrase}`);
+    if(typed===phrase)trashAction(button.dataset.permanent,"permanent",phrase);
+  });
 };
 
 async function loadTrash(){
@@ -332,18 +347,18 @@ async function loadTrash(){
 }
 document.querySelector('[data-tab="trash"]')?.addEventListener("click",loadTrash);
 
-async function trashAction(key,action){
+async function trashAction(key,action,confirmText=""){
   const [type,id]=key.split(":");
-  const r=await fetch(`/api/admin/request/${type}/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action})});
+  const r=await fetch(`/api/admin/request/${type}/${id}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action,confirm:confirmText})});
   if(!r.ok){alert("تعذر تنفيذ الإجراء.");return}
   await loadTrash();
 }
 
 openAdminDetails=function(type,id){
   const row=(state.data?.[type]||[]).find(x=>Number(x.id)===Number(id));if(!row)return;
-  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة / الموديل",year:"السنة",branch:"الفرع",preferred_date:"الموعد المفضل",details:"التفاصيل",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",status:"الحالة",source_type:"نوع المصدر",source_label:"اسم العرض / الحدث / الخدمة",source_id:"رقم العرض / الحدث",source_page:"الصفحة الأصلية"};
+  const labels={id:"رقم الطلب",created_at:"تاريخ الإنشاء",name:"اسم العميل",phone:"الهاتف",car_model:"السيارة / الموديل",year:"السنة",branch:"الفرع",service_type:"نوع الخدمة",preferred_date:"التاريخ المفضل",preferred_time:"الوقت المفضل",details:"التفاصيل",vin:"VIN",part_code:"كود القطعة",quantity:"الكمية",subject:"الموضوع",message:"الرسالة",status:"الحالة",source_type:"نوع المصدر",source_label:"اسم العرض / الحدث / الخدمة",source_id:"رقم العرض / الحدث",source_page:"الصفحة الأصلية"};
   const body=$("#adminModalBody");
-  body.innerHTML=`<div class="request-source-panel"><small>مصدر الطلب</small><strong>${esc(adminLeadSourceText(row))}</strong>${row.source_page?`<span dir="ltr">${esc(row.source_page)}</span>`:""}</div>`+Object.entries(row).filter(([k])=>labels[k]).map(([k,v])=>`<div class="detail-row"><span>${labels[k]}</span><strong ${["phone","vin","source_page"].includes(k)?'dir="ltr"':""}>${esc(k==="created_at"?date(v):v)}</strong></div>`).join("")+
+  body.innerHTML=`<div class="request-source-panel"><small>مصدر الطلب</small><strong>${esc(adminLeadSourceText(row))}</strong>${row.source_page?`<span dir="ltr">${esc(row.source_page)}</span>`:""}</div>`+Object.entries(row).filter(([k])=>labels[k]).map(([k,v])=>`<div class="detail-row"><span>${labels[k]}</span><strong ${["phone","vin","source_page"].includes(k)?'dir="ltr"':""}>${esc(k==="created_at"?date(v):k==="service_type"?bookingServiceName(v):v)}</strong></div>`).join("")+
     `<div class="request-note-box"><label>ملاحظة إدارية<textarea id="requestAdminNote" rows="4" maxlength="3000">${esc(row.admin_note||"")}</textarea></label><p id="requestNoteMsg" class="form-msg"></p></div>
      <div class="modal-actions"><button id="saveRequestNote" class="tool-btn tool-primary" type="button">حفظ الملاحظة</button><button id="deleteRequest" class="tool-btn danger" type="button">نقل للمحذوفات</button></div>`;
   $("#adminModal").classList.remove("hidden");
@@ -368,7 +383,7 @@ loadCMS=async function(){
   cmsData=await r.json();
   const f=$("#siteSettingsForm"),s=cmsData.settings||{};
   if(f){
-    for(const name of ["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url"]){
+    for(const name of CMS_TEXT_FIELDS){
       if(f.elements[name]&&s[name]!=null)f.elements[name].value=s[name];
     }
     for(const name of ["show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text"]){

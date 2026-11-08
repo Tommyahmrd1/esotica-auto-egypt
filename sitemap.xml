@@ -1,30 +1,327 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://esoticaegypt.com/</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://esoticaegypt.com/services</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/range-rover-land-rover-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/jaguar-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/luxury-car-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/bmw-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/mercedes-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/porsche-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/bentley-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/maserati-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/ferrari-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/lamborghini-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/aston-martin-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/mclaren-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/rolls-royce-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/corvette-service</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://esoticaegypt.com/booking</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://esoticaegypt.com/parts</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/branches</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/branches/fifth-settlement</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/branches/third-settlement</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/branches/sheikh-zayed</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://esoticaegypt.com/offers</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://esoticaegypt.com/warranty-insurance</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://esoticaegypt.com/about</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://esoticaegypt.com/contact</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://esoticaegypt.com/privacy</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://esoticaegypt.com/</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/about</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/about"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/about</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/about"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/aston-martin-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/aston-martin-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/aston-martin-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/aston-martin-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/aston-martin-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/aston-martin-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/aston-martin-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/aston-martin-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/bentley-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/bentley-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/bentley-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/bentley-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/bentley-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/bentley-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/bentley-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/bentley-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/bmw-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/bmw-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/bmw-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/bmw-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/bmw-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/bmw-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/bmw-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/bmw-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/booking</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/booking"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/booking"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/booking"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/booking</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/booking"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/booking"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/booking"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/branches</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/branches"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/branches"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/branches"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/branches</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/branches"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/branches"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/branches"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/branches/fifth-settlement</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/branches/fifth-settlement"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/branches/fifth-settlement"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/branches/fifth-settlement"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/branches/fifth-settlement</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/branches/fifth-settlement"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/branches/fifth-settlement"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/branches/fifth-settlement"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/branches/sheikh-zayed</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/branches/sheikh-zayed"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/branches/sheikh-zayed"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/branches/sheikh-zayed"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/branches/sheikh-zayed</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/branches/sheikh-zayed"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/branches/sheikh-zayed"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/branches/sheikh-zayed"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/branches/third-settlement</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/branches/third-settlement"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/branches/third-settlement"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/branches/third-settlement"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/branches/third-settlement</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/branches/third-settlement"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/branches/third-settlement"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/branches/third-settlement"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/contact</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/contact"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/contact</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/contact"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/corvette-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/corvette-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/corvette-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/corvette-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/corvette-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/corvette-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/corvette-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/corvette-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/ferrari-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/ferrari-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/ferrari-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/ferrari-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/ferrari-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/ferrari-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/ferrari-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/ferrari-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/jaguar-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/jaguar-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/jaguar-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/jaguar-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/jaguar-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/jaguar-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/jaguar-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/jaguar-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/lamborghini-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/lamborghini-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/lamborghini-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/lamborghini-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/lamborghini-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/lamborghini-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/lamborghini-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/lamborghini-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/luxury-car-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/luxury-car-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/luxury-car-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/luxury-car-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/luxury-car-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/luxury-car-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/luxury-car-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/luxury-car-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/maserati-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/maserati-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/maserati-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/maserati-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/maserati-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/maserati-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/maserati-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/maserati-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/mclaren-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/mclaren-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/mclaren-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/mclaren-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/mclaren-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/mclaren-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/mclaren-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/mclaren-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/mercedes-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/mercedes-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/mercedes-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/mercedes-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/mercedes-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/mercedes-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/mercedes-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/mercedes-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/offers</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/offers"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/offers"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/offers"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/offers</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/offers"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/offers"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/offers"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/parts</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/parts"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/parts"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/parts"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/parts</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/parts"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/parts"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/parts"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/porsche-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/porsche-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/porsche-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/porsche-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/porsche-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/porsche-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/porsche-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/porsche-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/privacy"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/privacy"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/range-rover-land-rover-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/range-rover-land-rover-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/range-rover-land-rover-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/range-rover-land-rover-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/range-rover-land-rover-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/range-rover-land-rover-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/range-rover-land-rover-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/range-rover-land-rover-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/rolls-royce-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/rolls-royce-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/rolls-royce-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/rolls-royce-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/rolls-royce-service</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/rolls-royce-service"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/rolls-royce-service"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/rolls-royce-service"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/services</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/services"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/services"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/services"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/services</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/services"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/services"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/services"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/warranty-insurance</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/warranty-insurance"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/warranty-insurance"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/warranty-insurance"/>
+  </url>
+  <url>
+    <loc>https://esoticaegypt.com/en/warranty-insurance</loc>
+    <xhtml:link rel="alternate" hreflang="ar-EG" href="https://esoticaegypt.com/warranty-insurance"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://esoticaegypt.com/en/warranty-insurance"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://esoticaegypt.com/warranty-insurance"/>
+  </url>
 </urlset>
