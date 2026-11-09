@@ -63,13 +63,16 @@ jobs:
           sitemap_headers="$(curl -fsSI --retry 6 --retry-delay 3 --retry-all-errors "$BASE/sitemap.xml")"
           echo "$sitemap_headers"
           echo "$sitemap_headers" | grep -qi '^content-type: application/xml'
-          curl -fsS --retry 6 --retry-delay 3 --retry-all-errors "$BASE/sitemap.xml" | grep -q '<urlset'
-          curl -fsS --retry 6 --retry-delay 3 --retry-all-errors "$BASE/robots.txt" | grep -q 'Sitemap: https://esoticaegypt.com/sitemap.xml'
+          sitemap_body="$(curl -fsS --retry 6 --retry-delay 3 --retry-all-errors "$BASE/sitemap.xml")"
+          grep -q '<urlset' <<< "$sitemap_body"
+          robots_body="$(curl -fsS --retry 6 --retry-delay 3 --retry-all-errors "$BASE/robots.txt")"
+          grep -q 'Sitemap: https://esoticaegypt.com/sitemap.xml' <<< "$robots_body"
           echo "Sitemap endpoint OK"
 
           for legacy in "https://www.esoticaegypt.com/" "https://esotica-auto-egypt.pages.dev/"; do
             code="$(curl -sS -o /dev/null -w "%{http_code}" "$legacy")"
-            location="$(curl -sSI "$legacy" | awk 'BEGIN{IGNORECASE=1} /^location:/{gsub("\r",""); print $2; exit}')"
+            legacy_headers="$(curl -sSI "$legacy")"
+            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{gsub("\r",""); print $2; exit}' <<< "$legacy_headers")"
             echo "$legacy -> $code -> $location"
             case "$code" in 301|302|307|308) ;; *) exit 1 ;; esac
             echo "$location" | grep -q '^https://esoticaegypt.com/'
