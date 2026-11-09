@@ -135,8 +135,10 @@ async function initDB(env){
  hits INTEGER NOT NULL DEFAULT 0)`,
 `CREATE TABLE IF NOT EXISTS form_submission_fingerprints (
  fingerprint TEXT PRIMARY KEY,
- created_at INTEGER NOT NULL)`,
+ created_at INTEGER NOT NULL,
+ claim_id TEXT NOT NULL DEFAULT '')`,
 `CREATE INDEX IF NOT EXISTS idx_form_submission_created ON form_submission_fingerprints(created_at)`,
+`CREATE INDEX IF NOT EXISTS idx_form_rate_window ON form_rate_limits(window_started)`,
 `CREATE TABLE IF NOT EXISTS site_settings (
  key TEXT PRIMARY KEY,
  value TEXT NOT NULL,
@@ -233,6 +235,7 @@ async function initDB(env){
     }
   }
   await ensureColumns(env,"bookings",[["service_type","TEXT NOT NULL DEFAULT ''"],["preferred_time","TEXT NOT NULL DEFAULT ''"]]);
+  await ensureColumns(env,"form_submission_fingerprints",[["claim_id","TEXT NOT NULL DEFAULT ''"]]);
   await ensureColumns(env,"offers",[["title_en","TEXT NOT NULL DEFAULT ''"],["description_en","TEXT NOT NULL DEFAULT ''"],["button_text_en","TEXT NOT NULL DEFAULT 'Book Now'"]]);
   await env.DB.prepare(`INSERT OR IGNORE INTO offers(created_at,title,title_en,description,description_en,image_media_id,start_date,end_date,button_text,button_text_en,button_link,visible)
     SELECT ?,?,?,?,?,?,'','','احجز واستفد بالعرض','Book & Claim Offer','/booking',1
@@ -268,21 +271,29 @@ async function guardPublicForm(req,env,type,data,signature){
  const now=Date.now(),windowMs=30*60*1000,limit=8;
  const rawClient=req.headers.get("cf-connecting-ip")||`${req.headers.get("user-agent")||"unknown"}|${cookieMap(req.headers.get("cookie")).esotica_visitor||""}`;
  const rateKey=`${type}:${await sha256(rawClient)}`;
- const current=await env.DB.prepare("SELECT window_started,hits FROM form_rate_limits WHERE rate_key=?").bind(rateKey).first();
- if(current&&now-Number(current.window_started)<windowMs&&Number(current.hits)>=limit)return {limited:true};
- if(!current||now-Number(current.window_started)>=windowMs){
-   await env.DB.prepare("INSERT INTO form_rate_limits(rate_key,window_started,hits) VALUES(?,?,1) ON CONFLICT(rate_key) DO UPDATE SET window_started=excluded.window_started,hits=1").bind(rateKey,now).run();
- }else{
-   await env.DB.prepare("UPDATE form_rate_limits SET hits=hits+1 WHERE rate_key=?").bind(rateKey).run();
- }
- const fingerprint=await sha256(`${type}|${signature}`),duplicate=await env.DB.prepare("SELECT created_at FROM form_submission_fingerprints WHERE fingerprint=?").bind(fingerprint).first();
- if(duplicate&&now-Number(duplicate.created_at)<2*60*1000)return {duplicate:true};
- await env.DB.batch([
-   env.DB.prepare("INSERT INTO form_submission_fingerprints(fingerprint,created_at) VALUES(?,?) ON CONFLICT(fingerprint) DO UPDATE SET created_at=excluded.created_at").bind(fingerprint,now),
+ const quota=await env.DB.prepare(`INSERT INTO form_rate_limits(rate_key,window_started,hits) VALUES(?,?,1)
+   ON CONFLICT(rate_key) DO UPDATE SET
+     window_started=CASE WHEN window_started<=? THEN excluded.window_started ELSE window_started END,
+     hits=CASE WHEN window_started<=? THEN 1 ELSE hits+1 END
+   WHERE window_started<=? OR hits<? RETURNING hits`).bind(rateKey,now,now-windowMs,now-windowMs,now-windowMs,limit).first();
+ if(!quota)return {limited:true};
+ return {fingerprint:await sha256(`${type}|${signature}`)};
+}
+async function savePublicRequest(env,guard,insertSQL,values){
+ if(guard.silent)return null;
+ const now=Date.now(),claimId=crypto.randomUUID();
+ // Claim the fingerprint and save the lead in one transaction. A failed insert
+ // rolls the claim back, so a customer can safely retry after a server error.
+ const results=await env.DB.batch([
+   env.DB.prepare(`INSERT INTO form_submission_fingerprints(fingerprint,created_at,claim_id) VALUES(?,?,?)
+     ON CONFLICT(fingerprint) DO UPDATE SET created_at=excluded.created_at,claim_id=excluded.claim_id
+     WHERE created_at<=?`).bind(guard.fingerprint,now,claimId,now-2*60*1000),
+   env.DB.prepare(`${insertSQL} SELECT ${values.map(()=>"?").join(",")} WHERE EXISTS
+     (SELECT 1 FROM form_submission_fingerprints WHERE fingerprint=? AND claim_id=?)`).bind(...values,guard.fingerprint,claimId),
    env.DB.prepare("DELETE FROM form_submission_fingerprints WHERE created_at<?").bind(now-24*60*60*1000),
    env.DB.prepare("DELETE FROM form_rate_limits WHERE window_started<?").bind(now-24*60*60*1000)
  ]);
- return {};
+ return Number(results[1].meta?.changes)>0?Number(results[1].meta.last_row_id):null;
 }
 function cairoDateParts(){
  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
@@ -290,7 +301,7 @@ function cairoDateParts(){
  return {date:`${get("year")}-${get("month")}-${get("day")}`,hour:Number(get("hour")),minute:Number(get("minute"))};
 }
 function validateBookingDate(v){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return "اختار تاريخ حجز صحيح.";
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||Number.isNaN(Date.parse(`${v}T00:00:00Z`))||new Date(`${v}T00:00:00Z`).toISOString().slice(0,10)!==v)return "اختار تاريخ حجز صحيح.";
  const now=cairoDateParts();
  if(v<now.date)return "لا يمكن اختيار تاريخ قديم. اختار تاريخ من اليوم أو بعده.";
  if(v===now.date && now.hour>=17)return "انتهى وقت حجز نفس اليوم. اختار موعدًا من بكرة أو بعده.";
@@ -411,8 +422,8 @@ async function handleAPI(req,env,url){
    if(!name||!validPhone(phone)||!carModel||!validYear(year)||!branch||!BOOKING_SERVICE_TYPES.has(serviceType)||!preferredDate||!validTime(preferredTime))return bad("راجع البيانات المطلوبة ونوع الخدمة والموعد ورقم الهاتف وسنة الصنع.");
    const dateError=validateBookingDate(preferredDate);if(dateError)return bad(dateError);
    const guard=await guardPublicForm(req,env,"booking",d,`${phone}|${carModel}|${branch}|${serviceType}|${preferredDate}|${preferredTime}`);
-   if(guard.limited)return bad("تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة.",429);
-   if(!guard.silent&&!guard.duplicate)await env.DB.prepare("INSERT INTO bookings(created_at,name,phone,car_model,year,branch,service_type,preferred_date,preferred_time,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,carModel,year,branch,serviceType,preferredDate,preferredTime,details,source.type,source.label,source.id,source.page,"new").run();
+   if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
+   await savePublicRequest(env,guard,"INSERT INTO bookings(created_at,name,phone,car_model,year,branch,service_type,preferred_date,preferred_time,details,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,carModel,year,branch,serviceType,preferredDate,preferredTime,details,source.type,source.label,source.id,source.page,"new"]);
    return json({message:"تم استلام طلب الحجز. سيتواصل معك فريق Esotica لتأكيد الموعد."});
  }
  if(p==="/api/parts"&&req.method==="POST"){
@@ -420,8 +431,8 @@ async function handleAPI(req,env,url){
    const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),vin=clean(d.vin,17).toUpperCase(),partCode=clean(d.partCode,60),details=clean(d.details,700),quantity=Math.min(20,Math.max(1,Number(d.quantity)||1)),source=leadSource(d);
    if(!name||!validPhone(phone)||!carModel||!validYear(year)||!(/^[A-HJ-NPR-Z0-9]{7,17}$/.test(vin))||!details)return bad("راجع البيانات. رقم الشاسيه يجب أن يكون من 7 إلى 17 خانة صحيحة.");
    const guard=await guardPublicForm(req,env,"parts",d,`${phone}|${vin}|${partCode}|${details}`);
-   if(guard.limited)return bad("تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة.",429);
-   if(!guard.silent&&!guard.duplicate)await env.DB.prepare("INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new").run();
+   if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
+   await savePublicRequest(env,guard,"INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status)",[Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new"]);
    return json({message:"تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر."});
  }
  if(p==="/api/contact"&&req.method==="POST"){
@@ -429,8 +440,8 @@ async function handleAPI(req,env,url){
    const name=clean(d.name,80),phone=clean(d.phone,20),subject=clean(d.subject,120),message=clean(d.message,900),source=leadSource(d);
    if(!name||!validPhone(phone)||!subject||!message)return bad("راجع البيانات المطلوبة.");
    const guard=await guardPublicForm(req,env,"contact",d,`${phone}|${subject}|${message}`);
-   if(guard.limited)return bad("تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة.",429);
-   if(!guard.silent&&!guard.duplicate)await env.DB.prepare("INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status) VALUES(?,?,?,?,?,?,?,?,?,?)").bind(Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new").run();
+   if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
+   await savePublicRequest(env,guard,"INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new"]);
    return json({message:"تم استلام رسالتك. سيتواصل معك فريق Esotica."});
  }
 
