@@ -179,6 +179,15 @@ async function initDB(env){
  source_type TEXT NOT NULL DEFAULT '', source_label TEXT NOT NULL DEFAULT '',
  source_id TEXT NOT NULL DEFAULT '', source_page TEXT NOT NULL DEFAULT '',
  status TEXT NOT NULL DEFAULT 'new')`,
+`CREATE TABLE IF NOT EXISTS email_alert_outbox (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ request_type TEXT NOT NULL, request_id INTEGER NOT NULL, created_at INTEGER NOT NULL,
+ from_email TEXT NOT NULL DEFAULT '', to_email TEXT NOT NULL DEFAULT '',
+ status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0,
+ next_attempt_at INTEGER NOT NULL DEFAULT 0, lease_until INTEGER NOT NULL DEFAULT 0,
+ lease_token TEXT NOT NULL DEFAULT '', last_error TEXT NOT NULL DEFAULT '', sent_at INTEGER NOT NULL DEFAULT 0,
+ UNIQUE(request_type,request_id))`,
+`CREATE INDEX IF NOT EXISTS idx_email_alert_due ON email_alert_outbox(status,next_attempt_at,lease_until)`,
 `CREATE TABLE IF NOT EXISTS form_rate_limits (
  rate_key TEXT PRIMARY KEY,
  window_started INTEGER NOT NULL,
@@ -347,11 +356,11 @@ async function guardPublicForm(req,env,type,data,signature){
      hits=CASE WHEN window_started<=? THEN 1 ELSE hits+1 END
    WHERE window_started<=? OR hits<? RETURNING hits`).bind(rateKey,now,now-windowMs,now-windowMs,now-windowMs,limit).first();
  if(!quota)return {limited:true};
- return {fingerprint:await sha256(`${type}|${signature}`)};
+ return {type,fingerprint:await sha256(`${type}|${signature}`)};
 }
-async function savePublicRequest(env,guard,insertSQL,values){
+async function savePublicRequest(env,guard,insertSQL,values,ctx){
  if(guard.silent)return null;
- const now=Date.now(),claimId=crypto.randomUUID();
+ const now=Date.now(),claimId=crypto.randomUUID(),mailConfig=emailAlertConfig(env);
  // Claim the fingerprint and save the lead in one transaction. A failed insert
  // rolls the claim back, so a customer can safely retry after a server error.
  const results=await env.DB.batch([
@@ -360,10 +369,62 @@ async function savePublicRequest(env,guard,insertSQL,values){
      WHERE created_at<=?`).bind(guard.fingerprint,now,claimId,now-2*60*1000),
    env.DB.prepare(`${insertSQL} SELECT ${values.map(()=>"?").join(",")} WHERE EXISTS
      (SELECT 1 FROM form_submission_fingerprints WHERE fingerprint=? AND claim_id=?)`).bind(...values,guard.fingerprint,claimId),
+   ...(mailConfig?[env.DB.prepare(`INSERT OR IGNORE INTO email_alert_outbox(request_type,request_id,created_at,from_email,to_email)
+     SELECT ?,last_insert_rowid(),?,?,? WHERE changes()>0`).bind(({booking:"bookings",parts:"parts",contact:"contacts"})[guard.type],now,mailConfig.from,mailConfig.to)]:[]),
    env.DB.prepare("DELETE FROM form_submission_fingerprints WHERE created_at<?").bind(now-24*60*60*1000),
    env.DB.prepare("DELETE FROM form_rate_limits WHERE window_started<?").bind(now-24*60*60*1000)
  ]);
- return Number(results[1].meta?.changes)>0?Number(results[1].meta.last_row_id):null;
+ const id=Number(results[1].meta?.changes)>0?Number(results[1].meta.last_row_id):null;
+ if(id)scheduleEmailAlerts(env,ctx);
+ return id;
+}
+function emailAlertConfig(env){
+ const email=value=>typeof value==="string"&&value.length<=254&&/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(value);
+ const from=env.LEAD_ALERT_FROM,to=env.LEAD_ALERT_TO;
+ return typeof env.RESEND_API_KEY==="string"&&env.RESEND_API_KEY.trim()&&email(from)&&email(to)?{from,to,key:env.RESEND_API_KEY}:null;
+}
+function scheduleEmailAlerts(env,ctx){
+ if(emailAlertConfig(env)&&typeof ctx?.waitUntil==="function")ctx.waitUntil(flushEmailAlerts(env).catch(()=>{}));
+}
+async function flushEmailAlerts(env){
+ const config=emailAlertConfig(env);if(!config)return;
+ // Never retry beyond the provider's 24-hour idempotency window.
+ const cutoff=Date.now()-23*60*60*1000;
+ await env.DB.prepare("UPDATE email_alert_outbox SET status='failed',last_error='attempts_exhausted' WHERE status='pending' AND attempts>=5 AND lease_until<=?").bind(Date.now()).run();
+ await env.DB.prepare("UPDATE email_alert_outbox SET status='failed',last_error='expired' WHERE status='pending' AND created_at<? AND lease_until<=?").bind(cutoff,Date.now()).run();
+ for(let index=0;index<3;index++){
+  const now=Date.now(),token=crypto.randomUUID();
+  const item=await env.DB.prepare(`UPDATE email_alert_outbox SET attempts=attempts+1,lease_token=?,lease_until=?
+    WHERE id=(SELECT id FROM email_alert_outbox WHERE status='pending' AND attempts<5 AND next_attempt_at<=? AND lease_until<=? AND created_at>=? ORDER BY id LIMIT 1)
+    RETURNING id,request_type,request_id,from_email,to_email,attempts`).bind(token,now+60000,now,now,cutoff).first();
+  if(!item)return;
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),5000);
+  let accepted=false,error="delivery_unavailable";
+  try{
+   const type=({bookings:"حجز صيانة",parts:"استعلام قطع غيار",contacts:"رسالة تواصل"})[item.request_type]||"طلب";
+   const response=await fetch("https://api.resend.com/emails",{
+    method:"POST",signal:controller.signal,
+    headers:{"content-type":"application/json",authorization:`Bearer ${config.key}`,"Idempotency-Key":`esotica-lead-${item.request_type}-${item.request_id}`},
+    body:JSON.stringify({from:item.from_email,to:[item.to_email],subject:`Esotica: ${type} #${item.request_id}`,
+      text:`طلب جديد من موقع Esotica\nالنوع: ${type}\nرقم الطلب: ${item.request_id}\nراجع التفاصيل داخل لوحة الإدارة: https://esoticaegypt.com/admin`})
+   });
+   accepted=response.ok;if(!accepted)error=response.status===429?"rate_limited":response.status>=500?"provider_unavailable":"provider_rejected";
+  }catch{error=controller.signal.aborted?"timeout":"delivery_unavailable"}finally{clearTimeout(timeout)}
+  if(accepted){
+   await env.DB.prepare("UPDATE email_alert_outbox SET status='sent',sent_at=?,last_error='',lease_until=0,lease_token='' WHERE id=? AND lease_token=?").bind(Date.now(),item.id,token).run();
+  }else{
+   await env.DB.prepare("UPDATE email_alert_outbox SET status=?,next_attempt_at=?,last_error=?,lease_until=0,lease_token='' WHERE id=? AND lease_token=?")
+    .bind(item.attempts>=5?"failed":"pending",Date.now()+Math.min(60*60*1000,60000*2**(item.attempts-1)),error,item.id,token).run();
+  }
+ }
+}
+async function emailAlertStatus(env){
+ const row=await env.DB.prepare(`SELECT
+   SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending,
+   SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) AS failed,
+   SUM(CASE WHEN status='sent' THEN 1 ELSE 0 END) AS sent,MAX(sent_at) AS last_success FROM email_alert_outbox`).first();
+ const failure=await env.DB.prepare("SELECT last_error FROM email_alert_outbox WHERE last_error<>'' ORDER BY id DESC LIMIT 1").first();
+ return {configured:Boolean(emailAlertConfig(env)),pending:Number(row?.pending)||0,failed:Number(row?.failed)||0,sent:Number(row?.sent)||0,lastSuccess:Number(row?.last_success)||0,lastError:failure?.last_error||""};
 }
 function cairoDateParts(){
  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
@@ -435,12 +496,12 @@ function visitorTech(req){
  const os=/windows/i.test(ua)?"Windows":/android/i.test(ua)?"Android":/iphone|ipad|ipod/i.test(ua)?"iOS/iPadOS":/mac os|macintosh/i.test(ua)?"macOS":/linux/i.test(ua)?"Linux":"Other";
  return {device,browser,os,language:clean((req.headers.get("accept-language")||"").split(",")[0],20),country:clean(req.cf?.country||req.headers.get("cf-ipcountry")||"",2).toUpperCase()};
 }
-async function handleAPI(req,env,url){
+async function handleAPI(req,env,url,ctx){
  const p=url.pathname;
  if(req.method==="POST"&&!sameOrigin(req)) return bad("طلب غير مسموح.",403);
 
  if(p==="/api/health"){
-   return json({ok:true,database:!!env.DB,adminConfigured:!!env.ADMIN_PASSWORD,formProtection:true,adminLoginProtection:true,leadAlertPagination:true});
+   return json({ok:true,database:!!env.DB,adminConfigured:!!env.ADMIN_PASSWORD,formProtection:true,adminLoginProtection:true,leadAlertPagination:true,emailAlertsPrepared:true,emailAlertsConfigured:Boolean(emailAlertConfig(env))});
  }
  if(p==="/api/analytics/heartbeat"&&req.method==="POST"){
    await initAnalyticsDB(env);
@@ -493,7 +554,7 @@ async function handleAPI(req,env,url){
    const dateError=validateBookingDate(preferredDate);if(dateError)return bad(dateError);
    const guard=await guardPublicForm(req,env,"booking",d,`${phone}|${carModel}|${branch}|${serviceType}|${preferredDate}|${preferredTime}`);
    if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
-   await savePublicRequest(env,guard,"INSERT INTO bookings(created_at,name,phone,car_model,year,branch,service_type,preferred_date,preferred_time,details,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,carModel,year,branch,serviceType,preferredDate,preferredTime,details,source.type,source.label,source.id,source.page,"new"]);
+   await savePublicRequest(env,guard,"INSERT INTO bookings(created_at,name,phone,car_model,year,branch,service_type,preferred_date,preferred_time,details,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,carModel,year,branch,serviceType,preferredDate,preferredTime,details,source.type,source.label,source.id,source.page,"new"],ctx);
    return json({message:"تم استلام طلب الحجز. سيتواصل معك فريق Esotica لتأكيد الموعد."});
  }
  if(p==="/api/parts"&&req.method==="POST"){
@@ -502,7 +563,7 @@ async function handleAPI(req,env,url){
    if(!name||!validPhone(phone)||!carModel||!validYear(year)||!(/^[A-HJ-NPR-Z0-9]{7,17}$/.test(vin))||!details)return bad("راجع البيانات. رقم الشاسيه يجب أن يكون من 7 إلى 17 خانة صحيحة.");
    const guard=await guardPublicForm(req,env,"parts",d,`${phone}|${vin}|${partCode}|${details}`);
    if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
-   await savePublicRequest(env,guard,"INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status)",[Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new"]);
+   await savePublicRequest(env,guard,"INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status)",[Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new"],ctx);
    return json({message:"تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر."});
  }
  if(p==="/api/contact"&&req.method==="POST"){
@@ -511,7 +572,7 @@ async function handleAPI(req,env,url){
    if(!name||!validPhone(phone)||!subject||!message)return bad("راجع البيانات المطلوبة.");
    const guard=await guardPublicForm(req,env,"contact",d,`${phone}|${subject}|${message}`);
    if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
-   await savePublicRequest(env,guard,"INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new"]);
+   await savePublicRequest(env,guard,"INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new"],ctx);
    return json({message:"تم استلام رسالتك. سيتواصل معك فريق Esotica."});
  }
 
@@ -528,6 +589,19 @@ async function handleAPI(req,env,url){
  if(p==="/api/admin/traffic"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    return json({traffic:await trafficSnapshot(env)});
+ }
+ if(p==="/api/admin/email-alerts"&&(req.method==="GET"||req.method==="POST")){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   await initDB(env);
+   if(req.method==="POST")return bad("إجراء غير صحيح.",405);
+   const status=await emailAlertStatus(env);scheduleEmailAlerts(env,ctx);return json(status);
+ }
+ if(p==="/api/admin/email-alerts/retry"&&req.method==="POST"){
+   if(!(await auth(req,env)))return bad("غير مصرح.",401);
+   if(!emailAlertConfig(env))return bad("البريد غير مهيأ. راجع إعدادات خدمة الإرسال أولًا.",503);
+   await initDB(env);
+   await env.DB.prepare("UPDATE email_alert_outbox SET status='pending',attempts=0,next_attempt_at=0,last_error='' WHERE status<>'sent' AND lease_until<=? AND created_at>=?").bind(Date.now(),Date.now()-23*60*60*1000).run();
+   scheduleEmailAlerts(env,ctx);return json({ok:true,message:"تمت جدولة إعادة المحاولة للرسائل المعلقة فقط."});
  }
  if(p==="/api/admin/lead-alerts"&&req.method==="GET"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
@@ -753,7 +827,7 @@ async function handleAPI(req,env,url){
  return bad("API غير موجود.",404);
 }
 export default{
- async fetch(req,env){
+ async fetch(req,env,ctx){
    const url=new URL(req.url);
    if(url.hostname==="www.esoticaegypt.com"||url.hostname==="esotica-auto-egypt.pages.dev"){
      const primary=new URL(req.url);
@@ -771,7 +845,7 @@ export default{
      return new Response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: https://esoticaegypt.com/sitemap.xml\n",{status:200,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public, max-age=300"}});
    }
    try{
-     if(url.pathname.startsWith("/api/"))return await handleAPI(req,env,url);
+     if(url.pathname.startsWith("/api/"))return await handleAPI(req,env,url,ctx);
      if(url.pathname==="/admin"||url.pathname==="/admin/")return env.ASSETS.fetch(new Request(new URL("/admin/",url),req));
      if(url.pathname==="/admin/login")return Response.redirect(new URL("/admin",url),302);
      return env.ASSETS.fetch(req);

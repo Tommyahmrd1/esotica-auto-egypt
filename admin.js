@@ -94,7 +94,7 @@ async function load(){
  const r=await fetch("/api/admin/dashboard",{cache:"no-store"});
  if(r.status===401||r.status===403){showLogin();return}
  const j=await r.json(); if(!r.ok){alert(j.error||"تعذر تحميل البيانات");return}
- state.data=j;showDash();render();
+ state.data=j;showDash();render();void refreshEmailAlertStatus();
 }
 $("#loginForm").addEventListener("submit",async e=>{
  e.preventDefault();const m=$("#loginMsg");m.textContent="جاري الدخول...";
@@ -106,6 +106,26 @@ $("#loginForm").addEventListener("submit",async e=>{
 });
 $("#logoutBtn").addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});showLogin()});
 $("#refreshBtn").addEventListener("click",load);
+async function refreshEmailAlertStatus(){
+ if($("#dashView")?.classList.contains("hidden"))return;
+ const title=$("#emailAlertStatus"),detail=$("#emailAlertDetail"),button=$("#retryEmailAlerts");if(!title||!detail||!button)return;
+ try{
+  const response=await fetch("/api/admin/email-alerts",{cache:"no-store"});if(!response.ok)return;
+  const status=await response.json();
+  title.textContent=status.configured?"إعداد خدمة البريد موجود":"تنبيهات البريد غير مهيأة";
+  detail.textContent=status.configured?`قبلت خدمة الإرسال ${adminNumber.format(status.sent||0)} رسالة · معلقة: ${adminNumber.format(status.pending||0)} · فشل: ${adminNumber.format(status.failed||0)}.`:"يلزم ربط خدمة إرسال البريد في إعدادات الموقع قبل تفعيل التنبيهات. تنبيهات المتصفح مستقلة وتعمل أثناء فتح اللوحة.";
+  if(status.lastError)detail.textContent+=" توجد محاولة لم تكتمل؛ راجع إعداد خدمة البريد ثم أعد المحاولة.";
+  button.classList.toggle("hidden",!status.configured||!(status.pending||status.failed));
+ }catch{}
+}
+$("#retryEmailAlerts")?.addEventListener("click",async()=>{
+ const button=$("#retryEmailAlerts");button.disabled=true;
+ try{
+  const response=await fetch("/api/admin/email-alerts/retry",{method:"POST",headers:{"content-type":"application/json"},body:"{}"});
+  if(!response.ok)$("#emailAlertDetail").textContent="تعذر جدولة إعادة المحاولة. راجع إعداد خدمة البريد.";
+  else await refreshEmailAlertStatus();
+ }catch{$("#emailAlertDetail").textContent="تعذر الاتصال. حاول مرة أخرى."}finally{button.disabled=false}
+});
 async function pollLeadAlerts(){
  if(leadAlertPolling||$("#dashView").classList.contains("hidden"))return;
  leadAlertPolling=true;
@@ -137,7 +157,7 @@ $("#enableBrowserAlerts")?.addEventListener("click",async()=>{
  button.disabled=permission==="granted";
 });
 if("Notification" in window&&Notification.permission==="granted"){$("#enableBrowserAlerts").textContent="التنبيهات مفعلة";$("#enableBrowserAlerts").disabled=true}
-window.setInterval(pollLeadAlerts,30000);
+window.setInterval(()=>{void pollLeadAlerts();void refreshEmailAlertStatus()},30000);
 async function refreshTraffic(){
  if($("#dashView").classList.contains("hidden"))return;
  try{

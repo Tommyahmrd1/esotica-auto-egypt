@@ -42,18 +42,20 @@ export function fixture(t,envOverrides={}){
     }
   };
   const env={DB,...envOverrides};
+  const background=[];const ctx={waitUntil:promise=>background.push(promise)};
   return {
-    sqlite,env,
+    sqlite,env,background,
+    async drain(){await Promise.all(background.splice(0))},
     failNextLeadInsert(){failLeadInsert=true},
     count(table){return Number(sqlite.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count)},
     async post(path,body,ip="192.0.2.1",origin="https://esoticaegypt.com",extraHeaders={}){
       const request=new Request(`https://esoticaegypt.com/api/${path}`,{
         method:"POST",headers:{"content-type":"application/json",origin,"cf-connecting-ip":ip,...extraHeaders},body:JSON.stringify(body)
       });
-      return worker.fetch(request,env);
+      return worker.fetch(request,env,ctx);
     },
     async get(path,headers={}){
-      return worker.fetch(new Request(`https://esoticaegypt.com/api/${path}`,{headers}),env);
+      return worker.fetch(new Request(`https://esoticaegypt.com/api/${path}`,{headers}),env,ctx);
     }
   };
 }

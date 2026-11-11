@@ -67,3 +67,43 @@ V7 PRODUCTION READINESS:
 - حماية اللوجو وفيديو الصفحة الرئيسية من الاستبدال العرضي داخل لوحة الإدارة.
 - روابط إنجليزية مستقلة تحت /en مع بيانات عنوان ووصف ومشاركة اجتماعية إنجليزية.
 - تخفيف فيديو الصفحة الرئيسية مع الحفاظ على الصوت والجودة البصرية.
+
+
+EMAIL ALERTS (requires separate activation)
+-----------------------------------------
+The code is prepared for Resend transactional email over HTTPS. It is NOT active
+until a sending provider and the production environment variables are configured.
+No real recipient address or API key is stored in this repository.
+
+1. Create/select a Resend account and verify a sender domain you control.
+   Add its DNS records as instructed by Resend; use a verified sender address.
+2. In Cloudflare Pages > esotica-auto-egypt > Settings > Variables and Secrets,
+   configure PRODUCTION values:
+   RESEND_API_KEY   (encrypted secret, an API key with email sending permission)
+   LEAD_ALERT_FROM  (plain verified email address; no display-name wrapper)
+   LEAD_ALERT_TO    (the receiving mailbox selected by the owner)
+3. Redeploy the production project so the environment changes take effect.
+4. Open /admin. The email panel reports whether configuration exists, counts
+   accepted/pending/failed messages, and provides an authenticated retry action.
+   Configuration alone does not prove delivery. A provider-accepted message is
+   not a guarantee that it reached the recipient inbox; check Resend delivery
+   logs and the receiving mailbox when activating the integration.
+
+Only NEW requests saved while all three settings are valid enter the outbox.
+Existing bookings/parts/messages are never scanned or backfilled. Honeypots and
+retry/duplicate submissions do not enqueue additional messages. Mail contains
+only request type, number and an administration link; customer data stays in
+administration. Failure to send mail never changes a successfully saved request.
+
+The durable outbox retries at most five times with increasing backoff when new
+requests arrive or an authenticated administrator checks email status. There is
+NO background cron/queue deployment in this project: without new requests or an
+open administration page, a failed message waits for the next trigger. The
+manual retry action applies only to unsent, non-leased messages under 23 hours
+old; it never retries accepted messages. A scheduled trigger can be configured
+separately if retries must continue while there is no site/admin activity.
+
+The same Idempotency-Key and message body are reused across retries. Resend
+retains idempotency keys for 24 hours, so automatic and manual retries stop at
+23 hours from creation. This reduces duplicate risk; it is not an unlimited
+exactly-once delivery guarantee. Do not manually edit outbox rows to bypass it.
