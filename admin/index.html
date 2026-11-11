@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Esotica Admin</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20261108-1"><link rel="stylesheet" href="/admin.css?v=20261108-1">
+<title>Esotica Admin</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.svg?v=20260930-1"><link rel="stylesheet" href="/styles.css?v=20261108-1"><link rel="stylesheet" href="/admin.css?v=20261111-1">
 </head>
 <body class="admin-body">
   <header class="admin-top"><a class="brand admin-brand" href="/"><span class="brand-logo"><img src="/site/logo.webp?v=20260930-1" alt="Esotica Auto"></span></a><span class="admin-top-label">CONTROL CENTER</span><button id="logoutBtn" class="btn btn-outline hidden">تسجيل خروج</button></header>
@@ -136,6 +136,217 @@
               <label>مقدمة صفحة التواصل<textarea name="contact_page_intro" rows="3" maxlength="600"></textarea></label>
               <label>Contact page intro in English<textarea name="contact_page_intro_en" rows="3" maxlength="600" dir="ltr"></textarea></label>
             </div>
+            <details class="mini-panel managed-content-panel">
+              <summary>نصوص الخدمات</summary>
+              <p class="hint">اترك الحقل فارغًا لاستخدام النص الأصلي. لكل لغة نص مستقل؛ تعديل العربية لا يستبدل الإنجليزية.</p>
+              <div class="grid2">
+                <label>الصيانة والتشخيص — العنوان — عربي<input name="service_maintenance_title" data-managed-content-field maxlength="160"></label>
+                <label>الصيانة والتشخيص — العنوان — English<input name="service_maintenance_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>الصيانة والتشخيص — الوصف — عربي<textarea name="service_maintenance_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>الصيانة والتشخيص — الوصف — English<textarea name="service_maintenance_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>السمكرة والدهان — العنوان — عربي<input name="service_body_paint_title" data-managed-content-field maxlength="160"></label>
+                <label>السمكرة والدهان — العنوان — English<input name="service_body_paint_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>السمكرة والدهان — الوصف — عربي<textarea name="service_body_paint_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>السمكرة والدهان — الوصف — English<textarea name="service_body_paint_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>قطع الغيار — العنوان — عربي<input name="service_parts_title" data-managed-content-field maxlength="160"></label>
+                <label>قطع الغيار — العنوان — English<input name="service_parts_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>قطع الغيار — الوصف — عربي<textarea name="service_parts_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>قطع الغيار — الوصف — English<textarea name="service_parts_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>الفحص الشامل — العنوان — عربي<input name="service_inspection_title" data-managed-content-field maxlength="160"></label>
+                <label>الفحص الشامل — العنوان — English<input name="service_inspection_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>الفحص الشامل — الوصف — عربي<textarea name="service_inspection_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>الفحص الشامل — الوصف — English<textarea name="service_inspection_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>الخدمة المتنقلة — العنوان — عربي<input name="service_mobile_title" data-managed-content-field maxlength="160"></label>
+                <label>الخدمة المتنقلة — العنوان — English<input name="service_mobile_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>الخدمة المتنقلة — الوصف — عربي<textarea name="service_mobile_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>الخدمة المتنقلة — الوصف — English<textarea name="service_mobile_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>متابعة ما بعد الخدمة — العنوان — عربي<input name="service_followup_title" data-managed-content-field maxlength="160"></label>
+                <label>متابعة ما بعد الخدمة — العنوان — English<input name="service_followup_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>متابعة ما بعد الخدمة — الوصف — عربي<textarea name="service_followup_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>متابعة ما بعد الخدمة — الوصف — English<textarea name="service_followup_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+            </details>
+            <details class="mini-panel managed-content-panel">
+              <summary>تفاصيل برنامج الضمان</summary>
+              <p class="hint">اترك الحقل فارغًا لاستخدام النص الأصلي. لكل لغة نص مستقل؛ تعديل العربية لا يستبدل الإنجليزية.</p>
+              <div class="grid2">
+                <label>عنوان برنامج الضمان — عربي<input name="warranty_intro_title" data-managed-content-field maxlength="160"></label>
+                <label>عنوان برنامج الضمان — English<input name="warranty_intro_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>شرح برنامج الضمان — عربي<textarea name="warranty_intro_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>شرح برنامج الضمان — English<textarea name="warranty_intro_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>أهلية السيارة — العنوان — عربي<input name="warranty_eligibility_title" data-managed-content-field maxlength="160"></label>
+                <label>أهلية السيارة — العنوان — English<input name="warranty_eligibility_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>أهلية السيارة — الوصف — عربي<textarea name="warranty_eligibility_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>أهلية السيارة — الوصف — English<textarea name="warranty_eligibility_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>التغطية — العنوان — عربي<input name="warranty_coverage_title" data-managed-content-field maxlength="160"></label>
+                <label>التغطية — العنوان — English<input name="warranty_coverage_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>التغطية — الوصف — عربي<textarea name="warranty_coverage_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>التغطية — الوصف — English<textarea name="warranty_coverage_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>كتيب الضمان — العنوان — عربي<input name="warranty_booklet_title" data-managed-content-field maxlength="160"></label>
+                <label>كتيب الضمان — العنوان — English<input name="warranty_booklet_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>كتيب الضمان — الوصف — عربي<textarea name="warranty_booklet_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>كتيب الضمان — الوصف — English<textarea name="warranty_booklet_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>الدعم والمتابعة — العنوان — عربي<input name="warranty_support_title" data-managed-content-field maxlength="160"></label>
+                <label>الدعم والمتابعة — العنوان — English<input name="warranty_support_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>الدعم والمتابعة — الوصف — عربي<textarea name="warranty_support_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>الدعم والمتابعة — الوصف — English<textarea name="warranty_support_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>عنوان ملاحظة الضمان — عربي<input name="warranty_note_title" data-managed-content-field maxlength="160"></label>
+                <label>عنوان ملاحظة الضمان — English<input name="warranty_note_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>ملاحظة الضمان — عربي<textarea name="warranty_note_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>ملاحظة الضمان — English<textarea name="warranty_note_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>نص زر استفسار الضمان — عربي<input name="warranty_cta" data-managed-content-field maxlength="80"></label>
+                <label>نص زر استفسار الضمان — English<input name="warranty_cta_en" data-managed-content-field maxlength="80" dir="ltr" lang="en"></label>
+              </div>
+            </details>
+            <details class="mini-panel managed-content-panel">
+              <summary>تفاصيل خدمة التأمين</summary>
+              <p class="hint">اترك الحقل فارغًا لاستخدام النص الأصلي. لكل لغة نص مستقل؛ تعديل العربية لا يستبدل الإنجليزية.</p>
+              <div class="grid2">
+                <label>عنوان خدمة التأمين — عربي<input name="insurance_intro_title" data-managed-content-field maxlength="160"></label>
+                <label>عنوان خدمة التأمين — English<input name="insurance_intro_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>شرح خدمة التأمين — عربي<textarea name="insurance_intro_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>شرح خدمة التأمين — English<textarea name="insurance_intro_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>عنوان جودة الخدمة — عربي<input name="insurance_trust_title" data-managed-content-field maxlength="160"></label>
+                <label>عنوان جودة الخدمة — English<input name="insurance_trust_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>شرح جودة الخدمة — عربي<textarea name="insurance_trust_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>شرح جودة الخدمة — English<textarea name="insurance_trust_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>ميزة التقييم — عربي<input name="insurance_point_assessment" data-managed-content-field maxlength="160"></label>
+                <label>ميزة التقييم — English<input name="insurance_point_assessment_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>ميزة المتابعة — عربي<input name="insurance_point_followup" data-managed-content-field maxlength="160"></label>
+                <label>ميزة المتابعة — English<input name="insurance_point_followup_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>ميزة الجودة — عربي<input name="insurance_point_quality" data-managed-content-field maxlength="160"></label>
+                <label>ميزة الجودة — English<input name="insurance_point_quality_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>عنوان مراحل الإصلاح — عربي<input name="insurance_process_title" data-managed-content-field maxlength="160"></label>
+                <label>عنوان مراحل الإصلاح — English<input name="insurance_process_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>الفحص والتقييم — العنوان — عربي<input name="insurance_assessment_title" data-managed-content-field maxlength="160"></label>
+                <label>الفحص والتقييم — العنوان — English<input name="insurance_assessment_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>الفحص والتقييم — الوصف — عربي<textarea name="insurance_assessment_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>الفحص والتقييم — الوصف — English<textarea name="insurance_assessment_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>التوثيق الفني — العنوان — عربي<input name="insurance_documentation_title" data-managed-content-field maxlength="160"></label>
+                <label>التوثيق الفني — العنوان — English<input name="insurance_documentation_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>التوثيق الفني — الوصف — عربي<textarea name="insurance_documentation_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>التوثيق الفني — الوصف — English<textarea name="insurance_documentation_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>تنسيق الموافقة — العنوان — عربي<input name="insurance_approval_title" data-managed-content-field maxlength="160"></label>
+                <label>تنسيق الموافقة — العنوان — English<input name="insurance_approval_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>تنسيق الموافقة — الوصف — عربي<textarea name="insurance_approval_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>تنسيق الموافقة — الوصف — English<textarea name="insurance_approval_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>الإصلاح والجودة — العنوان — عربي<input name="insurance_repair_title" data-managed-content-field maxlength="160"></label>
+                <label>الإصلاح والجودة — العنوان — English<input name="insurance_repair_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>الإصلاح والجودة — الوصف — عربي<textarea name="insurance_repair_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>الإصلاح والجودة — الوصف — English<textarea name="insurance_repair_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+            </details>
+            <details class="mini-panel managed-content-panel">
+              <summary>نصوص شركاء التأمين والاستفسار</summary>
+              <p class="hint">اترك الحقل فارغًا لاستخدام النص الأصلي. لكل لغة نص مستقل؛ تعديل العربية لا يستبدل الإنجليزية.</p>
+              <div class="grid2">
+                <label>عنوان شركاء التأمين — عربي<input name="insurance_partners_title" data-managed-content-field maxlength="160"></label>
+                <label>عنوان شركاء التأمين — English<input name="insurance_partners_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>مقدمة شركاء التأمين — عربي<textarea name="insurance_partners_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>مقدمة شركاء التأمين — English<textarea name="insurance_partners_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>عنوان استفسار التغطية — عربي<input name="insurance_cta_title" data-managed-content-field maxlength="160"></label>
+                <label>عنوان استفسار التغطية — English<input name="insurance_cta_title_en" data-managed-content-field maxlength="160" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>شرح استفسار التغطية — عربي<textarea name="insurance_cta_description" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>شرح استفسار التغطية — English<textarea name="insurance_cta_description_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+              <div class="grid2">
+                <label>نص زر استفسار التأمين — عربي<input name="insurance_cta" data-managed-content-field maxlength="80"></label>
+                <label>نص زر استفسار التأمين — English<input name="insurance_cta_en" data-managed-content-field maxlength="80" dir="ltr" lang="en"></label>
+              </div>
+              <div class="grid2">
+                <label>شروط اعتماد التغطية — عربي<textarea name="insurance_disclaimer" data-managed-content-field rows="3" maxlength="600"></textarea></label>
+                <label>شروط اعتماد التغطية — English<textarea name="insurance_disclaimer_en" data-managed-content-field rows="3" maxlength="600" dir="ltr" lang="en"></textarea></label>
+              </div>
+            </details>
+            <details class="mini-panel managed-content-panel">
+              <summary>بيانات الفروع المحمية</summary>
+              <p class="hint">العناوين ومواعيد العمل والخرائط معتمدة ولا يمكن تعديلها من هذه الأدوات. الروابط التالية لعرض البيانات الحالية فقط.</p>
+              <a href="/branches/fifth-settlement" target="_blank" rel="noopener noreferrer">عرض بيانات فرع التجمع الخامس</a><br>
+              <a href="/branches/third-settlement" target="_blank" rel="noopener noreferrer">عرض بيانات فرع التجمع الثالث</a><br>
+              <a href="/branches/sheikh-zayed" target="_blank" rel="noopener noreferrer">عرض بيانات فرع الشيخ زايد</a>
+            </details>
             <button class="btn btn-gold full" type="submit">حفظ تغييرات الموقع</button>
             <p id="siteMsg" class="form-msg"></p>
           </form>
@@ -261,5 +472,5 @@
 
     </section>
   </main>
-<script src="/admin.js?v=20261108-1" defer></script>
+<script src="/admin.js?v=20261111-1" defer></script>
 </body></html>

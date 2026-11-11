@@ -35,9 +35,20 @@ for(const file of htmlFiles){
   const source=fs.readFileSync(path.join(root,file),"utf8");
   const publicPage=publicHtml.includes(file);
   if(publicPage){
+    const route=file==="index.html"?"/":`/${file.replace(/\.html$/,"")}`;
+    const englishRoute=route==="/"?"/en":`/en${route}`;
     if(!/<meta\s+name="description"\s+content="[^"]+"/i.test(source))fail(file,"missing meta description");
     if(!/<link\s+rel="canonical"\s+href="https:\/\/esoticaegypt\.com\/[^"]*"/i.test(source))fail(file,"missing canonical URL");
     if((source.match(/<h1\b/gi)||[]).length!==1)fail(file,"must contain exactly one h1");
+    for(const [language,target] of [["ar-EG",route],["en",englishRoute],["x-default",route]]){
+      if(!source.includes(`hreflang="${language}" href="https://esoticaegypt.com${target}"`))fail(file,`missing or incorrect ${language} alternate`);
+    }
+    for(const property of ["og:type","og:site_name","og:title","og:description","og:url","og:image","og:locale","og:locale:alternate"]){
+      if(!new RegExp(`<meta\\s+property="${property}"\\s+content="[^"]+"`).test(source))fail(file,`missing ${property}`);
+    }
+    for(const name of ["twitter:card","twitter:title","twitter:description","twitter:image"]){
+      if(!new RegExp(`<meta\\s+name="${name}"\\s+content="[^"]+"`).test(source))fail(file,`missing ${name}`);
+    }
   }
 
   const ids=[...source.matchAll(/\sid="([^"]+)"/g)].map(match=>match[1]);
@@ -69,6 +80,8 @@ const sitemapPaths=new Set([...sitemap.matchAll(/<loc>https:\/\/esoticaegypt\.co
 for(const file of publicHtml){
   const route=file==="index.html"?"/":`/${file.replace(/\.html$/,"")}`;
   if(!sitemapPaths.has(route))fail("sitemap.xml",`missing public route ${route}`);
+  const englishRoute=route==="/"?"/en":`/en${route}`;
+  if(!sitemapPaths.has(englishRoute))fail("sitemap.xml",`missing English route ${englishRoute}`);
 }
 
 if(failures.length){

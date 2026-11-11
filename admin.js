@@ -1,6 +1,7 @@
 const $=s=>document.querySelector(s);
 let state={tab:"bookings",data:null,traffic:null};
 let leadAlertAfter=Date.now()-1000;
+let leadAlertCursor="",leadAlertPolling=false;
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 function showLogin(){ $("#loginView").classList.remove("hidden");$("#dashView").classList.add("hidden");$("#logoutBtn").classList.add("hidden") }
 function showDash(){ $("#loginView").classList.add("hidden");$("#dashView").classList.remove("hidden");$("#logoutBtn").classList.remove("hidden") }
@@ -59,7 +60,7 @@ function renderLeadSummary(latest=[]){
  if(!bar||!title||!text)return;
  bar.classList.toggle("has-new",count>0);
  title.textContent=count?`${adminNumber.format(count)} طلب جديد يحتاج متابعة`:"لا توجد طلبات جديدة حاليًا";
- text.textContent=latest.length?`وصل الآن: ${latest.map(item=>item.name).join("، ")}`:"يتم فحص الحجوزات وقطع الغيار والرسائل تلقائيًا كل 30 ثانية.";
+ text.textContent=latest.length?`وصل الآن ${adminNumber.format(latest.length)} طلب جديد. افتح الطلبات لمراجعة التفاصيل.`:"يتم فحص الحجوزات وقطع الغيار والرسائل تلقائيًا كل 30 ثانية أثناء فتح اللوحة.";
  document.title=count?`(${count}) Esotica Admin`:"Esotica Admin";
 }
 function statusSelect(type,id,value){
@@ -106,17 +107,27 @@ $("#loginForm").addEventListener("submit",async e=>{
 $("#logoutBtn").addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});showLogin()});
 $("#refreshBtn").addEventListener("click",load);
 async function pollLeadAlerts(){
- if($("#dashView").classList.contains("hidden"))return;
+ if(leadAlertPolling||$("#dashView").classList.contains("hidden"))return;
+ leadAlertPolling=true;
  try{
-  const response=await fetch(`/api/admin/lead-alerts?after=${leadAlertAfter}`,{cache:"no-store"});if(!response.ok)return;
-  const result=await response.json();leadAlertAfter=Number(result.now)||Date.now();
-  const alerts=result.alerts||[];if(!alerts.length)return;
-  if("Notification" in window&&Notification.permission==="granted"){
-   const names=alerts.slice(0,3).map(item=>item.name).join("، ");
-   new Notification("طلب جديد من موقع Esotica",{body:names||"افتح لوحة الإدارة لمراجعة الطلب."});
+  const alerts=[];
+  for(let page=0;page<10;page++){
+   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+   try{
+    const params=new URLSearchParams({after:String(leadAlertAfter)});if(leadAlertCursor)params.set("cursor",leadAlertCursor);
+    const response=await fetch(`/api/admin/lead-alerts?${params}`,{cache:"no-store",signal:controller.signal});if(!response.ok)break;
+    const result=await response.json();
+    alerts.push(...(result.alerts||[]));
+    leadAlertCursor=result.nextCursor||"";leadAlertAfter=Number(result.now)||leadAlertAfter;
+    if(!result.hasMore||!leadAlertCursor)break;
+   }catch{break}finally{clearTimeout(timeout)}
   }
+  if(!alerts.length)return;
+  if("Notification" in window&&Notification.permission==="granted")try{
+   new Notification("طلبات جديدة من موقع Esotica",{body:`وصل ${adminNumber.format(alerts.length)} طلب جديد. افتح لوحة الإدارة لمراجعة التفاصيل.`});
+  }catch{}
   await load();renderLeadSummary(alerts);
- }catch{}
+ }catch{}finally{leadAlertPolling=false}
 }
 $("#enableBrowserAlerts")?.addEventListener("click",async()=>{
  const button=$("#enableBrowserAlerts");
@@ -144,7 +155,8 @@ document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",
 load();
 
 let cmsData={settings:{},reviews:[]};
-const CMS_TEXT_FIELDS=["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url","services_page_title","services_page_title_en","services_page_intro","services_page_intro_en","about_page_title","about_page_title_en","about_page_intro","about_page_intro_en","warranty_page_title","warranty_page_title_en","warranty_page_intro","warranty_page_intro_en","contact_page_title","contact_page_title_en","contact_page_intro","contact_page_intro_en"];
+const CMS_CONTENT_FIELDS=[...document.querySelectorAll("[data-managed-content-field]")].map(field=>field.name);
+const CMS_TEXT_FIELDS=[...CMS_CONTENT_FIELDS,"hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url","services_page_title","services_page_title_en","services_page_intro","services_page_intro_en","about_page_title","about_page_title_en","about_page_intro","about_page_intro_en","warranty_page_title","warranty_page_title_en","warranty_page_intro","warranty_page_intro_en","contact_page_title","contact_page_title_en","contact_page_intro","contact_page_intro_en"];
 
 async function loadCMS(){
   const r=await fetch("/api/admin/site-settings",{cache:"no-store"});
@@ -193,7 +205,8 @@ $("#siteSettingsForm")?.addEventListener("submit",async e=>{
   for(const name of ["show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text"])payload[name]=String(f.elements[name].checked);
   payload.section_order=[...$("#sectionSorter").children].map(x=>x.dataset.id).join(",");
   const r=await fetch("/api/admin/site-settings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
-  const m=$("#siteMsg");m.textContent=r.ok?"تم حفظ تغييرات الموقع.":"تعذر الحفظ.";m.className="form-msg "+(r.ok?"ok":"err");
+  const result=await r.json().catch(()=>({}));
+  const m=$("#siteMsg");m.textContent=r.ok?"تم حفظ تغييرات الموقع.":(result.error||"تعذر الحفظ.");m.className="form-msg "+(r.ok?"ok":"err");
 });
 $("#reviewForm")?.addEventListener("submit",async e=>{
   e.preventDefault();const f=e.currentTarget,d=Object.fromEntries(new FormData(f).entries());

@@ -160,81 +160,170 @@ document.body.classList.add(`page-${pageName}`);
 const heroVideo=document.querySelector(".hero-video-main");
 const heroSoundToggle=document.querySelector("#heroSoundToggle");
 const heroMobileQuery=window.matchMedia("(max-width: 768px)");
+const heroMotionQuery=window.matchMedia("(prefers-reduced-motion: reduce)");
+const heroConnection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
 let heroSoundChoice=null;
 let heroAutoplayMuted=false;
+let heroPlaybackRequested=false;
+let heroUserPaused=false;
+let heroPauseExpected=false;
+let heroPlayPending=false;
+let heroSelectedSource="";
+let heroNeedsFallback=false;
+function heroIsInViewport(){
+  if(!heroVideo)return false;
+  const rect=heroVideo.getBoundingClientRect();
+  return rect.bottom>0&&rect.right>0&&rect.top<window.innerHeight&&rect.left<window.innerWidth;
+}
+let heroInViewport=heroIsInViewport();
+const heroNeedsConsent=()=>heroMotionQuery.matches||Boolean(heroConnection?.saveData);
+const heroCanPlay=()=>Boolean(heroVideo&&!heroUserPaused&&!document.hidden&&heroInViewport&&(!heroNeedsConsent()||heroPlaybackRequested));
+let heroLastNeedsConsent=heroNeedsConsent();
+function onHeroPreferenceChange(){
+  const needsConsent=heroNeedsConsent();
+  if(needsConsent&&!heroLastNeedsConsent)heroPlaybackRequested=false;
+  heroLastNeedsConsent=needsConsent;reconcileHeroPlayback();
+}
+let heroPlayIcon=null;
+if(heroSoundToggle){
+  heroPlayIcon=document.createElement("span");heroPlayIcon.textContent="▶";
+  heroPlayIcon.setAttribute("aria-hidden","true");heroPlayIcon.hidden=true;
+  heroSoundToggle.prepend(heroPlayIcon);
+}
 function updateHeroSoundButton(){
   if(!heroSoundToggle||!heroVideo)return;
+  const needsPlay=heroUserPaused||(heroNeedsConsent()&&!heroPlaybackRequested);
   const muted=heroVideo.muted;
   const arabic=document.documentElement.lang==="ar";
-  const label=muted?(arabic?"تشغيل الصوت":"Sound on"):(arabic?"كتم الصوت":"Mute");
-  heroSoundToggle.classList.toggle("is-muted",muted);
-  heroSoundToggle.setAttribute("aria-pressed",String(!muted));
+  const label=needsPlay?(arabic?"تشغيل الفيديو":"Play video"):(muted?(arabic?"تشغيل الصوت":"Sound on"):(arabic?"كتم الصوت":"Mute"));
+  heroSoundToggle.classList.toggle("is-muted",!needsPlay&&muted);
+  heroSoundToggle.setAttribute("aria-pressed",String(!needsPlay&&!muted));
   heroSoundToggle.setAttribute("aria-label",label);
+  const soundIcon=heroSoundToggle.querySelector("svg");if(soundIcon)soundIcon.style.display=needsPlay?"none":"";
+  if(heroPlayIcon)heroPlayIcon.hidden=!needsPlay;
   const text=heroSoundToggle.querySelector(".hero-sound-label");if(text)text.textContent=label;
 }
+function pauseHeroVideo(){
+  if(!heroVideo.paused)heroPauseExpected=true;
+  heroVideo.pause();
+}
 async function playHeroVideo(requestSound=true){
-  if(!heroVideo)return;
+  if(!heroCanPlay()||heroPlayPending)return;
+  heroPlayPending=true;
   const wantsSound=heroSoundChoice==="muted"?false:(heroSoundChoice==="sound"?true:requestSound);
   heroVideo.muted=!wantsSound;
   if(wantsSound)heroVideo.volume=1;
   try{
     await heroVideo.play();heroAutoplayMuted=false;
   }catch{
-    if(wantsSound){
+    if(wantsSound&&heroCanPlay()){
       heroVideo.muted=true;heroAutoplayMuted=true;
       try{await heroVideo.play()}catch{}
     }
+  }finally{
+    heroPlayPending=false;
+    if(!heroCanPlay())pauseHeroVideo();
+    updateHeroSoundButton();
   }
-  updateHeroSoundButton();
+}
+function loadHeroFallback(){
+  const fallback=heroVideo?.dataset.fallbackSrc;
+  if(!heroCanPlay()||!fallback||heroVideo.dataset.fallbackApplied==="true")return;
+  heroNeedsFallback=false;
+  heroVideo.dataset.fallbackApplied="true";
+  heroVideo.dataset.activeSrc=fallback;
+  heroVideo.classList.add("is-fallback");
+  pauseHeroVideo();heroVideo.src=fallback;heroVideo.load();
 }
 function loadResponsiveHeroVideo(){
-  if(!heroVideo)return;
+  if(!heroCanPlay())return;
   const preferred=heroMobileQuery.matches?heroVideo.dataset.mobileSrc:heroVideo.dataset.desktopSrc;
-  const fallback=heroVideo.dataset.fallbackSrc;
-  const target=preferred||fallback;
-  if(!target||heroVideo.dataset.activeSrc===target)return;
+  const target=preferred||heroVideo.dataset.fallbackSrc;
+  if(!target)return;
+  if(heroSelectedSource===target&&heroVideo.hasAttribute("src")){
+    if(heroNeedsFallback)loadHeroFallback();
+    return;
+  }
+  heroSelectedSource=target;heroNeedsFallback=false;
+  heroVideo.preload="metadata";
   heroVideo.dataset.activeSrc=target;
   heroVideo.dataset.fallbackApplied="false";
   heroVideo.classList.remove("is-fallback");
-  heroVideo.src=target;
-  heroVideo.load();
-  void playHeroVideo(heroSoundChoice!=="muted"&&!heroAutoplayMuted);
+  pauseHeroVideo();heroVideo.src=target;heroVideo.load();
+}
+function reconcileHeroPlayback(){
+  if(!heroVideo)return;
+  if(heroNeedsConsent()&&!heroPlaybackRequested){
+    pauseHeroVideo();heroVideo.preload="none";
+    if(heroVideo.hasAttribute("src")){
+      heroVideo.removeAttribute("src");heroSelectedSource="";heroNeedsFallback=false;
+      delete heroVideo.dataset.activeSrc;heroVideo.load();
+    }
+  }else if(!heroCanPlay())pauseHeroVideo();
+  else{
+    loadResponsiveHeroVideo();
+    if(heroVideo.paused)void playHeroVideo(heroSoundChoice==="sound"||(!heroAutoplayMuted&&heroSoundChoice!=="muted"));
+  }
+  updateHeroSoundButton();
 }
 function unlockHeroSound(event){
-  if(!heroVideo||!heroAutoplayMuted||heroSoundChoice!==null||event?.target?.closest?.("#heroSoundToggle"))return;
-  heroVideo.muted=false;heroVideo.volume=1;
-  heroVideo.play().then(()=>{heroAutoplayMuted=false;updateHeroSoundButton()}).catch(()=>{heroVideo.muted=true;updateHeroSoundButton()});
+  if(!heroCanPlay()||!heroAutoplayMuted||heroSoundChoice!==null||event?.target?.closest?.("#heroSoundToggle"))return;
+  void playHeroVideo(true);
 }
 if(heroVideo){
+  // Script controls autoplay so native media events cannot bypass visibility or consent.
+  heroVideo.autoplay=false;heroVideo.removeAttribute("autoplay");
   heroVideo.muted=false;heroVideo.defaultMuted=false;heroVideo.volume=1;
-  heroVideo.addEventListener("error",()=>{
-    const fallback=heroVideo.dataset.fallbackSrc;
-    if(!fallback||heroVideo.dataset.fallbackApplied==="true")return;
-    heroVideo.dataset.fallbackApplied="true";
-    heroVideo.dataset.activeSrc=fallback;
-    heroVideo.classList.add("is-fallback");
-    heroVideo.src=fallback;
-    heroVideo.load();
-    void playHeroVideo(heroSoundChoice!=="muted");
+  heroVideo.addEventListener("play",()=>{
+    // load() can discard a queued pause event when switching responsive sources.
+    heroPauseExpected=false;
+    if(!heroCanPlay())pauseHeroVideo();
   });
-  heroVideo.addEventListener("canplay",()=>{if(heroVideo.paused)void playHeroVideo(heroSoundChoice==="sound"||(!heroAutoplayMuted&&heroSoundChoice!=="muted"))});
-  heroVideo.addEventListener("ended",()=>{heroVideo.currentTime=0;void heroVideo.play().catch(()=>{})});
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&heroVideo.paused)void heroVideo.play().catch(()=>{})});
-  window.setInterval(()=>{if(heroVideo.paused&&!document.hidden)void heroVideo.play().catch(()=>{})},1500);
+  heroVideo.addEventListener("pause",()=>{
+    if(heroPauseExpected){heroPauseExpected=false;return}
+    if(heroCanPlay()&&!heroVideo.ended&&heroVideo.readyState>=2){
+      heroUserPaused=true;updateHeroSoundButton();
+    }
+  });
+  heroVideo.addEventListener("error",()=>{
+    if(!heroVideo.hasAttribute("src"))return;
+    heroNeedsFallback=true;reconcileHeroPlayback();
+  });
+  heroVideo.addEventListener("canplay",reconcileHeroPlayback);
+  heroVideo.addEventListener("ended",()=>{
+    if(!heroCanPlay())return;
+    heroVideo.currentTime=0;void playHeroVideo(heroSoundChoice!=="muted");
+  });
+  document.addEventListener("visibilitychange",reconcileHeroPlayback);
+  window.setInterval(reconcileHeroPlayback,1500);
   document.addEventListener("pointerdown",unlockHeroSound,{once:true,capture:true});
   document.addEventListener("keydown",unlockHeroSound,{once:true,capture:true});
-  if(heroMobileQuery.addEventListener)heroMobileQuery.addEventListener("change",loadResponsiveHeroVideo);
-  else heroMobileQuery.addListener(loadResponsiveHeroVideo);
-  loadResponsiveHeroVideo();
-  updateHeroSoundButton();
+  const onHeroViewportChange=()=>{heroInViewport=heroIsInViewport();reconcileHeroPlayback()};
+  if("IntersectionObserver" in window){
+    new IntersectionObserver(entries=>{
+      heroInViewport=entries.some(entry=>entry.isIntersecting&&entry.intersectionRatio>0);
+      reconcileHeroPlayback();
+    },{threshold:[0,0.01]}).observe(heroVideo);
+  }else window.addEventListener("scroll",onHeroViewportChange,{passive:true});
+  window.addEventListener("resize",onHeroViewportChange,{passive:true});
+  for(const [query,listener] of [[heroMobileQuery,reconcileHeroPlayback],[heroMotionQuery,onHeroPreferenceChange]]){
+    if(query.addEventListener)query.addEventListener("change",listener);
+    else query.addListener(listener);
+  }
+  heroConnection?.addEventListener?.("change",onHeroPreferenceChange);
+  reconcileHeroPlayback();
 }
 heroSoundToggle?.addEventListener("click",()=>{
   if(!heroVideo)return;
+  if(heroUserPaused||(heroNeedsConsent()&&!heroPlaybackRequested)){
+    heroUserPaused=false;
+    if(heroNeedsConsent()&&!heroPlaybackRequested)heroSoundChoice="sound";
+    heroPlaybackRequested=true;
+    reconcileHeroPlayback();return;
+  }
   const wantsSound=heroVideo.muted;
   heroSoundChoice=wantsSound?"sound":"muted";
-  heroVideo.muted=!wantsSound;
-  if(wantsSound)heroVideo.volume=1;
-  heroVideo.play().then(()=>{heroAutoplayMuted=false;updateHeroSoundButton()}).catch(()=>{heroVideo.muted=true;heroAutoplayMuted=true;updateHeroSoundButton()});
+  if(heroCanPlay())void playHeroVideo(wantsSound);
   updateHeroSoundButton();
 });
 const menuBtn=$("#menuBtn"),navLinks=$("#navLinks");
@@ -285,10 +374,14 @@ $("#partsForm")?.addEventListener("submit",e=>{e.preventDefault();sendForm(e.cur
 $("#contactForm")?.addEventListener("submit",e=>{e.preventDefault();sendForm(e.currentTarget,"/api/contact",$("#contactMsg"))});
 
 let activeCMSSettings={};
+// Capture approved copy before translation or asynchronous CMS updates. Keeping
+// each language's fallback prevents an Arabic override leaking onto /en.
+const managedPageDefaults=new WeakMap([...document.querySelectorAll("[data-cms-setting]")].map(element=>[element,element.textContent]));
 function applyManagedPageContent(settings,lang){
   document.querySelectorAll("[data-cms-setting]").forEach(element=>{
     const key=lang==="en"?(element.dataset.cmsSettingEn||""):element.dataset.cmsSetting;
-    const value=key?settings[key]:"";if(value)element.textContent=value;
+    const value=key?settings[key]:"",original=managedPageDefaults.get(element)||"";
+    element.textContent=typeof value==="string"&&value.trim()?value:(lang==="en"?(EN[original.trim()]||original):original);
   });
 }
 async function loadSiteContent(){

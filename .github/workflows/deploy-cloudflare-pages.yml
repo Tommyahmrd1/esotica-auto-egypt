@@ -29,7 +29,8 @@ jobs:
           node --check site.js
           node --input-type=module --check < _worker.js
           node scripts/validate-site.mjs
-          node --test scripts/public-forms.test.mjs
+          node --check admin.js
+          node --test scripts/*.test.mjs
 
       - name: Deploy
         uses: cloudflare/wrangler-action@v4

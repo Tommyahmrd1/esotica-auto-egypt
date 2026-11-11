@@ -1,6 +1,56 @@
 const JSON_HEADERS={"content-type":"application/json; charset=utf-8","cache-control":"no-store"};
 const json=(data,status=200,extra={})=>new Response(JSON.stringify(data),{status,headers:{...JSON_HEADERS,...extra}});
 const bad=(message,status=400)=>json({error:message},status);
+// Limits apply to both language versions; blank values restore the approved copy.
+const CMS_CONTENT_LIMITS=Object.fromEntries([
+ ["service_maintenance_title",160],
+ ["service_maintenance_description",600],
+ ["service_body_paint_title",160],
+ ["service_body_paint_description",600],
+ ["service_parts_title",160],
+ ["service_parts_description",600],
+ ["service_inspection_title",160],
+ ["service_inspection_description",600],
+ ["service_mobile_title",160],
+ ["service_mobile_description",600],
+ ["service_followup_title",160],
+ ["service_followup_description",600],
+ ["warranty_intro_title",160],
+ ["warranty_intro_description",600],
+ ["warranty_eligibility_title",160],
+ ["warranty_eligibility_description",600],
+ ["warranty_coverage_title",160],
+ ["warranty_coverage_description",600],
+ ["warranty_booklet_title",160],
+ ["warranty_booklet_description",600],
+ ["warranty_support_title",160],
+ ["warranty_support_description",600],
+ ["warranty_note_title",160],
+ ["warranty_note_description",600],
+ ["warranty_cta",80],
+ ["insurance_intro_title",160],
+ ["insurance_intro_description",600],
+ ["insurance_trust_title",160],
+ ["insurance_trust_description",600],
+ ["insurance_point_assessment",160],
+ ["insurance_point_followup",160],
+ ["insurance_point_quality",160],
+ ["insurance_process_title",160],
+ ["insurance_assessment_title",160],
+ ["insurance_assessment_description",600],
+ ["insurance_documentation_title",160],
+ ["insurance_documentation_description",600],
+ ["insurance_approval_title",160],
+ ["insurance_approval_description",600],
+ ["insurance_repair_title",160],
+ ["insurance_repair_description",600],
+ ["insurance_partners_title",160],
+ ["insurance_partners_description",600],
+ ["insurance_cta_title",160],
+ ["insurance_cta_description",600],
+ ["insurance_cta",80],
+ ["insurance_disclaimer",600]
+].flatMap(([key,max])=>[[key,max],[`${key}_en`,max]]));
 
 const ENGLISH_PAGE_META={
  "/":["Esotica Auto | Range Rover, Jaguar & Luxury Car Service","Specialist Range Rover, Land Rover and Jaguar maintenance, diagnostics, spare parts and luxury car care in New Cairo and Sheikh Zayed."],
@@ -266,6 +316,26 @@ async function sha256(value){
  const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(value)));
  return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,"0")).join("");
 }
+async function guardAdminLogin(req,env){
+ const now=Date.now(),windowMs=15*60*1000,limit=10;
+ // Cloudflare supplies the connecting IP. Do not trust caller-controlled
+ // cookies or user-agent values as alternatives for the login quota.
+ const clientKey=await sha256(`admin-login|${req.headers.get("cf-connecting-ip")||"unknown"}`);
+ await env.DB.batch([
+   env.DB.prepare(`CREATE TABLE IF NOT EXISTS admin_login_rate_limits (
+     client_key TEXT PRIMARY KEY,window_started INTEGER NOT NULL,hits INTEGER NOT NULL DEFAULT 0)`),
+   env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_admin_login_window ON admin_login_rate_limits(window_started)"),
+   env.DB.prepare("DELETE FROM admin_login_rate_limits WHERE window_started<?").bind(now-24*60*60*1000)
+ ]);
+ const quota=await env.DB.prepare(`INSERT INTO admin_login_rate_limits(client_key,window_started,hits) VALUES(?,?,1)
+   ON CONFLICT(client_key) DO UPDATE SET
+     window_started=CASE WHEN window_started<=? THEN excluded.window_started ELSE window_started END,
+     hits=CASE WHEN window_started<=? THEN 1 ELSE hits+1 END
+   WHERE window_started<=? OR hits<? RETURNING window_started`).bind(clientKey,now,now-windowMs,now-windowMs,now-windowMs,limit).first();
+ if(quota)return null;
+ const blocked=await env.DB.prepare("SELECT window_started FROM admin_login_rate_limits WHERE client_key=?").bind(clientKey).first();
+ return Math.max(1,Math.ceil(((Number(blocked?.window_started)||now)+windowMs-now)/1000));
+}
 async function guardPublicForm(req,env,type,data,signature){
  if(clean(data?.website,200))return {silent:true};
  const now=Date.now(),windowMs=30*60*1000,limit=8;
@@ -370,7 +440,7 @@ async function handleAPI(req,env,url){
  if(req.method==="POST"&&!sameOrigin(req)) return bad("طلب غير مسموح.",403);
 
  if(p==="/api/health"){
-   return json({ok:true,database:!!env.DB,adminConfigured:!!env.ADMIN_PASSWORD,formProtection:true});
+   return json({ok:true,database:!!env.DB,adminConfigured:!!env.ADMIN_PASSWORD,formProtection:true,adminLoginProtection:true,leadAlertPagination:true});
  }
  if(p==="/api/analytics/heartbeat"&&req.method==="POST"){
    await initAnalyticsDB(env);
@@ -447,6 +517,8 @@ async function handleAPI(req,env,url){
 
  if(p==="/api/admin/login"&&req.method==="POST"){
    if(!env.ADMIN_PASSWORD)return bad("دخول الإدارة غير مُعدّ بعد. أضف ADMIN_PASSWORD في Cloudflare.",503);
+   const retryAfter=await guardAdminLogin(req,env);
+   if(retryAfter)return json({error:"محاولات دخول كثيرة. انتظر قليلًا ثم حاول مرة أخرى."},429,{"retry-after":String(retryAfter)});
    const d=await readJSON(req);const u=clean(d?.username,50),pw=String(d?.password??"");
    if(u!=="admin"||pw!==env.ADMIN_PASSWORD)return bad("اسم المستخدم أو كلمة السر غير صحيحة.",401);
    const token=await makeSession(env);return json({ok:true},200,{"set-cookie":sessionCookie(token)});
@@ -461,12 +533,21 @@ async function handleAPI(req,env,url){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);
    const pollNow=Date.now(),after=Math.max(0,Math.min(pollNow,Number(url.searchParams.get("after"))||0));
-   const rows=await env.DB.prepare(`SELECT request_type,id,name,created_at FROM (
-     SELECT 'bookings' AS request_type,id,name,created_at FROM bookings WHERE created_at>? AND created_at<=?
-     UNION ALL SELECT 'parts' AS request_type,id,name,created_at FROM parts_requests WHERE created_at>? AND created_at<=?
-     UNION ALL SELECT 'contacts' AS request_type,id,name,created_at FROM contact_requests WHERE created_at>? AND created_at<=?
-   ) ORDER BY created_at ASC LIMIT 30`).bind(after,pollNow,after,pollNow,after,pollNow).all();
-   return json({now:pollNow,alerts:rows.results||[]});
+   const rawCursor=url.searchParams.get("cursor");
+   const cursor=rawCursor?.match(/^(\d{1,16}):(bookings|contacts|parts):(\d{1,16})$/);
+   if(rawCursor&&(!cursor||!Number.isSafeInteger(Number(cursor[1]))||!Number.isSafeInteger(Number(cursor[3]))||Number(cursor[1])>pollNow))return bad("مؤشر تنبيهات غير صحيح.");
+   const since=cursor?Number(cursor[1]):after;
+   // The type and ID break timestamp ties, so bursts larger than one page
+   // cannot disappear when the next poll advances its cursor.
+   const continuation=cursor?"(created_at>? OR (created_at=? AND (request_type>? OR (request_type=? AND id>?))))":"created_at>?";
+   const values=cursor?[since,since,cursor[2],cursor[2],Number(cursor[3]),pollNow]:[since,pollNow];
+   const rows=await env.DB.prepare(`SELECT request_type,id,created_at FROM (
+     SELECT 'bookings' AS request_type,id,created_at FROM bookings
+     UNION ALL SELECT 'parts' AS request_type,id,created_at FROM parts_requests
+     UNION ALL SELECT 'contacts' AS request_type,id,created_at FROM contact_requests
+   ) WHERE ${continuation} AND created_at<=? ORDER BY created_at ASC,request_type ASC,id ASC LIMIT 31`).bind(...values).all();
+   const alerts=(rows.results||[]).slice(0,30),hasMore=(rows.results||[]).length>30,last=alerts.at(-1);
+   return json({now:pollNow,alerts,hasMore,nextCursor:hasMore?`${last.created_at}:${last.request_type}:${last.id}`:""});
  }
 
  if(p==="/api/admin/dashboard"&&req.method==="GET"){
@@ -497,11 +578,13 @@ async function handleAPI(req,env,url){
  if(p==="/api/admin/site-settings"&&req.method==="POST"){
    if(!(await auth(req,env)))return bad("غير مصرح.",401);
    await initDB(env);const d=await readJSON(req);if(!d||typeof d!=="object")return bad("بيانات غير صحيحة.");
-   const allowed=["hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","section_order","show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url","services_page_title","services_page_title_en","services_page_intro","services_page_intro_en","about_page_title","about_page_title_en","about_page_intro","about_page_intro_en","warranty_page_title","warranty_page_title_en","warranty_page_intro","warranty_page_intro_en","contact_page_title","contact_page_title_en","contact_page_intro","contact_page_intro_en"];
+   const allowed=[...Object.keys(CMS_CONTENT_LIMITS),"hero_title","hero_subtitle","hero_primary_text","hero_primary_link","hero_secondary_text","hero_secondary_link","accent_color","section_order","show_services","show_booking","show_parts","show_branches","show_reviews","show_contact","show_brand_text","brand_name","brand_subtitle","contact_phone","whatsapp_number","contact_email","facebook_url","instagram_url","services_page_title","services_page_title_en","services_page_intro","services_page_intro_en","about_page_title","about_page_title_en","about_page_intro","about_page_intro_en","warranty_page_title","warranty_page_title_en","warranty_page_intro","warranty_page_intro_en","contact_page_title","contact_page_title_en","contact_page_intro","contact_page_intro_en"];
    const stmts=[];
    for(const key of allowed){
      if(Object.prototype.hasOwnProperty.call(d,key)){
-       const val=clean(d[key],key==="section_order"?500:1000);
+       const contentLimit=CMS_CONTENT_LIMITS[key];
+       if(contentLimit&&(typeof d[key]!=="string"||d[key].trim().length>contentLimit))return bad("راجع طول نصوص المحتوى؛ لم يتم حفظ أي تغيير.");
+       const val=clean(d[key],contentLimit||(key==="section_order"?500:1000));
        stmts.push(env.DB.prepare("INSERT INTO site_settings(key,value,updated_at) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").bind(key,val,Date.now()));
      }
    }
@@ -565,10 +648,18 @@ async function handleAPI(req,env,url){
    }else if(action==="permanent"){
      if(clean(d.confirm,80)!==`DELETE ${id}`)return bad("تأكيد الحذف النهائي غير صحيح.",400);
      const table=type==="parts"?"parts_requests":type==="contacts"?"contact_requests":"bookings";
-     await env.DB.batch([
-       env.DB.prepare(`DELETE FROM ${table} WHERE id=?`).bind(id),
-       env.DB.prepare("DELETE FROM admin_request_meta WHERE request_type=? AND request_id=?").bind(type,id)
+     const row=await env.DB.prepare(`SELECT r.id,COALESCE(m.deleted_at,0) AS deleted_at FROM ${table} r
+       LEFT JOIN admin_request_meta m ON m.request_type=? AND m.request_id=r.id WHERE r.id=?`).bind(type,id).first();
+     if(!row)return bad("الطلب غير موجود.",404);
+     if(!Number(row.deleted_at))return bad("انقل الطلب إلى المحذوفات قبل الحذف النهائي.",409);
+     const results=await env.DB.batch([
+       // Recheck inside the transaction so a concurrent restore cannot be lost.
+       env.DB.prepare(`DELETE FROM ${table} WHERE id=? AND EXISTS
+         (SELECT 1 FROM admin_request_meta WHERE request_type=? AND request_id=? AND deleted_at>0)`).bind(id,type,id),
+       env.DB.prepare(`DELETE FROM admin_request_meta WHERE request_type=? AND request_id=?
+         AND NOT EXISTS (SELECT 1 FROM ${table} WHERE id=?)`).bind(type,id,id)
      ]);
+     if(Number(results[0].meta?.changes)!==1)return bad("تعذر الحذف النهائي. راجع حالة الطلب وأعد المحاولة.",409);
    }else return bad("إجراء غير صحيح.");
    return json({ok:true});
  }
