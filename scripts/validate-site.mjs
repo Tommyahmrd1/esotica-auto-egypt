@@ -29,7 +29,7 @@ function routeExists(raw,fromFile){
 
 walk(root);
 const htmlFiles=allFiles.filter(file=>file.endsWith(".html"));
-const publicHtml=htmlFiles.filter(file=>!file.startsWith("admin/")&&!file.startsWith("customer-preview/"));
+const publicHtml=htmlFiles.filter(file=>!file.startsWith("admin/")&&!file.startsWith("customer-preview/")&&!file.startsWith("en/"));
 
 for(const file of htmlFiles){
   const source=fs.readFileSync(path.join(root,file),"utf8");

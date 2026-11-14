@@ -5,7 +5,7 @@ import vm from "node:vm";
 import {fixture} from "./test-support.mjs";
 
 const root=new URL("../",import.meta.url);
-const [worker,site,adminHtml]=await Promise.all(["_worker.js","site.js","admin/index.html"].map(path=>fs.readFile(new URL(path,root),"utf8")));
+const [worker,site,adminHtml]=await Promise.all(["_worker.js","site.js","admin/index.html"].map(path=>fs.readFile(new URL(path,root),"utf8").then(text=>text.replace(/\r\n/g,"\n"))));
 const limits=vm.runInNewContext(worker.match(/const CMS_CONTENT_LIMITS=([\s\S]*?);\n/)[1]);
 const EN=vm.runInNewContext(`${site.slice(site.indexOf("const EN="),site.indexOf("const AR="))};EN`);
 const defaultText=source=>source.replace(/<[^>]+>/g,"").replace(/&amp;/g,"&");

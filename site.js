@@ -1,8 +1,8 @@
 
-function cairoNow(){
-  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hour12:false}).formatToParts(new Date());
+function cairoNow(reference=new Date()){
+  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(reference);
   const get=t=>parts.find(p=>p.type===t)?.value||"";
-  return {date:`${get("year")}-${get("month")}-${get("day")}`,hour:Number(get("hour"))};
+  return {date:`${get("year")}-${get("month")}-${get("day")}`,hour:Number(get("hour")),minute:Number(get("minute"))};
 }
 const bookingDateInput=document.querySelector('#bookingForm input[name="preferredDate"]');
 if(bookingDateInput){
@@ -100,6 +100,7 @@ async function sendVisitorHeartbeat(isPageView=false){
       keepalive:true
     });
     if(!response.ok)console.warn("Visitor analytics heartbeat unavailable",response.status);
+    else document.dispatchEvent(new Event("esotica:visitor-ready"));
   }catch{}
 }
 void sendVisitorHeartbeat(true);
@@ -176,7 +177,8 @@ function heroIsInViewport(){
   return rect.bottom>0&&rect.right>0&&rect.top<window.innerHeight&&rect.left<window.innerWidth;
 }
 let heroInViewport=heroIsInViewport();
-const heroNeedsConsent=()=>heroMotionQuery.matches||Boolean(heroConnection?.saveData);
+const heroNeedsConsent=()=>heroMotionQuery.matches||Boolean(heroConnection?.saveData)||["slow-2g","2g","3g"].includes(heroConnection?.effectiveType)||
+  (typeof heroConnection?.downlink==="number"&&heroConnection.downlink>0&&heroConnection.downlink<=2);
 const heroCanPlay=()=>Boolean(heroVideo&&!heroUserPaused&&!document.hidden&&heroInViewport&&(!heroNeedsConsent()||heroPlaybackRequested));
 let heroLastNeedsConsent=heroNeedsConsent();
 function onHeroPreferenceChange(){
@@ -340,38 +342,189 @@ if(menuBtn&&navLinks){
   document.addEventListener("keydown",event=>{if(event.key==="Escape")setMenuOpen(false)});
 }
 
+// PUBLIC_FORM_HELPERS_BEGIN
+function normalizeFormDigits(value){
+  return String(value??"").replace(/[٠-٩۰-۹]/g,character=>String(character.charCodeAt(0)-(character<="٩"?0x660:0x6f0)));
+}
+function normalizeFormPhone(value){
+  const raw=normalizeFormDigits(value).trim().replace(/[\u061c\u200e\u200f]/g,"");
+  if(raw.length>64||!/^[+0-9\s().-]+$/.test(raw))return "";
+  let phone=raw.replace(/[\s().-]/g,"");
+  if(phone.startsWith("00"))phone="+"+phone.slice(2);
+  if(/^0[1-9]\d{7,9}$/.test(phone))phone="+20"+phone.slice(1);
+  else if(/^1[0125]\d{8}$/.test(phone))phone="+20"+phone;
+  else if(/^[1-9]\d{6,14}$/.test(phone))phone="+"+phone;
+  if(/^\+200[1-9]\d{7,9}$/.test(phone))phone="+20"+phone.slice(4);
+  return /^\+[1-9]\d{6,14}$/.test(phone)?phone:"";
+}
+const FORM_ERROR_COPY={
+  INVALID_PHONE:["أدخل رقم هاتف صحيحًا يمكن التواصل معك عليه.","Enter a valid phone number where we can contact you."],
+  INVALID_DATE:["اختار تاريخ حجز صحيح.","Choose a valid appointment date."],
+  PAST_DATE:["لا يمكن اختيار تاريخ قديم. اختار تاريخ من اليوم أو بعده.","Please choose today or a future date."],
+  FRIDAY_CLOSED:["الجمعة إجازة. اختار يومًا من السبت إلى الخميس.","We are closed on Fridays. Please choose Saturday to Thursday."],
+  SAME_DAY_CUTOFF:["انتهى وقت حجز نفس اليوم. اختار موعدًا من بكرة أو بعده.","Same-day booking is closed after 5:00 PM Cairo time. Please choose tomorrow or a later date."],
+  INVALID_TIME:["اختار وقتًا بين 10:00 صباحًا و6:00 مساءً بفاصل نصف ساعة.","Choose a preferred time from 10:00 AM to 6:00 PM in 30-minute steps."],
+  PAST_TIME:["الوقت المختار فات بالفعل. اختار وقتًا لاحقًا بتوقيت القاهرة.","That time has already passed. Choose a later time in Cairo."],
+  SERVER_ERROR:["حدث خطأ مؤقت في الموقع. بياناتك ما زالت موجودة؛ حاول مرة أخرى بعد قليل.","The website encountered a temporary error. Your details are still here; please try again shortly."],
+  FORBIDDEN_ORIGIN:["تعذر التحقق من صفحة إرسال الطلب. حدّث الصفحة ثم حاول مرة أخرى.","We could not verify this submission page. Refresh the page, then try again."]
+};
+function bookingChoiceError(date,time,now){
+  const parsed=new Date(`${date}T00:00:00Z`);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==date)return {code:"INVALID_DATE",field:"preferredDate"};
+  if(date<now.date)return {code:"PAST_DATE",field:"preferredDate"};
+  if(parsed.getUTCDay()===5)return {code:"FRIDAY_CLOSED",field:"preferredDate"};
+  if(date===now.date&&now.hour>=17)return {code:"SAME_DAY_CUTOFF",field:"preferredDate"};
+  if(time===null)return null;
+  if(!/^\d{2}:\d{2}$/.test(time))return {code:"INVALID_TIME",field:"preferredTime"};
+  const [hour,minute]=time.split(":").map(Number),total=hour*60+minute;
+  if(hour>23||minute>59||total<600||total>1080||minute%30!==0)return {code:"INVALID_TIME",field:"preferredTime"};
+  if(date===now.date&&total<=now.hour*60+now.minute)return {code:"PAST_TIME",field:"preferredTime"};
+  return null;
+}
+function publicFormError(data,status,language){
+  const arabic=language==="ar",localized=arabic?data?.error:data?.error_en;
+  if(typeof localized==="string"&&localized.trim())return localized;
+  const code=status>=500?"SERVER_ERROR":data?.code||(status===403?"FORBIDDEN_ORIGIN":"");
+  const copy=FORM_ERROR_COPY[code];
+  if(copy)return copy[arabic?0:1];
+  return arabic?"راجع البيانات المطلوبة ثم حاول مرة أخرى.":"Please review the entered details and try again.";
+}
+function formRetrySeconds(response,data,now=Date.now()){
+  const header=response.headers.get("retry-after");
+  let seconds=header&&/^\d+(?:\.\d+)?$/.test(header.trim())?Number(header):NaN;
+  if(!Number.isFinite(seconds)&&header)seconds=(Date.parse(header)-now)/1000;
+  if(!Number.isFinite(seconds)||seconds<=0)seconds=Number(data?.retryAfter);
+  if(!Number.isFinite(seconds)||seconds<=0)seconds=1800;
+  return Math.min(86400,Math.max(1,Math.ceil(seconds)));
+}
+function formCooldownCopy(seconds,language){
+  const duration=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,"0")}`;
+  return language==="ar"?`تم الوصول إلى حد الإرسال. يمكنك المحاولة بعد ${duration}. بياناتك ما زالت موجودة.`:`The submission limit has been reached. Try again in ${duration}. Your details are still here.`;
+}
+// PUBLIC_FORM_HELPERS_END
+
 const FORM_SUCCESS={
   "/api/booking":["تم استلام طلب الحجز. سيتواصل معك فريق Esotica لتأكيد الموعد.","Your booking request has been received. The Esotica team will contact you to confirm the appointment."],
   "/api/parts":["تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر.","Your spare-parts enquiry has been received. Our team will contact you to confirm availability and price."],
   "/api/contact":["تم استلام رسالتك. سيتواصل معك فريق Esotica.","Your message has been received. The Esotica team will contact you shortly."]
 };
 
+// PUBLIC_FORM_CONTROLLER_BEGIN
+const formCooldowns=new WeakMap(),submittingForms=new WeakSet();
+function cooldownStorageKey(url){return `esotica-form-cooldown:${url}`}
+function renderFormCooldown(form){
+  const state=formCooldowns.get(form);if(!state)return false;
+  const remaining=Math.max(0,Math.ceil((state.until-Date.now())/1000));
+  if(!remaining){
+    window.clearInterval(state.timer);formCooldowns.delete(form);
+    try{sessionStorage.removeItem(cooldownStorageKey(state.url))}catch{}
+    state.button.disabled=false;
+    msg(state.message,uiText("يمكنك إرسال طلبك الآن. بياناتك ما زالت موجودة.","You can submit your request now. Your details are still here."),true);
+    return false;
+  }
+  state.button.disabled=true;
+  const text=formCooldownCopy(remaining,document.documentElement.lang);
+  // Announce the initial error and the expiry, rather than every elapsed second.
+  if(state.announced){state.message.setAttribute("aria-live","off");state.message.textContent=text}
+  else{msg(state.message,text,false);state.announced=true}
+  return true;
+}
+function startFormCooldown(form,url,message,seconds){
+  const previous=formCooldowns.get(form);if(previous)window.clearInterval(previous.timer);
+  const state={url,message,button:form.querySelector("button[type=submit]"),until:Date.now()+seconds*1000};
+  formCooldowns.set(form,state);
+  try{sessionStorage.setItem(cooldownStorageKey(url),String(state.until))}catch{}
+  renderFormCooldown(form);
+  state.timer=window.setInterval(()=>renderFormCooldown(form),1000);
+}
 async function sendForm(form,url,msgEl){
-  const btn=form.querySelector("button[type=submit]");
-  btn.classList.add("loading"); btn.disabled=true;
+  if(submittingForms.has(form)||renderFormCooldown(form))return;
+  const btn=form.querySelector("button[type=submit]"),controller=new AbortController();
+  const timeout=window.setTimeout(()=>controller.abort(),25000);
+  submittingForms.add(form);form.setAttribute("aria-busy","true");
+  btn.classList.add("loading");btn.disabled=true;
   msg(msgEl,uiText("جاري الإرسال...","Sending..."),true);
   try{
     const data=Object.fromEntries(new FormData(form).entries());
+    if(data.phone)data.phone=normalizeFormPhone(data.phone);
+    if(data.year)data.year=normalizeFormDigits(data.year);
     Object.assign(data,{sourceType:currentLeadAttribution.type,sourceLabel:currentLeadAttribution.label,sourceId:currentLeadAttribution.id,sourcePage:currentLeadAttribution.page||location.pathname});
-    if(data.quantity) data.quantity=Number(data.quantity);
-    const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data)});
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(isArabic()?(j.error||"تعذر إرسال الطلب."):"Please review the entered details and try again.");
+    if(data.quantity)data.quantity=Number(data.quantity);
+    const response=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data),signal:controller.signal});
+    const result=await response.json().catch(()=>null);
+    if(!response.ok){
+      if(response.status===429)startFormCooldown(form,url,msgEl,formRetrySeconds(response,result));
+      else{
+        msg(msgEl,publicFormError(result,response.status,document.documentElement.lang),false);
+        const field=result?.field&&form.elements[result.field];
+        if(field&&typeof field.focus==="function"){field.setAttribute("aria-invalid","true");field.focus()}
+      }
+      return;
+    }
+    if(!result||!(typeof result.message==="string"||result.ok===true)){
+      msg(msgEl,uiText("تعذر التأكد من استلام الطلب. بياناتك ما زالت موجودة؛ حاول مرة أخرى.","We could not confirm receipt of your request. Your details are still here; please try again."),false);return;
+    }
     const success=FORM_SUCCESS[url]||["تم استلام طلبك بنجاح.","Your request has been received successfully."];
     msg(msgEl,isArabic()?success[0]:success[1],true);
     form.reset();
-  }catch(e){msg(msgEl,e.message||uiText("تعذر إرسال الطلب.","We could not send your request. Please try again."),false)}
-  finally{btn.classList.remove("loading");btn.disabled=false}
+  }catch(error){
+    const timedOut=error?.name==="AbortError";
+    msg(msgEl,timedOut?uiText("انتهت مهلة الاتصال قبل تأكيد استلام الطلب. بياناتك ما زالت موجودة؛ حاول مرة أخرى.","The connection timed out before we could confirm receipt. Your details are still here; please try again."):uiText("تعذر الاتصال بالموقع. تحقق من الإنترنت وحاول مرة أخرى؛ بياناتك ما زالت موجودة.","We could not connect to the website. Check your connection and try again; your details are still here."),false);
+  }finally{
+    window.clearTimeout(timeout);submittingForms.delete(form);
+    form.setAttribute("aria-busy","false");btn.classList.remove("loading");
+    btn.disabled=formCooldowns.has(form);
+  }
 }
-$("#bookingForm")?.addEventListener("submit",e=>{
-  e.preventDefault();
-  const form=e.currentTarget, chosen=form.elements.preferredDate.value, now=cairoNow();
-  if(chosen<now.date){msg($("#bookingMsg"),uiText("لا يمكن اختيار تاريخ قديم. اختار تاريخ من اليوم أو بعده.","Please choose today or a future date."),false);return}
-  if(chosen===now.date && now.hour>=17){msg($("#bookingMsg"),uiText("انتهى وقت حجز نفس اليوم. اختار موعدًا من بكرة أو بعده.","Same-day booking is closed after 5:00 PM Cairo time. Please choose tomorrow or a later date."),false);return}
-  sendForm(form,"/api/booking",$("#bookingMsg"));
-});
-$("#partsForm")?.addEventListener("submit",e=>{e.preventDefault();sendForm(e.currentTarget,"/api/parts",$("#partsMsg"))});
-$("#contactForm")?.addEventListener("submit",e=>{e.preventDefault();sendForm(e.currentTarget,"/api/contact",$("#contactMsg"))});
+// PUBLIC_FORM_CONTROLLER_END
+
+function refreshBookingChoices(form){
+  const date=form.elements.preferredDate,time=form.elements.preferredTime,now=cairoNow();
+  date.min=now.date;date.setCustomValidity("");time.setCustomValidity("");
+  const next=Math.min(1080,Math.max(600,(Math.floor((now.hour*60+now.minute)/30)+1)*30));
+  time.min=date.value===now.date?`${String(Math.floor(next/60)).padStart(2,"0")}:${String(next%60).padStart(2,"0")}`:"10:00";
+  if(!date.value)return null;
+  const error=bookingChoiceError(date.value,time.value||null,now);
+  if(error)form.elements[error.field].setCustomValidity(FORM_ERROR_COPY[error.code][isArabic()?0:1]);
+  return error;
+}
+for(const [formId,url,messageId] of [["bookingForm","/api/booking","bookingMsg"],["partsForm","/api/parts","partsMsg"],["contactForm","/api/contact","contactMsg"]]){
+  const form=$("#"+formId);if(!form)continue;
+  const message=$("#"+messageId),phone=form.elements.phone,year=form.elements.year;
+  function normalizeFieldDigits(field){
+    if(!field)return;
+    const normalized=normalizeFormDigits(field.value).replace(/[\u061c\u200e\u200f]/g,"");
+    if(normalized!==field.value){
+      const cursor=field.selectionStart;field.value=normalized;
+      if(cursor!==null&&typeof field.setSelectionRange==="function")field.setSelectionRange(cursor,cursor);
+    }
+  }
+  function validatePhone(){
+    normalizeFieldDigits(phone);
+    phone.setCustomValidity(phone.value&&!/^\+[1-9]\d{6,14}$/.test(normalizeFormPhone(phone.value))?FORM_ERROR_COPY.INVALID_PHONE[isArabic()?0:1]:"");
+  }
+  phone.addEventListener("input",validatePhone);
+  phone.addEventListener("blur",()=>{validatePhone();const normalized=normalizeFormPhone(phone.value);if(normalized)phone.value=normalized});
+  year?.addEventListener("input",()=>normalizeFieldDigits(year));
+  form.addEventListener("input",event=>event.target.removeAttribute?.("aria-invalid"));
+  if(formId==="bookingForm"){
+    form.elements.preferredDate.addEventListener("input",()=>refreshBookingChoices(form));
+    form.elements.preferredTime.addEventListener("input",()=>refreshBookingChoices(form));
+    form.elements.preferredDate.addEventListener("focus",()=>refreshBookingChoices(form));
+  }
+  form.addEventListener("submit",event=>{
+    event.preventDefault();validatePhone();normalizeFieldDigits(year);
+    const choiceError=formId==="bookingForm"?refreshBookingChoices(form):null;
+    if(choiceError){msg(message,FORM_ERROR_COPY[choiceError.code][isArabic()?0:1],false);form.reportValidity();return}
+    if(!form.reportValidity())return;
+    void sendForm(form,url,message);
+  });
+  try{
+    const until=Number(sessionStorage.getItem(cooldownStorageKey(url))),remaining=Math.ceil((until-Date.now())/1000);
+    if(remaining>0)startFormCooldown(form,url,message,Math.min(remaining,86400));
+    else sessionStorage.removeItem(cooldownStorageKey(url));
+  }catch{}
+}
 
 let activeCMSSettings={};
 // Capture approved copy before translation or asynchronous CMS updates. Keeping
@@ -795,8 +948,7 @@ function translatePage(lang){
   try{localStorage.setItem("esotica-language",lang)}catch{}
 }
 function preferredLanguage(){
-  if(isEnglishRoute)return "en";
-  try{return localStorage.getItem("esotica-language")||"en"}catch{return "en"}
+  return isEnglishRoute?"en":"ar";
 }
 function initLanguage(){
   const main=document.querySelector("main");

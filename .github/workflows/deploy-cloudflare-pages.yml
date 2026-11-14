@@ -26,6 +26,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node scripts/build-english.mjs --check
+          node --check marketing.js
           node --check site.js
           node --input-type=module --check < _worker.js
           node scripts/validate-site.mjs
@@ -78,3 +80,5 @@ jobs:
             case "$code" in 301|302|307|308) ;; *) exit 1 ;; esac
             echo "$location" | grep -q '^https://esoticaegypt.com/'
           done
+
+          node scripts/smoke-public.mjs

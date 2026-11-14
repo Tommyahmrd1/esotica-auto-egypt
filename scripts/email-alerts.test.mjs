@@ -8,7 +8,7 @@ const mailEnv={
  RESEND_API_KEY:"re_isolated_test_only",LEAD_ALERT_FROM:"alerts@example.test",LEAD_ALERT_TO:"team@example.test"
 };
 const cases=[
- ["booking","bookings","bookings",{name:"PrivateTestCustomer",phone:"01099999999",carModel:"Private vehicle",year:"2024",branch:"Private branch",serviceType:"maintenance",preferredDate:"2099-01-20",preferredTime:"10:30",details:"Private booking details"}],
+ ["booking","bookings","bookings",{name:"PrivateTestCustomer",phone:"01099999999",carModel:"Private vehicle",year:"2024",branch:"فرع التجمع الخامس",serviceType:"maintenance",preferredDate:"2099-01-20",preferredTime:"10:30",details:"Private booking details"}],
  ["parts","parts","parts_requests",{name:"PrivateTestCustomer",phone:"01099999999",carModel:"Private vehicle",year:"2024",vin:"ABCDEFG",partCode:"PRIVATEPART",quantity:2,details:"Private parts details"}],
  ["contact","contacts","contact_requests",{name:"PrivateTestCustomer",phone:"01099999999",subject:"Private subject",message:"Private customer message"}]
 ];

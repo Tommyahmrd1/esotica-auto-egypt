@@ -88,28 +88,40 @@ function englishPage(url){
  return metadata?{basePath,metadata}:null;
 }
 async function serveEnglishPage(req,env,url,page){
- const assetUrl=new URL(page.basePath,url);assetUrl.search="";assetUrl.hash="";
+ const assetPath=page.basePath==="/"?"/en/":`/en${page.basePath}`;
+ const assetUrl=new URL(assetPath,url);assetUrl.search="";assetUrl.hash="";
  const response=await env.ASSETS.fetch(new Request(assetUrl,req));
- if(req.method==="HEAD"||!response.ok||!(response.headers.get("content-type")||"").includes("text/html"))return response;
- const englishPath=page.basePath==="/"?"/en":`/en${page.basePath}`;
- const canonical=`https://esoticaegypt.com${englishPath}`;
- const [title,description]=page.metadata;
- return new HTMLRewriter()
-   .on("html",{element(element){element.setAttribute("lang","en");element.setAttribute("dir","ltr")}})
-   .on("title",{element(element){element.setInnerContent(title)}})
-   .on('meta[name="description"]',{element(element){element.setAttribute("content",description)}})
-   .on('meta[property="og:title"]',{element(element){element.setAttribute("content",title)}})
-   .on('meta[property="og:description"]',{element(element){element.setAttribute("content",description)}})
-   .on('meta[property="og:url"]',{element(element){element.setAttribute("content",canonical)}})
-   .on('meta[property="og:locale"]',{element(element){element.setAttribute("content","en_US")}})
-   .on('meta[property="og:locale:alternate"]',{element(element){element.setAttribute("content","ar_EG")}})
-   .on('meta[name="twitter:title"]',{element(element){element.setAttribute("content",title)}})
-   .on('meta[name="twitter:description"]',{element(element){element.setAttribute("content",description)}})
-   .on('link[rel="canonical"]',{element(element){element.setAttribute("href",canonical)}})
-   .transform(response);
+ const headers=new Headers(response.headers);headers.set("content-language","en");
+ return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
 }
 
 let analyticsSchemaPromise=null;
+const MARKETING_RETENTION_MS=90*24*60*60*1000;
+const MARKETING_SCHEMA=[
+ `CREATE TABLE IF NOT EXISTS public_marketing_events (
+   event_id TEXT PRIMARY KEY,created_at INTEGER NOT NULL,
+   event_type TEXT NOT NULL,form_type TEXT NOT NULL DEFAULT '',page TEXT NOT NULL,
+   visitor_id TEXT NOT NULL DEFAULT '',campaign_source TEXT NOT NULL DEFAULT 'direct',
+   campaign_medium TEXT NOT NULL DEFAULT '',campaign_name TEXT NOT NULL DEFAULT '',
+   campaign_content TEXT NOT NULL DEFAULT '',campaign_term TEXT NOT NULL DEFAULT '',
+   campaign_landing TEXT NOT NULL DEFAULT '',campaign_referrer TEXT NOT NULL DEFAULT '')`,
+ "CREATE INDEX IF NOT EXISTS idx_marketing_event_created ON public_marketing_events(created_at)",
+ `CREATE TABLE IF NOT EXISTS lead_marketing (
+   request_type TEXT NOT NULL,request_id INTEGER NOT NULL,created_at INTEGER NOT NULL,
+   visitor_id TEXT NOT NULL DEFAULT '',campaign_source TEXT NOT NULL DEFAULT 'direct',
+   campaign_medium TEXT NOT NULL DEFAULT '',campaign_name TEXT NOT NULL DEFAULT '',
+   campaign_content TEXT NOT NULL DEFAULT '',campaign_term TEXT NOT NULL DEFAULT '',
+   campaign_landing TEXT NOT NULL DEFAULT '',campaign_referrer TEXT NOT NULL DEFAULT '',
+   PRIMARY KEY(request_type,request_id)) WITHOUT ROWID`,
+ "CREATE INDEX IF NOT EXISTS idx_lead_marketing_created ON lead_marketing(created_at)"
+];
+async function initMarketingDB(env){
+ if(!env.DB)throw new Error("Missing D1 binding: DB");
+ await env.DB.batch([...MARKETING_SCHEMA,
+   "CREATE TABLE IF NOT EXISTS form_rate_limits (rate_key TEXT PRIMARY KEY,window_started INTEGER NOT NULL,hits INTEGER NOT NULL DEFAULT 0)",
+   "CREATE INDEX IF NOT EXISTS idx_form_rate_window ON form_rate_limits(window_started)"
+ ].map(sql=>env.DB.prepare(sql)));
+}
 async function ensureColumns(env,table,columns){
   const info=await env.DB.prepare(`PRAGMA table_info(${table})`).all();
   const existing=new Set((info.results||[]).map(row=>row.name));
@@ -179,6 +191,7 @@ async function initDB(env){
  source_type TEXT NOT NULL DEFAULT '', source_label TEXT NOT NULL DEFAULT '',
  source_id TEXT NOT NULL DEFAULT '', source_page TEXT NOT NULL DEFAULT '',
  status TEXT NOT NULL DEFAULT 'new')`,
+...MARKETING_SCHEMA,
 `CREATE TABLE IF NOT EXISTS email_alert_outbox (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  request_type TEXT NOT NULL, request_id INTEGER NOT NULL, created_at INTEGER NOT NULL,
@@ -317,10 +330,110 @@ function leadSource(d){
  if(type==="direct")return {type,label:"",id:"",page:""};
  return {type,label:clean(d?.sourceLabel,160),id:clean(d?.sourceId,80),page:clean(d?.sourcePage,220)};
 }
-function validPhone(v){return /^[0-9+\s()-]{8,20}$/.test(v)}
+const PUBLIC_FORM_ERRORS={
+ INVALID_REQUEST:["بيانات الطلب غير صحيحة. راجع النموذج وحاول مرة أخرى.","The request could not be read. Review the form and try again."],
+ INVALID_FIELDS:["راجع البيانات المطلوبة في النموذج.","Check the required form fields."],
+ INVALID_PHONE:["اكتب رقم هاتف صحيحًا، وأضف كود الدولة للأرقام خارج مصر.","Enter a valid phone number, including the country code for numbers outside Egypt."],
+ INVALID_YEAR:["اكتب سنة صنع صحيحة من 1980 إلى 2100.","Enter a valid model year from 1980 to 2100."],
+ INVALID_VIN:["رقم الشاسيه يجب أن يكون من 7 إلى 17 خانة صحيحة.","Enter a valid VIN containing 7 to 17 letters and digits."],
+ INVALID_QUANTITY:["اختار كمية صحيحة من 1 إلى 20.","Choose a whole-number quantity from 1 to 20."],
+ INVALID_BRANCH:["اختار فرعًا من الفروع المتاحة في النموذج.","Choose one of the branches listed in the form."],
+ INVALID_SERVICE_TYPE:["اختار نوع الخدمة من القائمة.","Choose a service type from the list."],
+ INVALID_DATE:["اختار تاريخ حجز صحيحًا.","Choose a valid appointment date."],
+ PAST_DATE:["لا يمكن اختيار تاريخ قديم. اختار تاريخًا من اليوم أو بعده.","Choose today or a future date; past dates cannot be booked."],
+ FRIDAY_CLOSED:["الفروع مغلقة يوم الجمعة. اختار يومًا من السبت إلى الخميس.","The branches are closed on Friday. Choose Saturday through Thursday."],
+ SAME_DAY_CUTOFF:["انتهى وقت حجز نفس اليوم. اختار موعدًا من بكرة أو بعده.","Same-day booking closes at 5:00 PM Cairo time. Choose a later date."],
+ INVALID_TIME:["اختار وقتًا من 10:00 صباحًا إلى 6:00 مساءً، كل نصف ساعة.","Choose a time from 10:00 AM to 6:00 PM in half-hour steps."],
+ PAST_TIME:["الوقت المختار فات بتوقيت القاهرة. اختار وقتًا لاحقًا.","That time has already passed in Cairo. Choose a later time."],
+ RATE_LIMITED:["تم إرسال عدد كبير من الطلبات. انتظر حتى انتهاء مهلة إعادة المحاولة.","Too many requests have been submitted. Wait until the retry countdown finishes."],
+ FORBIDDEN_ORIGIN:["طلب غير مسموح. افتح النموذج من موقع Esotica.","This request is not permitted. Open the form on the Esotica website."],
+ SERVER_ERROR:["تعذر حفظ الطلب حاليًا. بيانات النموذج كما هي؛ حاول مرة أخرى.","The request could not be saved right now. Your form entries are unchanged; please try again."]
+};
+const isPublicFormPath=path=>["/api/booking","/api/parts","/api/contact"].includes(path);
+function publicFormError(code,field,status=400,extra={}){
+ const [error,error_en]=PUBLIC_FORM_ERRORS[code];
+ return json({error,error_en,code,...(field?{field}:{}),...extra},status,status===429?{"retry-after":String(extra.retryAfter||1800)}:{});
+}
+function normalizePublicDigits(value){
+ return String(value??"").replace(/[\u0660-\u0669]/g,char=>String(char.charCodeAt(0)-0x660)).replace(/[\u06f0-\u06f9]/g,char=>String(char.charCodeAt(0)-0x6f0));
+}
+function normalizePublicPhone(value){
+ const raw=normalizePublicDigits(value).trim().replace(/[\u061c\u200e\u200f]/g,"");
+ if(raw.length>64||!/^[+\d\s().-]+$/.test(raw))return "";
+ let phone=raw.replace(/[\s().-]/g,"");
+ if(phone.startsWith("00"))phone=`+${phone.slice(2)}`;
+ if(/^0[1-9]\d{7,9}$/.test(phone))phone=`+20${phone.slice(1)}`;
+ else if(/^1[0125]\d{8}$/.test(phone))phone=`+20${phone}`;
+ else if(/^[1-9]\d{6,14}$/.test(phone))phone=`+${phone}`;
+ // Accept the common +20 (0) national-trunk notation without retaining its zero.
+ if(/^\+200[1-9]\d{7,9}$/.test(phone))phone=`+20${phone.slice(4)}`;
+ return /^\+[1-9]\d{6,14}$/.test(phone)?phone:"";
+}
 function validYear(v){return /^\d{4}$/.test(v)&&Number(v)>=1980&&Number(v)<=2100}
-function validTime(v){return /^([01]\d|2[0-3]):[0-5]\d$/.test(v)}
+function validTime(v){return /^(?:1[0-7]:(?:00|30)|18:00)$/.test(v)}
+const BOOKING_BRANCHES=new Set(["فرع التجمع الخامس","فرع التجمع الثالث","الشيخ زايد"]);
 const BOOKING_SERVICE_TYPES=new Set(["maintenance","diagnostics","inspection","body-paint","spare-parts","warranty-insurance","mobile-service","other"]);
+const MARKETING_EVENT_TYPES=new Set(["page_view","form_start","whatsapp_click","phone_click","booking_click"]);
+const MARKETING_FORM_TYPES=new Set(["booking","parts","contact"]);
+const MARKETING_EVENT_KEYS=new Set(["id","type","form","page","campaignSource","campaignMedium","campaignName","campaignContent","campaignTerm","campaignLanding","campaignReferrer"]);
+function publicMarketingPath(value){
+ if(typeof value!=="string"||value.length>160||/[?#\\%]/.test(value)||!value.startsWith("/")||value.startsWith("//"))return "";
+ const path=value.replace(/\/$/,"")||"/",english=path==="/en"||path.startsWith("/en/");
+ const base=(english?(path.slice(3)||"/"):path).replace(/\.html$/,"");
+ return Object.prototype.hasOwnProperty.call(ENGLISH_PAGE_META,base)?(english?(base==="/"?"/en":`/en${base}`):base):"";
+}
+function campaignLabel(value){
+ if(typeof value!=="string")return "";
+ const label=normalizePublicDigits(value.normalize("NFKC")).trim();
+ return label.length<=100&&/^[\p{L}\p{N} _.()/\s-]*$/u.test(label)&&!/(?:\p{N}[\s()./-]*){10,}/u.test(label)?label:"";
+}
+function campaignReferrer(value){
+ if(typeof value!=="string"||value.length>1024)return "";
+ try{
+   const url=new URL(value.includes("://")?value:`https://${value}`),host=url.hostname.toLowerCase().replace(/\.$/,"");
+   if(!["http:","https:"].includes(url.protocol)||url.username||url.password||host.length>100||host==="esoticaegypt.com"||host.endsWith(".esoticaegypt.com"))return "";
+   return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(host)?host:"";
+ }catch{return ""}
+}
+function marketingOptOut(req){return req.headers.get("dnt")==="1"||req.headers.get("sec-gpc")==="1"}
+function marketingVisitor(req){
+ const value=String(cookieMap(req.headers.get("cookie")).esotica_visitor||"").toLowerCase();
+ return /^[a-f0-9]{32}$/.test(value)?value:"";
+}
+function marketingAttribution(data,req,defaultPage=""){
+ if(marketingOptOut(req))return {visitor:"",source:"direct",medium:"",name:"",content:"",term:"",landing:"",referrer:""};
+ return {visitor:marketingVisitor(req),source:campaignLabel(data.campaignSource)||"direct",medium:campaignLabel(data.campaignMedium),
+   name:campaignLabel(data.campaignName),content:campaignLabel(data.campaignContent),term:campaignLabel(data.campaignTerm),
+   landing:publicMarketingPath(data.campaignLanding)||publicMarketingPath(defaultPage),referrer:campaignReferrer(data.campaignReferrer)};
+}
+function marketingValues(attribution){
+ return [attribution.visitor,attribution.source,attribution.medium,attribution.name,attribution.content,attribution.term,attribution.landing,attribution.referrer];
+}
+async function readMarketingJSON(req){
+ const maxBytes=8192,declared=Number(req.headers.get("content-length"));
+ if(Number.isFinite(declared)&&declared>maxBytes)return null;
+ if(!req.body)return null;
+ const reader=req.body.getReader(),decoder=new TextDecoder();let size=0,text="";
+ try{
+   while(true){
+     const chunk=await reader.read();if(chunk.done)break;
+     size+=chunk.value.byteLength;if(size>maxBytes){await reader.cancel();return null}
+     text+=decoder.decode(chunk.value,{stream:true});
+   }
+   return JSON.parse(text+decoder.decode());
+ }catch{return null}finally{reader.releaseLock()}
+}
+async function guardMarketingEvent(req,env){
+ const now=Date.now(),windowMs=30*60*1000,key=`marketing:${await sha256(req.headers.get("cf-connecting-ip")||"unknown")}`;
+ const quota=await env.DB.prepare(`INSERT INTO form_rate_limits(rate_key,window_started,hits) VALUES(?,?,1)
+   ON CONFLICT(rate_key) DO UPDATE SET
+     window_started=CASE WHEN window_started<=? THEN excluded.window_started ELSE window_started END,
+     hits=CASE WHEN window_started<=? THEN 1 ELSE hits+1 END
+   WHERE window_started<=? OR hits<120 RETURNING hits`).bind(key,now,now-windowMs,now-windowMs,now-windowMs).first();
+ if(quota)return 0;
+ const row=await env.DB.prepare("SELECT window_started FROM form_rate_limits WHERE rate_key=?").bind(key).first();
+ return Math.max(1,Math.ceil(((Number(row?.window_started)||now)+windowMs-now)/1000));
+}
 async function sha256(value){
  const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(value)));
  return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,"0")).join("");
@@ -355,10 +468,13 @@ async function guardPublicForm(req,env,type,data,signature){
      window_started=CASE WHEN window_started<=? THEN excluded.window_started ELSE window_started END,
      hits=CASE WHEN window_started<=? THEN 1 ELSE hits+1 END
    WHERE window_started<=? OR hits<? RETURNING hits`).bind(rateKey,now,now-windowMs,now-windowMs,now-windowMs,limit).first();
- if(!quota)return {limited:true};
- return {type,fingerprint:await sha256(`${type}|${signature}`)};
+ if(!quota){
+   const blocked=await env.DB.prepare("SELECT window_started FROM form_rate_limits WHERE rate_key=?").bind(rateKey).first();
+   return {limited:true,retryAfter:Math.max(1,Math.ceil(((Number(blocked?.window_started)||now)+windowMs-now)/1000))};
+ }
+ return {type,fingerprint:await sha256(JSON.stringify([type,signature]))};
 }
-async function savePublicRequest(env,guard,insertSQL,values,ctx){
+async function savePublicRequest(env,guard,insertSQL,values,ctx,attribution){
  if(guard.silent)return null;
  const now=Date.now(),claimId=crypto.randomUUID(),mailConfig=emailAlertConfig(env);
  // Claim the fingerprint and save the lead in one transaction. A failed insert
@@ -369,8 +485,14 @@ async function savePublicRequest(env,guard,insertSQL,values,ctx){
      WHERE created_at<=?`).bind(guard.fingerprint,now,claimId,now-2*60*1000),
    env.DB.prepare(`${insertSQL} SELECT ${values.map(()=>"?").join(",")} WHERE EXISTS
      (SELECT 1 FROM form_submission_fingerprints WHERE fingerprint=? AND claim_id=?)`).bind(...values,guard.fingerprint,claimId),
+   // WITHOUT ROWID preserves last_insert_rowid() for the existing email outbox.
+   // changes() ties both records to the genuine lead insert in this transaction.
+   env.DB.prepare(`INSERT INTO lead_marketing(request_type,request_id,created_at,visitor_id,campaign_source,campaign_medium,campaign_name,campaign_content,campaign_term,campaign_landing,campaign_referrer)
+     SELECT ?,last_insert_rowid(),?,?,?,?,?,?,?,?,? WHERE changes()>0`).bind(({booking:"bookings",parts:"parts",contact:"contacts"})[guard.type],now,...marketingValues(attribution)),
    ...(mailConfig?[env.DB.prepare(`INSERT OR IGNORE INTO email_alert_outbox(request_type,request_id,created_at,from_email,to_email)
      SELECT ?,last_insert_rowid(),?,?,? WHERE changes()>0`).bind(({booking:"bookings",parts:"parts",contact:"contacts"})[guard.type],now,mailConfig.from,mailConfig.to)]:[]),
+   env.DB.prepare("DELETE FROM public_marketing_events WHERE created_at<?").bind(now-MARKETING_RETENTION_MS),
+   env.DB.prepare("DELETE FROM lead_marketing WHERE created_at<?").bind(now-MARKETING_RETENTION_MS),
    env.DB.prepare("DELETE FROM form_submission_fingerprints WHERE created_at<?").bind(now-24*60*60*1000),
    env.DB.prepare("DELETE FROM form_rate_limits WHERE window_started<?").bind(now-24*60*60*1000)
  ]);
@@ -431,11 +553,16 @@ function cairoDateParts(){
  const get=t=>parts.find(p=>p.type===t)?.value||"";
  return {date:`${get("year")}-${get("month")}-${get("day")}`,hour:Number(get("hour")),minute:Number(get("minute"))};
 }
-function validateBookingDate(v){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||Number.isNaN(Date.parse(`${v}T00:00:00Z`))||new Date(`${v}T00:00:00Z`).toISOString().slice(0,10)!==v)return "اختار تاريخ حجز صحيح.";
+function validateBookingDate(v,time){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||Number.isNaN(Date.parse(`${v}T00:00:00Z`))||new Date(`${v}T00:00:00Z`).toISOString().slice(0,10)!==v)return "INVALID_DATE";
  const now=cairoDateParts();
- if(v<now.date)return "لا يمكن اختيار تاريخ قديم. اختار تاريخ من اليوم أو بعده.";
- if(v===now.date && now.hour>=17)return "انتهى وقت حجز نفس اليوم. اختار موعدًا من بكرة أو بعده.";
+ if(v<now.date)return "PAST_DATE";
+ if(new Date(`${v}T00:00:00Z`).getUTCDay()===5)return "FRIDAY_CLOSED";
+ if(v===now.date && now.hour>=17)return "SAME_DAY_CUTOFF";
+ if(time&&v===now.date){
+   const [hour,minute]=time.split(":").map(Number);
+   if(hour*60+minute<=now.hour*60+now.minute)return "PAST_TIME";
+ }
  return null;
 }
 function cookieMap(h){return Object.fromEntries((h||"").split(";").map(x=>x.trim().split("=")).filter(x=>x[0]))}
@@ -498,10 +625,31 @@ function visitorTech(req){
 }
 async function handleAPI(req,env,url,ctx){
  const p=url.pathname;
- if(req.method==="POST"&&!sameOrigin(req)) return bad("طلب غير مسموح.",403);
+ if(req.method==="POST"&&!sameOrigin(req))return isPublicFormPath(p)?publicFormError("FORBIDDEN_ORIGIN",null,403):bad("طلب غير مسموح.",403);
 
  if(p==="/api/health"){
    return json({ok:true,database:!!env.DB,adminConfigured:!!env.ADMIN_PASSWORD,formProtection:true,adminLoginProtection:true,leadAlertPagination:true,emailAlertsPrepared:true,emailAlertsConfigured:Boolean(emailAlertConfig(env))});
+ }
+ if(p==="/api/analytics/event"&&req.method==="POST"){
+   if(marketingOptOut(req))return new Response(null,{status:204,headers:{"cache-control":"no-store"}});
+   const data=await readMarketingJSON(req);
+   if(!data||typeof data!=="object"||Array.isArray(data)||Object.keys(data).some(key=>!MARKETING_EVENT_KEYS.has(key)))return bad("بيانات القياس غير صحيحة.");
+   const eventId=typeof data.id==="string"?data.id.toLowerCase():"",page=publicMarketingPath(data.page),form=data.form??"";
+   if(!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(eventId)||!MARKETING_EVENT_TYPES.has(data.type)||!page||
+     (data.type==="form_start"?!MARKETING_FORM_TYPES.has(form):form!==""))return bad("حدث قياس غير صحيح.");
+   await initMarketingDB(env);
+   const retryAfter=await guardMarketingEvent(req,env);
+   if(retryAfter)return json({error:"تم تجاوز حد القياس.",code:"RATE_LIMITED",retryAfter},429,{"retry-after":String(retryAfter)});
+   const attribution=marketingAttribution(data,req,page),hasVisitor=Boolean(attribution.visitor),now=Date.now();
+   if(!hasVisitor)attribution.visitor=crypto.randomUUID().replace(/-/g,"");
+   await env.DB.batch([
+     env.DB.prepare(`INSERT OR IGNORE INTO public_marketing_events(event_id,created_at,event_type,form_type,page,visitor_id,campaign_source,campaign_medium,campaign_name,campaign_content,campaign_term,campaign_landing,campaign_referrer)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(eventId,now,data.type,form,page,...marketingValues(attribution)),
+     env.DB.prepare("DELETE FROM public_marketing_events WHERE created_at<?").bind(now-MARKETING_RETENTION_MS),
+     env.DB.prepare("DELETE FROM lead_marketing WHERE created_at<?").bind(now-MARKETING_RETENTION_MS),
+     env.DB.prepare("DELETE FROM form_rate_limits WHERE window_started<?").bind(now-24*60*60*1000)
+   ]);
+   return json({ok:true},200,hasVisitor?{}:{"set-cookie":visitorCookie(attribution.visitor)});
  }
  if(p==="/api/analytics/heartbeat"&&req.method==="POST"){
    await initAnalyticsDB(env);
@@ -548,32 +696,42 @@ async function handleAPI(req,env,url,ctx){
  }
 
  if(p==="/api/booking"&&req.method==="POST"){
-   await initDB(env); const d=await readJSON(req); if(!d)return bad("بيانات غير صحيحة.");
-   const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),branch=clean(d.branch,100),serviceType=clean(d.serviceType,40),preferredDate=clean(d.preferredDate,20),preferredTime=clean(d.preferredTime,10),details=clean(d.details,700),source=leadSource(d);
-   if(!name||!validPhone(phone)||!carModel||!validYear(year)||!branch||!BOOKING_SERVICE_TYPES.has(serviceType)||!preferredDate||!validTime(preferredTime))return bad("راجع البيانات المطلوبة ونوع الخدمة والموعد ورقم الهاتف وسنة الصنع.");
-   const dateError=validateBookingDate(preferredDate);if(dateError)return bad(dateError);
-   const guard=await guardPublicForm(req,env,"booking",d,`${phone}|${carModel}|${branch}|${serviceType}|${preferredDate}|${preferredTime}`);
-   if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
-   await savePublicRequest(env,guard,"INSERT INTO bookings(created_at,name,phone,car_model,year,branch,service_type,preferred_date,preferred_time,details,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,carModel,year,branch,serviceType,preferredDate,preferredTime,details,source.type,source.label,source.id,source.page,"new"],ctx);
-   return json({message:"تم استلام طلب الحجز. سيتواصل معك فريق Esotica لتأكيد الموعد."});
+   await initDB(env); const d=await readJSON(req); if(!d||typeof d!=="object"||Array.isArray(d))return publicFormError("INVALID_REQUEST");
+   const name=clean(d.name,80),phone=normalizePublicPhone(d.phone),carModel=clean(d.carModel,80),year=clean(normalizePublicDigits(d.year),4),branch=clean(d.branch,100),serviceType=clean(d.serviceType,40),preferredDate=clean(normalizePublicDigits(d.preferredDate),20),preferredTime=clean(normalizePublicDigits(d.preferredTime),10),details=clean(d.details,700),source=leadSource(d);
+   if(!name||!carModel)return publicFormError("INVALID_FIELDS",!name?"name":"carModel");
+   if(!phone)return publicFormError("INVALID_PHONE","phone");
+   if(!validYear(year))return publicFormError("INVALID_YEAR","year");
+   if(!BOOKING_BRANCHES.has(branch))return publicFormError("INVALID_BRANCH","branch");
+   if(!BOOKING_SERVICE_TYPES.has(serviceType))return publicFormError("INVALID_SERVICE_TYPE","serviceType");
+   if(!validTime(preferredTime))return publicFormError("INVALID_TIME","preferredTime");
+   const dateError=validateBookingDate(preferredDate,preferredTime);if(dateError)return publicFormError(dateError,dateError==="PAST_TIME"?"preferredTime":"preferredDate");
+   const guard=await guardPublicForm(req,env,"booking",d,{name,phone,carModel,year,branch,serviceType,preferredDate,preferredTime,details,source});
+   if(guard.limited)return publicFormError("RATE_LIMITED",null,429,{retryAfter:guard.retryAfter});
+   await savePublicRequest(env,guard,"INSERT INTO bookings(created_at,name,phone,car_model,year,branch,service_type,preferred_date,preferred_time,details,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,carModel,year,branch,serviceType,preferredDate,preferredTime,details,source.type,source.label,source.id,source.page,"new"],ctx,marketingAttribution(d,req,"/booking"));
+   return json({message:"تم استلام طلب الحجز. سيتواصل معك فريق Esotica لتأكيد الموعد.",message_en:"Your service request has been received. The Esotica team will contact you to confirm the appointment."});
  }
  if(p==="/api/parts"&&req.method==="POST"){
-   await initDB(env); const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
-   const name=clean(d.name,80),phone=clean(d.phone,20),carModel=clean(d.carModel,80),year=clean(d.year,4),vin=clean(d.vin,17).toUpperCase(),partCode=clean(d.partCode,60),details=clean(d.details,700),quantity=Math.min(20,Math.max(1,Number(d.quantity)||1)),source=leadSource(d);
-   if(!name||!validPhone(phone)||!carModel||!validYear(year)||!(/^[A-HJ-NPR-Z0-9]{7,17}$/.test(vin))||!details)return bad("راجع البيانات. رقم الشاسيه يجب أن يكون من 7 إلى 17 خانة صحيحة.");
-   const guard=await guardPublicForm(req,env,"parts",d,`${phone}|${vin}|${partCode}|${details}`);
-   if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
-   await savePublicRequest(env,guard,"INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status)",[Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new"],ctx);
-   return json({message:"تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر."});
+   await initDB(env); const d=await readJSON(req);if(!d||typeof d!=="object"||Array.isArray(d))return publicFormError("INVALID_REQUEST");
+   const name=clean(d.name,80),phone=normalizePublicPhone(d.phone),carModel=clean(d.carModel,80),year=clean(normalizePublicDigits(d.year),4),vin=normalizePublicDigits(d.vin).trim().toUpperCase(),partCode=clean(d.partCode,60),details=clean(d.details,700),quantityText=normalizePublicDigits(d.quantity).trim(),quantity=quantityText===""?1:Number(quantityText),source=leadSource(d);
+   if(!name||!carModel||!details)return publicFormError("INVALID_FIELDS",!name?"name":!carModel?"carModel":"details");
+   if(!phone)return publicFormError("INVALID_PHONE","phone");
+   if(!validYear(year))return publicFormError("INVALID_YEAR","year");
+   if(!(/^[A-HJ-NPR-Z0-9]{7,17}$/.test(vin)))return publicFormError("INVALID_VIN","vin");
+   if(!Number.isInteger(quantity)||quantity<1||quantity>20)return publicFormError("INVALID_QUANTITY","quantity");
+   const guard=await guardPublicForm(req,env,"parts",d,{name,phone,carModel,year,vin,partCode,quantity,details,source});
+   if(guard.limited)return publicFormError("RATE_LIMITED",null,429,{retryAfter:guard.retryAfter});
+   await savePublicRequest(env,guard,"INSERT INTO parts_requests(created_at,request_type,name,phone,car_model,year,vin,part_code,quantity,details,source_type,source_label,source_id,source_page,status)",[Date.now(),"inquiry",name,phone,carModel,year,vin,partCode,quantity,details,source.type,source.label,source.id,source.page,"new"],ctx,marketingAttribution(d,req,"/parts"));
+   return json({message:"تم استلام استعلام قطع الغيار. سيتم التواصل لتأكيد التوفر والسعر.",message_en:"Your spare-parts enquiry has been received. The team will contact you to confirm availability and price."});
  }
  if(p==="/api/contact"&&req.method==="POST"){
-   await initDB(env);const d=await readJSON(req);if(!d)return bad("بيانات غير صحيحة.");
-   const name=clean(d.name,80),phone=clean(d.phone,20),subject=clean(d.subject,120),message=clean(d.message,900),source=leadSource(d);
-   if(!name||!validPhone(phone)||!subject||!message)return bad("راجع البيانات المطلوبة.");
-   const guard=await guardPublicForm(req,env,"contact",d,`${phone}|${subject}|${message}`);
-   if(guard.limited)return json({error:"تم إرسال عدد كبير من الطلبات. حاول مرة أخرى بعد 30 دقيقة."},429,{"retry-after":"1800"});
-   await savePublicRequest(env,guard,"INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new"],ctx);
-   return json({message:"تم استلام رسالتك. سيتواصل معك فريق Esotica."});
+   await initDB(env);const d=await readJSON(req);if(!d||typeof d!=="object"||Array.isArray(d))return publicFormError("INVALID_REQUEST");
+   const name=clean(d.name,80),phone=normalizePublicPhone(d.phone),subject=clean(d.subject,120),message=clean(d.message,900),source=leadSource(d);
+   if(!name||!subject||!message)return publicFormError("INVALID_FIELDS",!name?"name":!subject?"subject":"message");
+   if(!phone)return publicFormError("INVALID_PHONE","phone");
+   const guard=await guardPublicForm(req,env,"contact",d,{name,phone,subject,message,source});
+   if(guard.limited)return publicFormError("RATE_LIMITED",null,429,{retryAfter:guard.retryAfter});
+   await savePublicRequest(env,guard,"INSERT INTO contact_requests(created_at,name,phone,subject,message,source_type,source_label,source_id,source_page,status)",[Date.now(),name,phone,subject,message,source.type,source.label,source.id,source.page,"new"],ctx,marketingAttribution(d,req,"/contact"));
+   return json({message:"تم استلام رسالتك. سيتواصل معك فريق Esotica.",message_en:"Your message has been received. The Esotica team will contact you."});
  }
 
  if(p==="/api/admin/login"&&req.method==="POST"){
@@ -838,6 +996,7 @@ export default{
    }
    const english=englishPage(url);
    if(english&&(req.method==="GET"||req.method==="HEAD"))return serveEnglishPage(req,env,url,english);
+   if((url.pathname==="/en"||url.pathname.startsWith("/en/"))&&!english)return new Response("Page not found",{status:404,headers:{"content-type":"text/plain; charset=utf-8"}});
    if(url.pathname==="/sitemap.xml"){
      return env.ASSETS.fetch(new Request(new URL("/sitemap.xml",url),req));
    }
@@ -851,6 +1010,7 @@ export default{
      return env.ASSETS.fetch(req);
    }catch(e){
      console.error(e);
+     if(isPublicFormPath(url.pathname))return publicFormError("SERVER_ERROR",null,500);
      if(url.pathname.startsWith("/api/"))return bad("حدث خطأ في الخادم. راجع ربط DB وإعدادات Cloudflare.",500);
      return new Response("Server error",{status:500});
    }

@@ -62,7 +62,7 @@ test("login protection discards expired records and never stores the raw IP",asy
 });
 
 const cases=[
-  ["booking","bookings","bookings",{name:"Test customer",phone:"01000000000",carModel:"Test vehicle",year:"2024",branch:"Test branch",serviceType:"maintenance",preferredDate:"2099-01-20",preferredTime:"10:30",details:"Test booking"}],
+  ["booking","bookings","bookings",{name:"Test customer",phone:"01000000000",carModel:"Test vehicle",year:"2024",branch:"فرع التجمع الخامس",serviceType:"maintenance",preferredDate:"2099-01-20",preferredTime:"10:30",details:"Test booking"}],
   ["parts","parts","parts_requests",{name:"Test customer",phone:"01000000000",carModel:"Test vehicle",year:"2024",vin:"ABCDEFG",partCode:"TEST",quantity:2,details:"Test part"}],
   ["contact","contacts","contact_requests",{name:"Test customer",phone:"01000000000",subject:"Test subject",message:"Test message"}]
 ];
