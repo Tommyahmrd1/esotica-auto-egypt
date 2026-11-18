@@ -1,0 +1,12 @@
+/* Static, privacy-reviewed workshop photographs. Natural image ratios keep vehicles visible. */
+.work-photo-grid{columns:3;column-gap:18px}
+.work-photo-card{break-inside:avoid;display:inline-block;vertical-align:top;width:100%;margin:0 0 18px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel)}
+.work-photo-link{display:block;overflow:hidden;background:#111411}
+.work-photo-link img{display:block;width:100%;height:auto;transition:transform .35s ease}
+.work-photo-link:hover img{transform:scale(1.018)}
+.work-photo-link:focus-visible{outline-offset:-4px;position:relative;z-index:1}
+.work-photo-card figcaption{padding:12px 15px;color:var(--gold2);font-size:13px;font-weight:700;line-height:1.6}
+#work-gallery{scroll-margin-top:96px}
+@media(max-width:1000px){.work-photo-grid{columns:2;column-gap:14px}.work-photo-card{margin-bottom:14px}}
+@media(max-width:600px){.work-photo-grid{column-gap:12px}.work-photo-card{border-radius:12px;margin-bottom:12px}.work-photo-card figcaption{padding:10px;font-size:11px}.gallery-inner{padding-top:56px}}
+@media(prefers-reduced-motion:reduce){.work-photo-link img{transition:none}.work-photo-link:hover img{transform:none}}
